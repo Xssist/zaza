@@ -21,12 +21,12 @@
     "backgroundColor": "#0a0a0f",
     "fontFamily": "Inter",
     "particleCount": 80,
-    "snowEnabled": false,
+    "snowEnabled": true,
     "rainEnabled": false
   },
   "background": {
     "videoUrl": "assets/images/background.mp4",
-    "overlayOpacity": 0.55
+    "overlayOpacity": 0.6
   },
   "music": {
     "enabled": true,
