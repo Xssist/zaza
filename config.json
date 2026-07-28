@@ -1,19 +1,16 @@
 {
   "profile": {
-    "username": "zaza",
-    "displayName": "zaza",
+    "username": "zade",
+    "displayName": "zade",
     "bio": "living in the moment. creating something real.",
     "avatar": "assets/images/avatar.png",
     "status": "online",
     "statusMessages": [
-      "vibing to music rn 🎵",
-      "cooking something up...",
-      "living rent free in your head",
-      "making moves quietly 🤫",
-      "just existing, doing my thing"
+      "im a goat",
+      "Developer"
     ],
     "location": "somewhere cool",
-    "joinDate": "2024"
+    "joinDate": "2001"
   },
   "theme": {
     "accentColor": "#ffffff",
