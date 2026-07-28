@@ -6,10 +6,10 @@
     "avatar": "assets/images/avatar.png",
     "status": "online",
     "statusMessages": [
-      "vibing to music rn \uD83C\uDFB5",
+      "vibing to music rn 🎵",
       "cooking something up...",
       "living rent free in your head",
-      "making moves quietly \uD83E\uDD2B",
+      "making moves quietly 🤫",
       "just existing, doing my thing"
     ],
     "location": "somewhere cool",
@@ -112,7 +112,7 @@
   "spotify": {
     "enabled": false,
     "showCurrentlyPlaying": true,
-    "fallbackText": "not listening to anything rn"
+    "fallbackText": ""
   },
   "cursor": {
     "enabled": true,
@@ -124,8 +124,13 @@
     "sessionTimeout": 3600
   },
   "seo": {
-    "title": "zaza \u2014 personal",
-    "titleCycle": ["zaza \u2014 personal", "living in the moment.", "creating something real.", "zaza."],
+    "title": "zade",
+    "titleCycle": [
+      "zaza — personal",
+      "living in the moment.",
+      "creating something real.",
+      "zaza."
+    ],
     "description": "living in the moment. creating something real.",
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#a855f7"
