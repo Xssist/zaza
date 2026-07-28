@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="living in the moment. creating something real." />
+  <meta name="theme-color" content="#a855f7" />
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:title"       content="zaza — personal" />
+  <meta property="og:description" content="living in the moment. creating something real." />
+  <meta property="og:image"       content="assets/avatar.jpg" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="zaza — personal" />
+  <meta name="twitter:description" content="living in the moment. creating something real." />
+
+  <title>zaza — personal</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       CUSTOM CURSOR
+  ══════════════════════════════════════════ -->
+  <div id="cursor"></div>
+  <div id="cursor-follower"></div>
+  <div id="mouse-light"></div>
+
+  <!-- ══════════════════════════════════════════
+       LOADING SCREEN
+  ══════════════════════════════════════════ -->
+  <div id="loading-screen">
+    <div class="loader-logo">zaza</div>
+    <div class="loader-bar-wrap">
+      <div class="loader-bar"></div>
+    </div>
+    <div class="loader-text">initializing...</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       BACKGROUND LAYER
+  ══════════════════════════════════════════ -->
+  <div id="bg-layer">
+    <!-- Video background (src injected by JS from config) -->
+    <video id="bg-video" autoplay muted loop playsinline></video>
+
+    <!-- Dark overlay -->
+    <div id="bg-overlay"></div>
+
+    <!-- Animated gradient blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <!-- Particle canvas -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- ══════════════════════════════════════════
+       ENTER SCREEN
+  ══════════════════════════════════════════ -->
+  <div id="enter-screen">
+    <h1 class="enter-title">zaza</h1>
+    <p class="enter-subtitle">click to enter</p>
+    <button id="enter-btn" class="enter-btn">
+      <span>enter</span>
+    </button>
+    <div class="enter-pulse"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       MAIN PAGE
+  ══════════════════════════════════════════ -->
+  <main id="main-page">
+
+    <!-- ── Profile Card ── -->
+    <div class="profile-card">
+
+      <!-- Avatar -->
+      <div class="avatar-section">
+        <div class="avatar-wrap" id="avatar-wrap">
+          <div class="avatar-ring"></div>
+          <!-- Placeholder replaced by JS with actual avatar or initial -->
+          <div class="avatar-img-placeholder avatar-placeholder">Z</div>
+          <span class="online-dot"></span>
+        </div>
+
+        <!-- Username -->
+        <h1 class="username" id="profile-username">zaza</h1>
+
+        <!-- Typewriter status -->
+        <div class="status-row">
+          <span class="status-text">
+            <span id="status-typewriter"></span><span class="typewriter-cursor"></span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="card-divider"></div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-value" id="stat-visits">—</span>
+          <span class="stat-label">visitors</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-views">—</span>
+          <span class="stat-label">views</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-since">—</span>
+          <span class="stat-label">since</span>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="card-divider"></div>
+
+      <!-- About Me -->
+      <div class="about-section">
+        <div class="section-label">about me</div>
+        <p class="about-text" id="profile-bio">loading...</p>
+      </div>
+
+      <!-- Spotify Currently Playing -->
+      <div id="spotify-section" class="spotify-section" style="display:none;">
+        <i class="fab fa-spotify spotify-icon"></i>
+        <div class="spotify-text">
+          <div class="spotify-label">currently playing</div>
+          <div class="spotify-track">not listening to anything rn</div>
+        </div>
+        <div class="eq-bars">
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+        </div>
+      </div>
+
+      <!-- Discord Widget -->
+      <div id="discord-section" class="discord-section" style="display:none;">
+        <i class="fab fa-discord discord-icon"></i>
+        <div class="discord-text">
+          <div class="discord-label">discord</div>
+          <div class="discord-username">—</div>
+        </div>
+        <div class="discord-status-dot"></div>
+      </div>
+
+      <!-- Social Links -->
+      <div class="socials-section">
+        <div class="section-label">socials</div>
+        <div class="social-grid" id="socials-container">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <!-- Music Player -->
+      <div class="music-section" id="music-section">
+        <div class="section-label">music</div>
+
+        <!-- Track header -->
+        <div class="music-header">
+          <div class="music-cover" id="music-cover">
+            <i class="fas fa-music"></i>
+          </div>
+          <div class="music-info">
+            <div class="music-title" id="music-title">No track loaded</div>
+            <div class="music-artist" id="music-artist">—</div>
+          </div>
+          <div class="music-controls">
+            <button class="music-btn" id="prev-btn" title="Previous (Alt+←)">
+              <i class="fas fa-backward-step"></i>
+            </button>
+            <button class="music-btn play-btn" id="play-pause-btn" title="Play/Pause (Space)">
+              <i class="fas fa-play"></i>
+            </button>
+            <button class="music-btn" id="next-btn" title="Next (Alt+→)">
+              <i class="fas fa-forward-step"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="music-progress-row">
+          <span class="music-time" id="music-current">0:00</span>
+          <div class="music-progress" id="music-progress">
+            <div class="music-progress-fill" id="music-progress-fill"></div>
+          </div>
+          <span class="music-time" id="music-duration">0:00</span>
+        </div>
+
+        <!-- Volume -->
+        <div class="music-volume-row">
+          <i class="fas fa-volume-high volume-icon" id="volume-icon"></i>
+          <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="0.5" />
+        </div>
+
+        <!-- Visualizer -->
+        <canvas id="visualizer-canvas" width="400" height="40" style="margin-top:10px;"></canvas>
+      </div>
+
+      <!-- Visitor Counter row -->
+      <div class="visitors-row">
+        <i class="fas fa-eye"></i>
+        <span class="visitors-count" id="visitor-count">—</span>
+        <span>total visits</span>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="card-footer">
+        <span>made with</span>
+        <i class="fas fa-heart" style="color:var(--accent);font-size:0.65rem;"></i>
+        <span>by</span>
+        <a href="#" style="cursor:none;">zaza</a>
+        &nbsp;·&nbsp;
+        <a href="admin.html" style="color:var(--text-muted);cursor:none;transition:color 0.2s;"
+           onmouseover="this.style.color='var(--accent)'"
+           onmouseout="this.style.color='var(--text-muted)'">admin</a>
+      </div>
+
+    </div>
+    <!-- end .profile-card -->
+
+  </main>
+
+  <!-- ══════════════════════════════════════════
+       THEME FAB (accent color switcher)
+  ══════════════════════════════════════════ -->
+  <button class="theme-fab" id="theme-fab" title="Change theme color" aria-label="Change accent color">
+    <i class="fas fa-palette"></i>
+  </button>
+
+  <!-- ══════════════════════════════════════════
+       KEYBOARD SHORTCUTS HINT
+  ══════════════════════════════════════════ -->
+  <div class="shortcuts-hint" id="shortcuts-hint">
+    <span class="shortcut-key">space</span> play/pause &nbsp;
+    <span class="shortcut-key">alt+→</span> next &nbsp;
+    <span class="shortcut-key">M</span> mute
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TOAST (injected by JS)
+  ══════════════════════════════════════════ -->
+
+  <!-- ══════════════════════════════════════════
+       SCRIPTS
+  ══════════════════════════════════════════ -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>
