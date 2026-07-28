@@ -81,6 +81,15 @@ async function loadConfig() {
 /* ══════════════════════════════════════════
    GITHUB SAVE — always commits directly to repo
 ══════════════════════════════════════════ */
+
+// Encode a UTF-8 string to base64 correctly (handles emoji, unicode, etc.)
+function toBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+
 async function saveToGitHub(cfg) {
   const url = `https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/config.json`;
   const headers = {
@@ -89,44 +98,47 @@ async function saveToGitHub(cfg) {
     'Content-Type': 'application/json',
   };
 
-  // Get current file SHA (required for update)
+  // Step 1 — GET current SHA
   const getRes = await fetch(url, { headers });
-  if (!getRes.ok) throw new Error(`GitHub GET failed: ${getRes.status}`);
+  if (!getRes.ok) {
+    const errBody = await getRes.text();
+    throw new Error(`GitHub GET ${getRes.status}: ${errBody}`);
+  }
   const fileData = await getRes.json();
+  const sha = fileData.sha;
 
-  // Encode content as base64
+  // Step 2 — encode JSON as base64 (unicode-safe)
   const jsonStr = JSON.stringify(cfg, null, 2);
-  const content = btoa(unescape(encodeURIComponent(jsonStr)));
+  const content = toBase64(jsonStr);
 
-  // Commit
-  const putRes = await fetch(url, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify({
-      message: 'chore: update config via admin panel',
-      content,
-      sha: fileData.sha,
-      branch: GH.branch,
-    }),
+  // Step 3 — PUT (commit the file)
+  const body = JSON.stringify({
+    message: 'chore: update config via admin panel',
+    content,
+    sha,
+    branch: GH.branch,
   });
 
+  const putRes = await fetch(url, { method: 'PUT', headers, body });
+
   if (!putRes.ok) {
-    const err = await putRes.json().catch(() => ({}));
-    throw new Error(err.message || `GitHub PUT failed: ${putRes.status}`);
+    const errBody = await putRes.json().catch(() => ({ message: putRes.statusText }));
+    throw new Error(`GitHub PUT ${putRes.status}: ${errBody.message || JSON.stringify(errBody)}`);
   }
+
   return true;
 }
 
 async function saveConfig(cfg) {
   try {
     await saveToGitHub(cfg);
-    // Also update localStorage so file:// loads stay in sync
+    // Mirror to localStorage so file:// loads stay in sync
     localStorage.setItem('zaza_config_override', JSON.stringify(cfg, null, 2));
     return { ok: true, method: 'github' };
   } catch (e) {
-    console.warn('GitHub save failed, using localStorage fallback:', e);
-    localStorage.setItem('zaza_config_override', JSON.stringify(cfg, null, 2));
-    return { ok: true, method: 'localStorage', error: e.message };
+    // Surface the real error in the toast so it's visible
+    console.error('GitHub save error:', e);
+    return { ok: false, method: 'failed', error: e.message };
   }
 }
 
@@ -231,16 +243,16 @@ async function doSaveAll() {
     const result = await saveConfig(AdminState.config);
 
     if (result.method === 'github') {
-      adminToast('✓ Saved to GitHub — site will update in ~30s', 'success');
+      adminToast('✓ Saved to GitHub — site updates in ~30s', 'success');
+      AdminState.dirty = false;
+      badge(false);
     } else {
-      adminToast(`⚠ GitHub failed (${result.error}) — saved locally`, 'error');
-      downloadConfig(); // offer manual download as fallback
+      // Show the actual error so we can debug
+      adminToast(`✗ GitHub save failed: ${result.error}`, 'error');
     }
-
-    AdminState.dirty = false;
-    badge(false);
   } catch (e) {
-    adminToast('✗ Save failed: ' + e.message, 'error');
+    adminToast('✗ Unexpected error: ' + e.message, 'error');
+    console.error('doSaveAll error:', e);
   } finally {
     if (btn) { btn.textContent = 'Save All'; btn.disabled = false; }
   }
