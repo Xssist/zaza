@@ -656,10 +656,6 @@ function initEnter() {
   }
 
   btn.addEventListener('click', doEnter);
-  // Also allow clicking anywhere on enter screen
-  es.addEventListener('click', e => {
-    if (e.target === es || e.target.closest('#enter-screen')) doEnter();
-  });
   // Keyboard: Enter or Space
   document.addEventListener('keydown', e => {
     if (!S.entered && (e.code === 'Enter' || e.code === 'Space')) {
