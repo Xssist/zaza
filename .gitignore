@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+
+# Local overrides (never commit real tokens)
+*.env
+.env.local
+
+# Large media (upload separately or use CDN)
+assets/*.mp4
+assets/*.webm
+assets/*.mov
