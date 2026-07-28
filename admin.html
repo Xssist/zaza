@@ -3,694 +3,321 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>zaza — admin panel</title>
+  <title>zaza — admin</title>
   <meta name="robots" content="noindex, nofollow" />
-
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-  <!-- Styles -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="css/style.css" />
-
   <style>
-    /* ── Admin-only extras that live here to keep style.css clean ── */
-    body { cursor: auto; }
-    a, button { cursor: pointer; }
-
-    .hidden { display: none !important; }
-
-    /* Login card fade-out + shake */
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      20%,60%  { transform: translateX(-8px); }
-      40%,80%  { transform: translateX(8px); }
-    }
-    .shake { animation: shake 0.45s ease; }
-    .fade-out { opacity: 0 !important; transition: opacity 0.4s ease; pointer-events: none; }
-
-    /* Section headers */
-    .admin-section-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 20px; gap: 12px;
-    }
-    .admin-section-title-wrap { flex: 1; }
-
-    /* Range input styling */
-    input[type="range"] {
-      -webkit-appearance: none; appearance: none;
-      width: 100%; height: 4px;
-      background: rgba(255,255,255,0.1); border-radius: 99px; outline: none;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 14px; height: 14px;
-      background: var(--accent); border-radius: 50%; cursor: pointer;
-      box-shadow: 0 0 6px var(--accent-glow);
-    }
-
-    /* Avatar upload zone */
-    .avatar-upload-zone {
-      border: 2px dashed var(--glass-border); border-radius: 12px;
-      padding: 20px; text-align: center; cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-    }
-    .avatar-upload-zone:hover { border-color: var(--accent); background: rgba(168,85,247,0.05); }
-    .avatar-upload-zone input { display: none; }
-    #avatar-preview-img {
-      width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
-      margin: 0 auto 10px; display: none;
-      border: 3px solid var(--accent);
-    }
-
-    /* Info box */
-    .info-box {
-      background: rgba(168,85,247,0.07); border: 1px solid rgba(168,85,247,0.2);
-      border-radius: 10px; padding: 12px 14px; font-size: 0.78rem;
-      color: var(--text-dim); line-height: 1.55; margin-bottom: 14px;
-    }
-    .info-box i { color: var(--accent); margin-right: 6px; }
-
-    /* Pill tag for shortcut hints */
-    .hint-pill {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 3px 9px; border-radius: 99px;
-      background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
-      font-size: 0.7rem; color: var(--text-muted);
-    }
-
-    /* Section nav labels */
-    .nav-section-label {
-      font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.12em; color: var(--text-muted);
-      padding: 10px 12px 4px; margin-top: 4px;
-    }
-
-    /* Preview link */
-    .preview-link {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 0.75rem; color: var(--accent); text-decoration: none;
-      padding: 5px 12px; border: 1px solid rgba(168,85,247,0.3);
-      border-radius: 99px; transition: all 0.2s;
-    }
-    .preview-link:hover { background: rgba(168,85,247,0.1); }
+    body { cursor:auto; overflow:auto; }
+    a,button { cursor:pointer; }
+    .hidden { display:none!important; }
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+    .shake{animation:shake .45s ease;}
+    .fade-out{opacity:0!important;transition:opacity .4s ease!important;pointer-events:none!important;}
+    input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:rgba(255,255,255,0.1);border-radius:99px;outline:none;}
+    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--accent);border-radius:50%;cursor:pointer;}
+    .avatar-upload-zone{border:2px dashed rgba(255,255,255,0.08);border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;}
+    .avatar-upload-zone:hover{border-color:var(--accent);background:rgba(168,85,247,0.04);}
+    .avatar-upload-zone input{display:none;}
+    #avatar-preview-img{width:70px;height:70px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:none;border:2px solid var(--accent);}
+    .preview-link{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;color:var(--accent);padding:5px 11px;border:1px solid rgba(168,85,247,0.3);border-radius:99px;transition:var(--transition);text-decoration:none;}
+    .preview-link:hover{background:rgba(168,85,247,0.1);}
+    .nav-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text-muted);padding:10px 10px 4px;display:block;}
   </style>
 </head>
 <body class="admin-body">
 
-<!-- ══════════════════════════════════════════
-     LOGIN SCREEN
-══════════════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="admin-login" class="admin-login">
   <div class="admin-login-card">
     <div class="admin-logo">zaza</div>
     <div class="admin-login-title">Admin Panel</div>
-    <p class="admin-login-sub">Enter your password to continue.</p>
-
+    <p class="admin-login-sub">Password required to continue.</p>
     <form id="login-form" autocomplete="off">
       <div class="admin-form-group">
         <label for="login-password">Password</label>
-        <input
-          type="password"
-          id="login-password"
-          class="admin-input"
-          placeholder="••••••••"
-          autocomplete="current-password"
-          autofocus
-        />
+        <input type="password" id="login-password" class="admin-input" placeholder="••••••••" autofocus />
       </div>
       <button type="submit" class="admin-btn">Enter Panel</button>
-      <p class="admin-error" id="login-error">Incorrect password.</p>
+      <p class="admin-error" id="login-error"></p>
     </form>
-
-    <div style="margin-top:20px;text-align:center;">
-      <a href="index.html" style="font-size:0.75rem;color:var(--text-muted);text-decoration:none;">
-        ← Back to profile
-      </a>
+    <div style="margin-top:18px;text-align:center;">
+      <a href="index.html" style="font-size:.74rem;color:var(--text-muted);text-decoration:none;">← back to profile</a>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     ADMIN DASHBOARD
-══════════════════════════════════════════ -->
+<!-- DASHBOARD -->
 <div id="admin-dashboard" class="admin-dashboard">
 
-  <!-- Top Bar -->
+  <!-- Topbar -->
   <header class="admin-topbar">
     <div class="admin-topbar-logo">zaza / admin</div>
     <div class="admin-topbar-right">
       <span id="save-status" class="admin-status-badge badge-saved">Saved</span>
-      <a href="index.html" target="_blank" class="preview-link">
-        <i class="fas fa-arrow-up-right-from-square"></i> Preview
-      </a>
-      <button class="admin-save-all-btn" id="save-all-btn">
-        <i class="fas fa-floppy-disk"></i> Save All
-      </button>
-      <button class="admin-logout-btn" id="logout-btn">
-        <i class="fas fa-right-from-bracket"></i> Logout
-      </button>
+      <a href="index.html" target="_blank" class="preview-link"><i class="fas fa-arrow-up-right-from-square"></i> Preview</a>
+      <button class="admin-save-all-btn" id="save-all-btn"><i class="fas fa-floppy-disk"></i> Save All</button>
+      <button class="admin-logout-btn" id="logout-btn"><i class="fas fa-right-from-bracket"></i> Logout</button>
     </div>
   </header>
 
-  <!-- Content -->
   <div class="admin-content">
-
-    <!-- Sidebar Nav -->
+    <!-- Sidebar -->
     <nav class="admin-sidebar">
-      <div class="nav-section-label">Content</div>
-      <button class="admin-nav-item active" data-section="profile">
-        <i class="fas fa-user"></i> Profile
-      </button>
-      <button class="admin-nav-item" data-section="socials">
-        <i class="fas fa-share-nodes"></i> Socials
-      </button>
-      <button class="admin-nav-item" data-section="music">
-        <i class="fas fa-music"></i> Music
-      </button>
-
-      <div class="nav-section-label">Appearance</div>
-      <button class="admin-nav-item" data-section="theme">
-        <i class="fas fa-palette"></i> Theme
-      </button>
-      <button class="admin-nav-item" data-section="background">
-        <i class="fas fa-image"></i> Background
-      </button>
-
-      <div class="nav-section-label">Integrations</div>
-      <button class="admin-nav-item" data-section="discord">
-        <i class="fab fa-discord"></i> Discord
-      </button>
-      <button class="admin-nav-item" data-section="spotify">
-        <i class="fab fa-spotify"></i> Spotify
-      </button>
-      <button class="admin-nav-item" data-section="stats">
-        <i class="fas fa-chart-bar"></i> Stats
-      </button>
-
-      <div class="nav-section-label">System</div>
-      <button class="admin-nav-item" data-section="seo">
-        <i class="fas fa-magnifying-glass"></i> SEO
-      </button>
-      <button class="admin-nav-item" data-section="github">
-        <i class="fab fa-github"></i> GitHub
-      </button>
-      <button class="admin-nav-item" data-section="security">
-        <i class="fas fa-lock"></i> Security
-      </button>
+      <span class="nav-lbl">Content</span>
+      <button class="admin-nav-item active" data-section="profile"><i class="fas fa-user"></i> Profile</button>
+      <button class="admin-nav-item" data-section="socials"><i class="fas fa-share-nodes"></i> Socials</button>
+      <button class="admin-nav-item" data-section="music"><i class="fas fa-music"></i> Music</button>
+      <span class="nav-lbl">Appearance</span>
+      <button class="admin-nav-item" data-section="theme"><i class="fas fa-palette"></i> Theme</button>
+      <button class="admin-nav-item" data-section="background"><i class="fas fa-image"></i> Background</button>
+      <span class="nav-lbl">Integrations</span>
+      <button class="admin-nav-item" data-section="stats"><i class="fas fa-chart-bar"></i> Stats</button>
+      <span class="nav-lbl">System</span>
+      <button class="admin-nav-item" data-section="seo"><i class="fas fa-magnifying-glass"></i> SEO</button>
+      <button class="admin-nav-item" data-section="github"><i class="fab fa-github"></i> GitHub</button>
+      <button class="admin-nav-item" data-section="security"><i class="fas fa-lock"></i> Security</button>
     </nav>
 
-    <!-- Main Content Area -->
     <main class="admin-main">
 
-      <!-- ════════ PROFILE SECTION ════════ -->
-      <section class="admin-section active" id="section-profile">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">Profile</h2>
-            <p class="admin-section-desc">Your public name, bio, avatar, and status messages.</p>
-          </div>
+<!-- ═══ PROFILE ═══ -->
+<section class="admin-section active" id="section-profile">
+  <h2 class="admin-section-title">Profile</h2>
+  <p class="admin-section-desc">Name, bio, avatar and status messages.</p>
+
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-image"></i> Avatar</div>
+    <img id="avatar-preview-img" src="" alt="preview" />
+    <label class="avatar-upload-zone" for="avatar-file-input">
+      <input type="file" id="avatar-file-input" accept="image/*" />
+      <i class="fas fa-cloud-arrow-up" style="font-size:1.3rem;color:var(--accent);display:block;margin-bottom:6px;"></i>
+      <div style="font-size:.82rem;font-weight:600;color:var(--text);">Upload image</div>
+      <div style="font-size:.7rem;color:var(--text-muted);margin-top:3px;">PNG · JPG · GIF · WEBP</div>
+    </label>
+    <div class="admin-form-row" style="margin-top:10px;">
+      <label>Or paste URL / path</label>
+      <input type="text" id="input-avatar-url" class="admin-input" placeholder="assets/images/avatar.png or https://..." />
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-id-card"></i> Identity</div>
+    <div class="admin-grid-2">
+      <div class="admin-form-row"><label>Username (slug)</label><input type="text" id="input-username" class="admin-input" placeholder="zaza" /></div>
+      <div class="admin-form-row"><label>Display Name</label><input type="text" id="input-displayname" class="admin-input" placeholder="zaza" /></div>
+    </div>
+    <div class="admin-grid-2">
+      <div class="admin-form-row"><label>Location</label><input type="text" id="input-location" class="admin-input" placeholder="somewhere cool" /></div>
+      <div class="admin-form-row"><label>Member Since</label><input type="text" id="input-join-date" class="admin-input" placeholder="2024" /></div>
+    </div>
+    <div class="admin-form-row"><label>Bio</label><textarea id="input-bio" class="admin-textarea"></textarea></div>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-comment-dots"></i> Typewriter Status Messages</div>
+    <div class="info-box"><i class="fas fa-circle-info"></i> One message per line. Cycles under your name.</div>
+    <div class="admin-form-row"><label>Messages</label><textarea id="input-status-msgs" class="admin-textarea" style="min-height:110px;"></textarea></div>
+  </div>
+</section>
+
+<!-- ═══ SOCIALS ═══ -->
+<section class="admin-section" id="section-socials">
+  <h2 class="admin-section-title">Social Links</h2>
+  <p class="admin-section-desc">Toggle visibility, update URLs and handles.</p>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-toggle-on"></i> Platforms</div>
+    <div id="socials-admin-list"></div>
+  </div>
+</section>
+
+<!-- ═══ MUSIC ═══ -->
+<section class="admin-section" id="section-music">
+  <h2 class="admin-section-title">Music Player</h2>
+  <p class="admin-section-desc">Tracks and player settings.</p>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-sliders"></i> Settings</div>
+    <div class="admin-grid-2">
+      <div class="admin-form-row">
+        <label>Show Player</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+          <label class="toggle"><input type="checkbox" id="toggle-music"><span class="toggle-slider"></span></label>
+          <span style="font-size:.78rem;color:var(--text-dim);">Show music bar</span>
         </div>
+      </div>
+      <div class="admin-form-row">
+        <label>Default Volume (<span id="vol-display">50</span>%)</label>
+        <input type="range" id="input-default-volume" min="0" max="1" step="0.01" value="0.5"
+          oninput="document.getElementById('vol-display').textContent=Math.round(this.value*100)" />
+      </div>
+    </div>
+  </div>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-list-music"></i> Track List</div>
+    <div class="info-box"><i class="fas fa-circle-info"></i> Drop MP3s into <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px;">assets/music/</code> then add them below.</div>
+    <div id="track-list" style="margin-bottom:10px;"></div>
+    <button class="admin-btn" id="add-track-btn" style="width:auto;padding:8px 18px;font-size:.78rem;"><i class="fas fa-plus"></i> Add Track</button>
+  </div>
+</section>
 
-        <!-- Avatar -->
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-image"></i> Avatar</div>
-          <img id="avatar-preview-img" src="" alt="Avatar preview" />
-          <label class="avatar-upload-zone" for="avatar-file-input">
-            <input type="file" id="avatar-file-input" accept="image/*" />
-            <i class="fas fa-cloud-arrow-up" style="font-size:1.4rem;color:var(--accent);margin-bottom:6px;display:block;"></i>
-            <div style="font-size:0.82rem;font-weight:600;color:var(--text);">Click to upload image</div>
-            <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">PNG, JPG, GIF, WEBP — max 5MB</div>
-          </label>
-          <div class="admin-form-row" style="margin-top:10px;">
-            <label for="input-avatar-url">Or paste image URL / path</label>
-            <input type="text" id="input-avatar-url" class="admin-input" placeholder="https://... or assets/avatar.jpg" />
-          </div>
+<!-- ═══ THEME ═══ -->
+<section class="admin-section" id="section-theme">
+  <h2 class="admin-section-title">Theme</h2>
+  <p class="admin-section-desc">Accent colors and visual effects.</p>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-fill-drip"></i> Accent Colors</div>
+    <div class="admin-grid-2">
+      <div class="admin-form-row">
+        <label>Primary</label>
+        <div class="admin-color-row">
+          <div class="admin-color-preview" id="color-preview-accent" style="background:#a855f7;" title="Click to pick"></div>
+          <input type="color" id="picker-accent" value="#a855f7" />
+          <input type="text" id="input-accent" class="admin-input" placeholder="#a855f7" maxlength="7" />
         </div>
-
-        <!-- Identity -->
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-id-card"></i> Identity</div>
-          <div class="admin-grid-2">
-            <div class="admin-form-row">
-              <label for="input-username">Username (slug)</label>
-              <input type="text" id="input-username" class="admin-input" placeholder="zaza" />
-            </div>
-            <div class="admin-form-row">
-              <label for="input-displayname">Display Name</label>
-              <input type="text" id="input-displayname" class="admin-input" placeholder="zaza" />
-            </div>
-          </div>
-          <div class="admin-grid-2">
-            <div class="admin-form-row">
-              <label for="input-location">Location</label>
-              <input type="text" id="input-location" class="admin-input" placeholder="somewhere cool" />
-            </div>
-            <div class="admin-form-row">
-              <label for="input-join-date">Member Since (year)</label>
-              <input type="text" id="input-join-date" class="admin-input" placeholder="2024" />
-            </div>
-          </div>
-          <div class="admin-form-row">
-            <label for="input-bio">Bio / About Me</label>
-            <textarea id="input-bio" class="admin-textarea" placeholder="Tell the world about yourself..."></textarea>
-          </div>
+      </div>
+      <div class="admin-form-row">
+        <label>Secondary</label>
+        <div class="admin-color-row">
+          <div class="admin-color-preview" id="color-preview-accent2" style="background:#ec4899;" title="Click to pick"></div>
+          <input type="color" id="picker-accent2" value="#ec4899" />
+          <input type="text" id="input-accent2" class="admin-input" placeholder="#ec4899" maxlength="7" />
         </div>
-
-        <!-- Status Messages -->
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-comment-dots"></i> Typewriter Status Messages</div>
-          <div class="info-box">
-            <i class="fas fa-circle-info"></i>
-            One message per line. These rotate in the typewriter animation under your name.
-          </div>
-          <div class="admin-form-row">
-            <label for="input-status-msgs">Messages (one per line)</label>
-            <textarea id="input-status-msgs" class="admin-textarea" style="min-height:120px;"
-              placeholder="vibing to music rn 🎵&#10;cooking something up...&#10;living rent free in your head"></textarea>
-          </div>
+      </div>
+    </div>
+  </div>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-sparkles"></i> Effects</div>
+    <div class="admin-grid-2">
+      <div class="admin-form-row">
+        <label>Particle Count (<span id="particle-display">80</span>)</label>
+        <input type="range" id="input-particle-count" min="10" max="200" step="5" value="80"
+          oninput="document.getElementById('particle-display').textContent=this.value" />
+      </div>
+      <div class="admin-form-row">
+        <label>Weather</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
+          <div style="display:flex;align-items:center;gap:8px;"><label class="toggle"><input type="checkbox" id="toggle-snow"><span class="toggle-slider"></span></label><span style="font-size:.78rem;color:var(--text-dim);">❄ Snow</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><label class="toggle"><input type="checkbox" id="toggle-rain"><span class="toggle-slider"></span></label><span style="font-size:.78rem;color:var(--text-dim);">🌧 Rain</span></div>
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+</section>
 
-      <!-- ════════ SOCIALS SECTION ════════ -->
-      <section class="admin-section" id="section-socials">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">Social Links</h2>
-            <p class="admin-section-desc">Toggle, reorder URLs, and update usernames for each platform.</p>
-          </div>
-        </div>
+<!-- ═══ BACKGROUND ═══ -->
+<section class="admin-section" id="section-background">
+  <h2 class="admin-section-title">Background</h2>
+  <p class="admin-section-desc">Video background and overlay opacity.</p>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-video"></i> Background Video</div>
+    <div class="info-box"><i class="fas fa-circle-info"></i> Place your video in <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px;">assets/images/</code> and enter the path. Leave blank for gradient only.</div>
+    <div class="admin-form-row"><label>Video URL or Path</label><input type="text" id="input-video-url" class="admin-input" placeholder="assets/images/background.mp4" /></div>
+    <div class="admin-form-row">
+      <label>Overlay Darkness (<span id="overlay-display">55</span>%)</label>
+      <input type="range" id="input-overlay-opacity" min="0" max="1" step="0.05" value="0.55"
+        oninput="document.getElementById('overlay-display').textContent=Math.round(this.value*100)" />
+    </div>
+  </div>
+</section>
 
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-toggle-on"></i> Platforms</div>
-          <div class="info-box">
-            <i class="fas fa-circle-info"></i>
-            Use the toggle to show/hide each platform. Changes are saved with "Save All".
-          </div>
-          <div id="socials-admin-list">
-            <!-- Populated by admin.js -->
-          </div>
-        </div>
-      </section>
+<!-- ═══ STATS ═══ -->
+<section class="admin-section" id="section-stats">
+  <h2 class="admin-section-title">Stats</h2>
+  <p class="admin-section-desc">Visitor counter and profile stats.</p>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-chart-bar"></i> Counters</div>
+    <div class="admin-grid-2">
+      <div class="admin-form-row">
+        <label>Visitor Counter</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label class="toggle"><input type="checkbox" id="toggle-visitor-count" checked><span class="toggle-slider"></span></label><span style="font-size:.78rem;color:var(--text-dim);">Show count</span></div>
+      </div>
+      <div class="admin-form-row"><label>Starting Count</label><input type="number" id="input-visitor-count" class="admin-input" min="0" /></div>
+    </div>
+    <div class="admin-form-row">
+      <label>Member Since</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label class="toggle"><input type="checkbox" id="toggle-member-since" checked><span class="toggle-slider"></span></label><span style="font-size:.78rem;color:var(--text-dim);">Show join year</span></div>
+    </div>
+  </div>
+</section>
 
-      <!-- ════════ MUSIC SECTION ════════ -->
-      <section class="admin-section" id="section-music">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">Music Player</h2>
-            <p class="admin-section-desc">Manage tracks, default volume, and player visibility.</p>
-          </div>
-        </div>
+<!-- ═══ SEO ═══ -->
+<section class="admin-section" id="section-seo">
+  <h2 class="admin-section-title">SEO &amp; Sharing</h2>
+  <p class="admin-section-desc">Page title, description and Open Graph image.</p>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-magnifying-glass"></i> Meta</div>
+    <div class="admin-form-row"><label>Page Title</label><input type="text" id="input-seo-title" class="admin-input" /></div>
+    <div class="admin-form-row">
+      <label>Title Typewriter Cycle <span style="font-weight:400;opacity:.6;">(one per line)</span></label>
+      <textarea id="input-seo-title-cycle" class="admin-textarea" style="min-height:90px;" placeholder="zaza — personal&#10;living in the moment.&#10;creating something real.&#10;zaza."></textarea>
+    </div>
+    <div class="admin-form-row"><label>Meta Description</label><textarea id="input-seo-description" class="admin-textarea" style="min-height:60px;"></textarea></div>
+    <div class="admin-form-row"><label>OG Image Path / URL</label><input type="text" id="input-og-image" class="admin-input" /></div>
+  </div>
+</section>
 
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-sliders"></i> Player Settings</div>
-          <div class="admin-grid-2">
-            <div class="admin-form-row">
-              <label>Music Player</label>
-              <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-                <label class="toggle">
-                  <input type="checkbox" id="toggle-music" />
-                  <span class="toggle-slider"></span>
-                </label>
-                <span style="font-size:0.8rem;color:var(--text-dim);">Show player on profile</span>
-              </div>
-            </div>
-            <div class="admin-form-row">
-              <label for="input-default-volume">Default Volume (<span id="vol-display">50</span>%)</label>
-              <input type="range" id="input-default-volume" min="0" max="1" step="0.01" value="0.5"
-                oninput="document.getElementById('vol-display').textContent = Math.round(this.value*100)" />
-            </div>
-          </div>
-        </div>
+<!-- ═══ GITHUB ═══ -->
+<section class="admin-section" id="section-github">
+  <h2 class="admin-section-title">GitHub</h2>
+  <p class="admin-section-desc">Connect so "Save All" commits directly to your repo.</p>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fab fa-github"></i> Repository</div>
+    <div class="info-box"><i class="fas fa-shield-halved"></i> Token stored in localStorage only — never sent anywhere except GitHub's API. Use a PAT with <strong>Contents: Read &amp; Write</strong>.</div>
+    <div class="admin-form-row"><label>GitHub Username</label><input type="text" id="input-gh-owner" class="admin-input" placeholder="Xssist" /></div>
+    <div class="admin-form-row"><label>Repository Name</label><input type="text" id="input-gh-repo" class="admin-input" placeholder="zaza" /></div>
+    <div class="admin-form-row"><label>Personal Access Token</label><input type="password" id="input-gh-token" class="admin-input" placeholder="ghp_..." autocomplete="off" /></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="admin-btn" id="save-gh-settings" style="width:auto;padding:8px 18px;font-size:.78rem;"><i class="fas fa-floppy-disk"></i> Save Settings</button>
+      <button class="admin-save-all-btn" id="test-gh-btn" style="background:rgba(255,255,255,.06);box-shadow:none;border:1px solid rgba(255,255,255,.1);color:var(--text);"><i class="fas fa-plug"></i> Test Connection</button>
+    </div>
+  </div>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-download"></i> Manual Export</div>
+    <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:12px;">If GitHub save fails, download the updated config.json and replace it in your repo.</p>
+    <button class="admin-btn" onclick="adminDownloadConfig()" style="width:auto;padding:8px 18px;font-size:.78rem;"><i class="fas fa-file-arrow-down"></i> Download config.json</button>
+  </div>
+</section>
 
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-list-music"></i> Track List</div>
-          <div class="info-box">
-            <i class="fas fa-circle-info"></i>
-            Add MP3 files to <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">assets/music/</code>
-            then reference them here. Supports URLs or local paths.
-          </div>
-          <div id="track-list" style="margin-bottom:12px;">
-            <!-- Populated by admin.js -->
-          </div>
-          <button class="admin-btn" id="add-track-btn" style="width:auto;padding:9px 20px;font-size:0.8rem;">
-            <i class="fas fa-plus"></i> Add Track
-          </button>
-        </div>
-      </section>
+<!-- ═══ SECURITY ═══ -->
+<section class="admin-section" id="section-security">
+  <h2 class="admin-section-title">Security</h2>
+  <p class="admin-section-desc">Change password and session settings.</p>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-key"></i> Change Password</div>
+    <div class="info-box"><i class="fas fa-circle-info"></i> Password is stored as SHA-256 in config.json. Default is <strong>zade</strong>.</div>
+    <form id="change-password-form" autocomplete="off">
+      <div class="admin-form-row"><label>Current Password</label><input type="password" id="input-current-pass" class="admin-input" placeholder="••••••••" /></div>
+      <div class="admin-grid-2">
+        <div class="admin-form-row"><label>New Password</label><input type="password" id="input-new-pass" class="admin-input" placeholder="••••••••" /></div>
+        <div class="admin-form-row"><label>Confirm</label><input type="password" id="input-confirm-pass" class="admin-input" placeholder="••••••••" /></div>
+      </div>
+      <button type="submit" class="admin-btn" style="width:auto;padding:9px 22px;font-size:.82rem;"><i class="fas fa-lock"></i> Update Password</button>
+    </form>
+  </div>
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-clock"></i> Session Timeout</div>
+    <div class="admin-form-row"><label>Timeout (seconds)</label><input type="number" id="input-session-timeout" class="admin-input" placeholder="3600" min="300" /></div>
+    <p style="font-size:.72rem;color:var(--text-muted);margin-top:5px;">Default 3600s = 1 hour.</p>
+  </div>
+</section>
 
-      <!-- ════════ THEME SECTION ════════ -->
-      <section class="admin-section" id="section-theme">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">Theme</h2>
-            <p class="admin-section-desc">Colors, particles, and visual effects.</p>
-          </div>
-        </div>
+    </main>
+  </div>
+</div><!-- end dashboard -->
 
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-fill-drip"></i> Accent Colors</div>
-          <div class="admin-grid-2">
-            <div class="admin-form-row">
-              <label for="input-accent">Primary Accent</label>
-              <div class="admin-color-row">
-                <div class="admin-color-preview" id="color-preview-accent" style="background:#a855f7;" title="Click to pick color"></div>
-                <input type="color" id="picker-accent" value="#a855f7" />
-                <input type="text" id="input-accent" class="admin-input" placeholder="#a855f7" value="#a855f7" maxlength="7" />
-              </div>
-            </div>
-            <div class="admin-form-row">
-              <label for="input-accent2">Secondary Accent</label>
-              <div class="admin-color-row">
-                <div class="admin-color-preview" id="color-preview-accent2" style="background:#ec4899;" title="Click to pick color"></div>
-                <input type="color" id="picker-accent2" value="#ec4899" />
-                <input type="text" id="input-accent2" class="admin-input" placeholder="#ec4899" value="#ec4899" maxlength="7" />
-              </div>
-            </div>
-          </div>
-          <div class="info-box" style="margin-top:8px;">
-            <i class="fas fa-lightbulb"></i>
-            Click the color swatch to open the color picker. Changes preview live on this page.
-          </div>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-sparkles"></i> Particles &amp; Effects</div>
-          <div class="admin-grid-2">
-            <div class="admin-form-row">
-              <label for="input-particle-count">Particle Count (<span id="particle-display">80</span>)</label>
-              <input type="range" id="input-particle-count" min="20" max="200" step="5" value="80"
-                oninput="document.getElementById('particle-display').textContent = this.value" />
-            </div>
-            <div class="admin-form-row">
-              <label>Weather Effects</label>
-              <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <label class="toggle">
-                    <input type="checkbox" id="toggle-snow" />
-                    <span class="toggle-slider"></span>
-                  </label>
-                  <span style="font-size:0.8rem;color:var(--text-dim);">❄ Snow effect</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <label class="toggle">
-                    <input type="checkbox" id="toggle-rain" />
-                    <span class="toggle-slider"></span>
-                  </label>
-                  <span style="font-size:0.8rem;color:var(--text-dim);">🌧 Rain effect</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ════════ BACKGROUND SECTION ════════ -->
-      <section class="admin-section" id="section-background">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">Background</h2>
-            <p class="admin-section-desc">Video background and overlay darkness.</p>
-          </div>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-video"></i> Background Video</div>
-          <div class="info-box">
-            <i class="fas fa-circle-info"></i>
-            Upload a video to <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">assets/</code>
-            and enter its path, or use an external URL. Leave blank to use the animated gradient only.
-          </div>
-          <div class="admin-form-row">
-            <label for="input-video-url">Video URL or Path</label>
-            <input type="text" id="input-video-url" class="admin-input"
-              placeholder="assets/bg.mp4 or https://..." />
-          </div>
-          <div class="admin-form-row">
-            <label for="input-overlay-opacity">Overlay Darkness (<span id="overlay-display">60</span>%)</label>
-            <input type="range" id="input-overlay-opacity" min="0" max="1" step="0.05" value="0.6"
-              oninput="document.getElementById('overlay-display').textContent = Math.round(this.value*100)" />
-          </div>
-        </div>
-      </section>
-
-      <!-- ════════ DISCORD SECTION ════════ -->
-      <section class="admin-section" id="section-discord">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">Discord</h2>
-            <p class="admin-section-desc">Show your Discord tag on your profile card.</p>
-          </div>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fab fa-discord"></i> Discord Widget</div>
-          <div class="admin-form-row">
-            <label>Show Discord Widget</label>
-            <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-              <label class="toggle">
-                <input type="checkbox" id="toggle-discord" />
-                <span class="toggle-slider"></span>
-              </label>
-              <span style="font-size:0.8rem;color:var(--text-dim);">Display Discord section on card</span>
-            </div>
-          </div>
-          <div class="admin-form-row">
-            <label for="input-discord-id">Discord User ID or Tag</label>
-            <input type="text" id="input-discord-id" class="admin-input" placeholder="zaza#0000 or 1234567890" />
-          </div>
-        </div>
-      </section>
-
-      <!-- ════════ SPOTIFY SECTION ════════ -->
-      <section class="admin-section" id="section-spotify">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">Spotify</h2>
-            <p class="admin-section-desc">Currently playing / fallback display text.</p>
-          </div>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fab fa-spotify"></i> Spotify Status</div>
-          <div class="info-box">
-            <i class="fas fa-circle-info"></i>
-            Live Spotify integration requires a backend. For now, this shows a static "currently playing" card with your fallback text.
-          </div>
-          <div class="admin-form-row">
-            <label>Show Spotify Card</label>
-            <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-              <label class="toggle">
-                <input type="checkbox" id="toggle-spotify" />
-                <span class="toggle-slider"></span>
-              </label>
-              <span style="font-size:0.8rem;color:var(--text-dim);">Display Spotify section on card</span>
-            </div>
-          </div>
-          <div class="admin-form-row">
-            <label for="input-spotify-text">Fallback Text</label>
-            <input type="text" id="input-spotify-text" class="admin-input"
-              placeholder="not listening to anything rn" />
-          </div>
-        </div>
-      </section>
-
-      <!-- ════════ STATS SECTION ════════ -->
-      <section class="admin-section" id="section-stats">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">Stats</h2>
-            <p class="admin-section-desc">Visitor counter and member since display.</p>
-          </div>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-chart-bar"></i> Counter Settings</div>
-          <div class="admin-grid-2">
-            <div class="admin-form-row">
-              <label>Visitor Counter</label>
-              <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-                <label class="toggle">
-                  <input type="checkbox" id="toggle-visitor-count" checked />
-                  <span class="toggle-slider"></span>
-                </label>
-                <span style="font-size:0.8rem;color:var(--text-dim);">Show visitor count</span>
-              </div>
-            </div>
-            <div class="admin-form-row">
-              <label for="input-visitor-count">Starting Visitor Count</label>
-              <input type="number" id="input-visitor-count" class="admin-input" placeholder="1" min="0" />
-            </div>
-          </div>
-          <div class="admin-form-row">
-            <label>Member Since</label>
-            <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-              <label class="toggle">
-                <input type="checkbox" id="toggle-member-since" checked />
-                <span class="toggle-slider"></span>
-              </label>
-              <span style="font-size:0.8rem;color:var(--text-dim);">Show join year in stats row</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ════════ SEO SECTION ════════ -->
-      <section class="admin-section" id="section-seo">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">SEO &amp; Sharing</h2>
-            <p class="admin-section-desc">Page title, description, and Open Graph image for link previews.</p>
-          </div>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-magnifying-glass"></i> Meta Tags</div>
-          <div class="admin-form-row">
-            <label for="input-seo-title">Page Title</label>
-            <input type="text" id="input-seo-title" class="admin-input" placeholder="zaza — personal" />
-          </div>
-          <div class="admin-form-row">
-            <label for="input-seo-description">Meta Description</label>
-            <textarea id="input-seo-description" class="admin-textarea" style="min-height:70px;"
-              placeholder="living in the moment. creating something real."></textarea>
-          </div>
-          <div class="admin-form-row">
-            <label for="input-og-image">OG Image URL / Path</label>
-            <input type="text" id="input-og-image" class="admin-input"
-              placeholder="assets/avatar.jpg or https://..." />
-          </div>
-        </div>
-      </section>
-
-      <!-- ════════ GITHUB SECTION ════════ -->
-      <section class="admin-section" id="section-github">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">GitHub Integration</h2>
-            <p class="admin-section-desc">Connect to your repo so "Save All" commits config.json directly.</p>
-          </div>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fab fa-github"></i> Repository Settings</div>
-          <div class="info-box">
-            <i class="fas fa-shield-halved"></i>
-            Your token is stored only in your browser's localStorage and never sent anywhere except GitHub's API.
-            Use a fine-grained PAT with <strong>Contents: Read &amp; Write</strong> scope.
-          </div>
-          <div class="admin-form-row">
-            <label for="input-gh-owner">GitHub Username / Org</label>
-            <input type="text" id="input-gh-owner" class="admin-input" placeholder="your-github-username" />
-          </div>
-          <div class="admin-form-row">
-            <label for="input-gh-repo">Repository Name</label>
-            <input type="text" id="input-gh-repo" class="admin-input" placeholder="zaza" />
-          </div>
-          <div class="admin-form-row">
-            <label for="input-gh-token">Personal Access Token</label>
-            <input type="password" id="input-gh-token" class="admin-input"
-              placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-            <button class="admin-btn" id="save-gh-settings" style="width:auto;padding:9px 20px;font-size:0.8rem;">
-              <i class="fas fa-floppy-disk"></i> Save Settings
-            </button>
-            <button class="admin-save-all-btn" id="test-gh-btn" style="background:rgba(255,255,255,0.08);box-shadow:none;border:1px solid var(--glass-border);color:var(--text);">
-              <i class="fas fa-plug"></i> Test Connection
-            </button>
-          </div>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-download"></i> Manual Export</div>
-          <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:12px;">
-            If GitHub save fails, "Save All" will download a <code style="background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">config.json</code>
-            file. Replace the one in your repo root manually to apply changes.
-          </p>
-          <button class="admin-btn" id="download-config-btn" style="width:auto;padding:9px 20px;font-size:0.8rem;"
-            onclick="adminDownloadConfig()">
-            <i class="fas fa-file-arrow-down"></i> Download config.json
-          </button>
-        </div>
-      </section>
-
-      <!-- ════════ SECURITY SECTION ════════ -->
-      <section class="admin-section" id="section-security">
-        <div class="admin-section-header">
-          <div class="admin-section-title-wrap">
-            <h2 class="admin-section-title">Security</h2>
-            <p class="admin-section-desc">Change admin password and session timeout.</p>
-          </div>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-key"></i> Change Password</div>
-          <div class="info-box">
-            <i class="fas fa-circle-info"></i>
-            Password is stored as a SHA-256 hash in config.json. Default password is <strong>admin</strong> — change it immediately.
-          </div>
-          <form id="change-password-form" autocomplete="off">
-            <div class="admin-form-row">
-              <label for="input-current-pass">Current Password</label>
-              <input type="password" id="input-current-pass" class="admin-input" placeholder="••••••••" autocomplete="current-password" />
-            </div>
-            <div class="admin-grid-2">
-              <div class="admin-form-row">
-                <label for="input-new-pass">New Password</label>
-                <input type="password" id="input-new-pass" class="admin-input" placeholder="••••••••" autocomplete="new-password" />
-              </div>
-              <div class="admin-form-row">
-                <label for="input-confirm-pass">Confirm Password</label>
-                <input type="password" id="input-confirm-pass" class="admin-input" placeholder="••••••••" autocomplete="new-password" />
-              </div>
-            </div>
-            <button type="submit" class="admin-btn" style="width:auto;padding:9px 24px;font-size:0.82rem;">
-              <i class="fas fa-lock"></i> Update Password
-            </button>
-          </form>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><i class="fas fa-clock"></i> Session</div>
-          <div class="admin-form-row">
-            <label for="input-session-timeout">Session Timeout (seconds)</label>
-            <input type="number" id="input-session-timeout" class="admin-input" placeholder="3600" min="300" />
-          </div>
-          <p style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;">
-            Default: 3600s (1 hour). You'll be logged out after this period of inactivity.
-          </p>
-        </div>
-      </section>
-
-    </main><!-- end .admin-main -->
-  </div><!-- end .admin-content -->
-</div><!-- end #admin-dashboard -->
-
-<!-- ══════════════════════════════════════════
-     SCRIPTS
-══════════════════════════════════════════ -->
 <script>
-  // Inline config fallback — used when file:// protocol blocks fetch()
-  // This is auto-updated when admin saves via GitHub
-  window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/avatar.jpg","status":"online","statusMessages":["vibing to music rn 🎵","cooking something up...","living rent free in your head","making moves quietly 🤫","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","glassColor":"rgba(255,255,255,0.04)","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false},"background":{"videoUrl":"","fallbackGradient":"linear-gradient(135deg, #0a0a0f 0%, #0f0a1e 50%, #0a0f1e 100%)","overlayOpacity":0.6},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"Chill Vibes","artist":"Artist Name","src":"assets/music/track1.mp3","cover":"assets/music/cover1.jpg"}]},"socials":[{"id":"discord","label":"Discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"Twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"Instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"GitHub","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"YouTube","username":"zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"Telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"discord":{"enabled":false,"userId":"","showWidget":false},"spotify":{"enabled":false,"showCurrentlyPlaying":true,"fallbackText":"not listening to anything rn"},"cursor":{"enabled":true,"trailEnabled":true,"color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zaza — personal","description":"living in the moment. creating something real.","ogImage":"assets/avatar.jpg","themeColor":"#a855f7"}};
-</script>
-<script>
-  // Expose download helper for the button onclick
   function adminDownloadConfig() {
     if (!window.AdminState?.config) return;
-    const json = JSON.stringify(window.AdminState.config, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'config.json'; a.click();
-    URL.revokeObjectURL(url);
+    const b = new Blob([JSON.stringify(window.AdminState.config,null,2)],{type:'application/json'});
+    const u = URL.createObjectURL(b); const a = document.createElement('a');
+    a.href=u; a.download='config.json'; a.click(); URL.revokeObjectURL(u);
   }
+
+  window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"discord":{"enabled":false,"userId":""},"spotify":{"enabled":false,"fallbackText":"not listening to anything rn"},"cursor":{"enabled":true,"color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zaza \u2014 personal","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
 </script>
 <script src="js/admin.js"></script>
-
 </body>
 </html>
