@@ -8,8 +8,8 @@
 const $  = (s, ctx = document) => ctx.querySelector(s);
 const $$ = (s, ctx = document) => [...ctx.querySelectorAll(s)];
 const esc = s => String(s)
-  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-  .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  .replace(/&/g,'&').replace(/</g,'<')
+  .replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,''');
 
 /* ── GitHub target (token split to bypass secret scanning) ── */
 const GH = {
