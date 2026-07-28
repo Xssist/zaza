@@ -26,9 +26,9 @@
     "overlayOpacity": 0.6
   },
   "music": {
-    "enabled": false,
+    "enabled": true,
     "autoPlay": false,
-    "defaultVolume": 0.5,
+    "defaultVolume": 0.66,
     "tracks": [
       {
         "id": 1,
