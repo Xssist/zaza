@@ -3,13 +3,13 @@
     "username": "zaza",
     "displayName": "zaza",
     "bio": "living in the moment. creating something real.",
-    "avatar": "assets/avatar.jpg",
+    "avatar": "assets/images/avatar.png",
     "status": "online",
     "statusMessages": [
-      "vibing to music rn 🎵",
+      "vibing to music rn \uD83C\uDFB5",
       "cooking something up...",
       "living rent free in your head",
-      "making moves quietly 🤫",
+      "making moves quietly \uD83E\uDD2B",
       "just existing, doing my thing"
     ],
     "location": "somewhere cool",
@@ -19,16 +19,14 @@
     "accentColor": "#a855f7",
     "accentColorSecondary": "#ec4899",
     "backgroundColor": "#0a0a0f",
-    "glassColor": "rgba(255,255,255,0.04)",
     "fontFamily": "Inter",
     "particleCount": 80,
     "snowEnabled": false,
     "rainEnabled": false
   },
   "background": {
-    "videoUrl": "",
-    "fallbackGradient": "linear-gradient(135deg, #0a0a0f 0%, #0f0a1e 50%, #0a0f1e 100%)",
-    "overlayOpacity": 0.6
+    "videoUrl": "assets/images/background.mp4",
+    "overlayOpacity": 0.55
   },
   "music": {
     "enabled": true,
@@ -37,17 +35,17 @@
     "tracks": [
       {
         "id": 1,
-        "title": "Chill Vibes",
-        "artist": "Artist Name",
-        "src": "assets/music/track1.mp3",
-        "cover": "assets/music/cover1.jpg"
+        "title": "song",
+        "artist": "zaza",
+        "src": "assets/music/song.mp3",
+        "cover": ""
       }
     ]
   },
   "socials": [
     {
       "id": "discord",
-      "label": "Discord",
+      "label": "discord",
       "username": "zaza#0000",
       "url": "https://discord.com/users/",
       "icon": "fab fa-discord",
@@ -56,7 +54,7 @@
     },
     {
       "id": "twitter",
-      "label": "Twitter",
+      "label": "twitter",
       "username": "@zaza",
       "url": "https://twitter.com/zaza",
       "icon": "fab fa-twitter",
@@ -65,7 +63,7 @@
     },
     {
       "id": "instagram",
-      "label": "Instagram",
+      "label": "instagram",
       "username": "@zaza",
       "url": "https://instagram.com/zaza",
       "icon": "fab fa-instagram",
@@ -74,7 +72,7 @@
     },
     {
       "id": "github",
-      "label": "GitHub",
+      "label": "github",
       "username": "zaza",
       "url": "https://github.com/zaza",
       "icon": "fab fa-github",
@@ -83,8 +81,8 @@
     },
     {
       "id": "youtube",
-      "label": "YouTube",
-      "username": "zaza",
+      "label": "youtube",
+      "username": "@zaza",
       "url": "https://youtube.com/@zaza",
       "icon": "fab fa-youtube",
       "color": "#FF0000",
@@ -92,7 +90,7 @@
     },
     {
       "id": "telegram",
-      "label": "Telegram",
+      "label": "telegram",
       "username": "@zaza",
       "url": "https://t.me/zaza",
       "icon": "fab fa-telegram",
@@ -126,9 +124,10 @@
     "sessionTimeout": 3600
   },
   "seo": {
-    "title": "zaza — personal",
+    "title": "zaza \u2014 personal",
+    "titleCycle": ["zaza \u2014 personal", "living in the moment.", "creating something real.", "zaza."],
     "description": "living in the moment. creating something real.",
-    "ogImage": "assets/avatar.jpg",
+    "ogImage": "assets/images/avatar.png",
     "themeColor": "#a855f7"
   }
 }
