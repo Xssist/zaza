@@ -31,14 +31,31 @@ const rand = (min, max) => Math.random() * (max - min) + min;
 
 /* ── Config Loader ── */
 async function loadConfig() {
+  // Try fetch first (works on HTTP/GitHub Pages)
   try {
     const res = await fetch('./config.json?v=' + Date.now());
-    if (!res.ok) throw new Error('Config fetch failed');
-    State.config = await res.json();
+    if (res.ok) {
+      State.config = await res.json();
+      return;
+    }
   } catch (e) {
-    console.warn('Config load failed, using defaults:', e);
-    State.config = getDefaultConfig();
+    // fetch blocked on file:// — fall through
   }
+
+  // Fallback 1: localStorage override (set by admin panel)
+  const lsOverride = localStorage.getItem('zaza_config_override');
+  if (lsOverride) {
+    try { State.config = JSON.parse(lsOverride); return; } catch (e) { /* ignore */ }
+  }
+
+  // Fallback 2: inline config injected in index.html
+  if (window.__ZAZA_CONFIG__) {
+    State.config = window.__ZAZA_CONFIG__;
+    return;
+  }
+
+  // Last resort: use defaults
+  State.config = getDefaultConfig();
 }
 
 function getDefaultConfig() {
