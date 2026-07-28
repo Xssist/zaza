@@ -486,10 +486,15 @@ function initEnter() {
   if (!es||!btn) return;
 
   function doEnter() {
-    if (S.entered) return; S.entered=true;
+    if (S.entered) return; S.entered = true;
     if (S.cfg?.music?.enabled && S.playPause) { try { S.playPause(); } catch(_){} }
     es.classList.add('hidden');
-    setTimeout(() => mp?.classList.add('visible'), 200);
+    setTimeout(() => {
+      mp?.classList.add('visible');
+      // Show theme fab now that user has entered
+      const fab = $('#theme-fab');
+      if (fab) { fab.style.opacity = '1'; fab.style.pointerEvents = 'auto'; }
+    }, 200);
   }
 
   btn.addEventListener('click', doEnter);
