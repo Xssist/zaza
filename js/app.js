@@ -95,9 +95,16 @@ function initBackground(c) {
   const ov = $('#bg-overlay');
   if (ov) ov.style.opacity = c.background?.overlayOpacity ?? 0.6;
 
-  if (c.background?.videoUrl) {
-    const v = $('#bg-video');
-    if (v) { v.src = c.background.videoUrl; v.style.display = 'block'; }
+  const v = $('#bg-video');
+  if (v && c.background?.videoUrl) {
+    v.src = c.background.videoUrl;
+    v.muted = true; // required for autoplay
+    v.style.display = 'block';
+    v.load();
+    v.play().catch(() => {
+      // Autoplay blocked — video will start on first user interaction
+      document.addEventListener('click', () => v.play().catch(()=>{}), { once: true });
+    });
   }
 }
 
@@ -344,17 +351,25 @@ function initMusic(c) {
 
   audioEl = new Audio();
   audioEl.volume = c.music.defaultVolume ?? 0.5;
+  // Only set crossOrigin if not a local file:// path — avoids CORS rejection
+  // on GitHub Pages for same-origin assets we still need it for Web Audio API
   audioEl.crossOrigin = 'anonymous';
   audioEl.preload = 'metadata';
+  audioEl.loop = false;
 
   function ensureCtx() {
     if (S.audioCtx) { if (S.audioCtx.state==='suspended') S.audioCtx.resume(); return; }
-    S.audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    S.analyser = S.audioCtx.createAnalyser(); S.analyser.fftSize=256;
-    S.gainNode = S.audioCtx.createGain(); S.gainNode.gain.value = audioEl.volume;
-    S.sourceNode = S.audioCtx.createMediaElementSource(audioEl);
-    S.sourceNode.connect(S.analyser); S.analyser.connect(S.gainNode); S.gainNode.connect(S.audioCtx.destination);
-    startViz();
+    try {
+      S.audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      S.analyser = S.audioCtx.createAnalyser(); S.analyser.fftSize=256;
+      S.gainNode = S.audioCtx.createGain(); S.gainNode.gain.value = audioEl.volume;
+      S.sourceNode = S.audioCtx.createMediaElementSource(audioEl);
+      S.sourceNode.connect(S.analyser); S.analyser.connect(S.gainNode); S.gainNode.connect(S.audioCtx.destination);
+      startViz();
+    } catch(err) {
+      console.warn('Web Audio API setup failed (CORS or browser restriction):', err);
+      // Audio still plays, just no visualizer
+    }
   }
 
   function loadTrack(idx) {
@@ -377,9 +392,16 @@ function initMusic(c) {
   function playPause() {
     ensureCtx();
     if (audioEl.paused) {
-      audioEl.play().then(() => { S.musicPlaying=true; updatePlayBtn(true); $('#music-cover-mini')?.classList.add('playing'); }).catch(()=>{});
+      audioEl.play().then(() => {
+        S.musicPlaying = true;
+        updatePlayBtn(true);
+        $('#music-cover-mini')?.classList.add('playing');
+      }).catch(err => { console.warn('Playback blocked:', err); });
     } else {
-      audioEl.pause(); S.musicPlaying=false; updatePlayBtn(false); $('#music-cover-mini')?.classList.remove('playing');
+      audioEl.pause();
+      S.musicPlaying = false;
+      updatePlayBtn(false);
+      $('#music-cover-mini')?.classList.remove('playing');
     }
   }
 
@@ -482,7 +504,12 @@ function initEnter() {
 function initKeys() {
   document.addEventListener('keydown', e => {
     if (!S.entered) return;
-    if (e.code==='Space' && e.target.tagName!=='INPUT') { e.preventDefault(); S.playPause?.(); toast(S.musicPlaying?'⏸ Paused':'▶ Playing'); }
+    if (e.code==='Space' && e.target.tagName!=='INPUT') {
+      e.preventDefault();
+      S.playPause?.();
+      // Read state AFTER toggle (playPause flips S.musicPlaying)
+      setTimeout(() => toast(S.musicPlaying ? '▶ Playing' : '⏸ Paused'), 20);
+    }
     if (e.code==='ArrowRight'&&e.altKey) { $('#next-btn')?.click(); toast('⏭ Next'); }
     if (e.code==='ArrowLeft'&&e.altKey)  { $('#prev-btn')?.click(); toast('⏮ Prev'); }
     if (e.code==='KeyM'&&e.target.tagName!=='INPUT') {
