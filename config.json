@@ -16,8 +16,8 @@
     "joinDate": "2024"
   },
   "theme": {
-    "accentColor": "#a855f7",
-    "accentColorSecondary": "#ec4899",
+    "accentColor": "#ffffff",
+    "accentColorSecondary": "#000000",
     "backgroundColor": "#0a0a0f",
     "fontFamily": "Inter",
     "particleCount": 80,
