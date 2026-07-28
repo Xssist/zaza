@@ -49,9 +49,24 @@ function clearSession() {
 
 /* ── Config Loader ── */
 async function loadConfig() {
-  const res = await fetch('./config.json?v=' + Date.now());
-  if (!res.ok) throw new Error('Failed to load config.json');
-  return res.json();
+  // Try fetch first (works when served via HTTP/GitHub Pages)
+  try {
+    const res = await fetch('./config.json?v=' + Date.now());
+    if (res.ok) return res.json();
+  } catch (e) {
+    // fetch blocked on file:// protocol — fall through to inline fallback
+  }
+
+  // Fallback: read from window.__ZAZA_CONFIG__ injected by admin.html,
+  // or from localStorage override written by a previous save
+  const lsOverride = localStorage.getItem('zaza_config_override');
+  if (lsOverride) {
+    try { return JSON.parse(lsOverride); } catch (e) { /* malformed, ignore */ }
+  }
+
+  if (window.__ZAZA_CONFIG__) return window.__ZAZA_CONFIG__;
+
+  throw new Error('Could not load config.json');
 }
 
 /* ── Config Saver (writes via fetch to a local save endpoint,
