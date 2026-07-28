@@ -134,20 +134,13 @@
   </div>
 </div>
 
-<!-- Theme FAB -->
-<button class="theme-fab" id="theme-fab" title="Change theme" aria-label="Change accent color">
+<!-- Theme FAB (hidden until after enter) -->
+<button class="theme-fab" id="theme-fab" title="Change theme" aria-label="Change accent color" style="opacity:0;pointer-events:none;">
   <i class="fas fa-palette"></i>
 </button>
 
-<!-- Keyboard hint -->
-<div class="kbd-hint" id="kbd-hint">
-  <span class="kbd">space</span> play/pause &nbsp;
-  <span class="kbd">alt+→</span> next &nbsp;
-  <span class="kbd">M</span> mute
-</div>
-
-<!-- Admin link (hidden, accessible via footer or direct URL) -->
-<a href="admin.html" style="position:fixed;bottom:60px;right:20px;z-index:100;font-size:.6rem;color:rgba(255,255,255,0.15);cursor:none;transition:color .2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='rgba(255,255,255,0.15)'">admin</a>
+<!-- Admin link -->
+<a href="admin.html" style="position:fixed;bottom:16px;right:20px;z-index:100;font-size:.6rem;color:rgba(255,255,255,0.12);transition:color .2s;pointer-events:auto;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='rgba(255,255,255,0.12)'">admin</a>
 
 <!-- Inline config fallback for file:// protocol -->
 <script>
