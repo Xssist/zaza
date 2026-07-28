@@ -533,7 +533,8 @@ function adminToast(msg, type = 'info') {
     error:   'background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.35);color:#f87171;',
     info:    'background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);color:#a855f7;',
   };
-  t.setAttribute('style', t.style.cssText + (styles[type] || styles.info));
+  const base = 'position:fixed;bottom:22px;right:22px;padding:11px 18px;border-radius:12px;font-size:.8rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;pointer-events:none;max-width:300px;font-family:var(--font);backdrop-filter:blur(12px);';
+  t.setAttribute('style', base + (styles[type] || styles.info));
   t.textContent = msg;
   t.style.opacity = '1'; t.style.transform = 'translateY(0)';
   clearTimeout(t._t);
