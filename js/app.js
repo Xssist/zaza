@@ -274,8 +274,15 @@ function renderProfile() {
     img.alt = p.displayName || 'avatar';
     img.className = 'avatar-img';
     img.onerror = () => img.replaceWith(makeInitial(p));
-    const old = wrap.querySelector('.avatar-initial');
-    if (old) old.replaceWith(img); else wrap.prepend(img);
+    const old = wrap.querySelector('.avatar-initial, img.avatar-img');
+    if (old) {
+      old.replaceWith(img);
+    } else {
+      // Insert after the ring div, before the online dot
+      const ring = wrap.querySelector('.avatar-ring');
+      if (ring) ring.insertAdjacentElement('afterend', img);
+      else wrap.appendChild(img);
+    }
   }
 
   // Badges
@@ -529,9 +536,12 @@ function initMusic() {
 
   function updatePlayBtn(playing) {
     const btn = $('#play-pause-btn');
-    if (btn) btn.innerHTML = playing
+    if (!btn) return;
+    btn.innerHTML = playing
       ? '<i class="fas fa-pause"></i>'
       : '<i class="fas fa-play"></i>';
+    // Keep the play-btn class for CSS gradient styling
+    btn.className = 'music-btn-mini play-btn';
   }
 
   S.audioEl.addEventListener('timeupdate', () => {
@@ -675,7 +685,8 @@ function initKeys() {
     if (e.code === 'Space') {
       e.preventDefault();
       S.playPause?.();
-      setTimeout(() => toast(S.musicPlaying ? '▶ Playing' : '⏸ Paused'), 30);
+      // Read state after a microtask so playPause has updated S.musicPlaying
+      setTimeout(() => toast(S.musicPlaying ? '▶ Playing' : '⏸ Paused'), 50);
     }
     if (e.code === 'ArrowRight' && e.altKey) { $('#next-btn')?.click(); toast('⏭ Next'); }
     if (e.code === 'ArrowLeft'  && e.altKey) { $('#prev-btn')?.click(); toast('⏮ Prev'); }
