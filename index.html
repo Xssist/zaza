@@ -5,267 +5,154 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="living in the moment. creating something real." />
   <meta name="theme-color" content="#a855f7" />
-
-  <!-- Open Graph -->
-  <meta property="og:type"        content="website" />
-  <meta property="og:title"       content="zaza — personal" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="zaza — personal" />
   <meta property="og:description" content="living in the moment. creating something real." />
-  <meta property="og:image"       content="assets/avatar.jpg" />
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="zaza — personal" />
-  <meta name="twitter:description" content="living in the moment. creating something real." />
-
+  <meta property="og:image" content="assets/avatar.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
   <title>zaza — personal</title>
-
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-  <!-- Styles -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-  <!-- ══════════════════════════════════════════
-       CUSTOM CURSOR
-  ══════════════════════════════════════════ -->
-  <div id="cursor"></div>
-  <div id="cursor-follower"></div>
-  <div id="mouse-light"></div>
+<!-- Cursor -->
+<div id="cursor"></div>
+<div id="cursor-follower"></div>
+<div id="mouse-light"></div>
 
-  <!-- ══════════════════════════════════════════
-       LOADING SCREEN
-  ══════════════════════════════════════════ -->
-  <div id="loading-screen">
-    <div class="loader-logo">zaza</div>
-    <div class="loader-bar-wrap">
-      <div class="loader-bar"></div>
-    </div>
-    <div class="loader-text">initializing...</div>
-  </div>
+<!-- Loading -->
+<div id="loading-screen">
+  <div class="loader-logo">zaza</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-text">loading...</div>
+</div>
 
-  <!-- ══════════════════════════════════════════
-       BACKGROUND LAYER
-  ══════════════════════════════════════════ -->
-  <div id="bg-layer">
-    <!-- Video background (src injected by JS from config) -->
-    <video id="bg-video" autoplay muted loop playsinline></video>
+<!-- Background -->
+<div id="bg-layer">
+  <video id="bg-video" autoplay muted loop playsinline style="display:none;"></video>
+  <div id="bg-image-wrap"></div>
+  <div id="bg-overlay"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+</div>
+<canvas id="particles-canvas"></canvas>
 
-    <!-- Dark overlay -->
-    <div id="bg-overlay"></div>
+<!-- Enter Screen -->
+<div id="enter-screen">
+  <h1 class="enter-title">zaza</h1>
+  <p class="enter-sub">click to enter</p>
+  <button id="enter-btn" class="enter-btn"><span>enter</span></button>
+</div>
 
-    <!-- Animated gradient blobs -->
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-  </div>
+<!-- Main Page -->
+<main id="main-page">
+  <div class="layout">
 
-  <!-- Particle canvas -->
-  <canvas id="particles-canvas"></canvas>
+    <!-- ═══ LEFT ═══ -->
+    <div class="profile-left">
+      <div class="section-eyebrow">about me</div>
 
-  <!-- ══════════════════════════════════════════
-       ENTER SCREEN
-  ══════════════════════════════════════════ -->
-  <div id="enter-screen">
-    <h1 class="enter-title">zaza</h1>
-    <p class="enter-subtitle">click to enter</p>
-    <button id="enter-btn" class="enter-btn">
-      <span>enter</span>
-    </button>
-    <div class="enter-pulse"></div>
-  </div>
-
-  <!-- ══════════════════════════════════════════
-       MAIN PAGE
-  ══════════════════════════════════════════ -->
-  <main id="main-page">
-
-    <!-- ── Profile Card ── -->
-    <div class="profile-card">
-
-      <!-- Avatar -->
-      <div class="avatar-section">
+      <div class="name-row">
         <div class="avatar-wrap" id="avatar-wrap">
           <div class="avatar-ring"></div>
-          <!-- Placeholder replaced by JS with actual avatar or initial -->
-          <div class="avatar-img-placeholder avatar-placeholder">Z</div>
-          <span class="online-dot"></span>
+          <div class="avatar-initial" id="avatar-el">Z</div>
+          <span class="online-dot" id="online-dot"></span>
         </div>
-
-        <!-- Username -->
-        <h1 class="username" id="profile-username">zaza</h1>
-
-        <!-- Typewriter status -->
-        <div class="status-row">
-          <span class="status-text">
-            <span id="status-typewriter"></span><span class="typewriter-cursor"></span>
-          </span>
+        <div class="name-text-wrap">
+          <div class="name-greeting">hey, i'm</div>
+          <div class="name-main" id="profile-username">zaza</div>
         </div>
       </div>
 
-      <!-- Divider -->
-      <div class="card-divider"></div>
+      <p class="bio-text" id="profile-bio">living in the moment. creating something real.</p>
 
-      <!-- Stats Row -->
-      <div class="stats-row">
+      <div class="badges-row" id="badges-row">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="stats-strip">
         <div class="stat-item">
           <span class="stat-value" id="stat-visits">—</span>
           <span class="stat-label">visitors</span>
         </div>
+        <div class="stat-sep"></div>
         <div class="stat-item">
           <span class="stat-value" id="stat-views">—</span>
           <span class="stat-label">views</span>
         </div>
+        <div class="stat-sep"></div>
         <div class="stat-item">
           <span class="stat-value" id="stat-since">—</span>
           <span class="stat-label">since</span>
         </div>
       </div>
-
-      <!-- Divider -->
-      <div class="card-divider"></div>
-
-      <!-- About Me -->
-      <div class="about-section">
-        <div class="section-label">about me</div>
-        <p class="about-text" id="profile-bio">loading...</p>
-      </div>
-
-      <!-- Spotify Currently Playing -->
-      <div id="spotify-section" class="spotify-section" style="display:none;">
-        <i class="fab fa-spotify spotify-icon"></i>
-        <div class="spotify-text">
-          <div class="spotify-label">currently playing</div>
-          <div class="spotify-track">not listening to anything rn</div>
-        </div>
-        <div class="eq-bars">
-          <div class="eq-bar"></div>
-          <div class="eq-bar"></div>
-          <div class="eq-bar"></div>
-        </div>
-      </div>
-
-      <!-- Discord Widget -->
-      <div id="discord-section" class="discord-section" style="display:none;">
-        <i class="fab fa-discord discord-icon"></i>
-        <div class="discord-text">
-          <div class="discord-label">discord</div>
-          <div class="discord-username">—</div>
-        </div>
-        <div class="discord-status-dot"></div>
-      </div>
-
-      <!-- Social Links -->
-      <div class="socials-section">
-        <div class="section-label">socials</div>
-        <div class="social-grid" id="socials-container">
-          <!-- Injected by JS -->
-        </div>
-      </div>
-
-      <!-- Music Player -->
-      <div class="music-section" id="music-section">
-        <div class="section-label">music</div>
-
-        <!-- Track header -->
-        <div class="music-header">
-          <div class="music-cover" id="music-cover">
-            <i class="fas fa-music"></i>
-          </div>
-          <div class="music-info">
-            <div class="music-title" id="music-title">No track loaded</div>
-            <div class="music-artist" id="music-artist">—</div>
-          </div>
-          <div class="music-controls">
-            <button class="music-btn" id="prev-btn" title="Previous (Alt+←)">
-              <i class="fas fa-backward-step"></i>
-            </button>
-            <button class="music-btn play-btn" id="play-pause-btn" title="Play/Pause (Space)">
-              <i class="fas fa-play"></i>
-            </button>
-            <button class="music-btn" id="next-btn" title="Next (Alt+→)">
-              <i class="fas fa-forward-step"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Progress bar -->
-        <div class="music-progress-row">
-          <span class="music-time" id="music-current">0:00</span>
-          <div class="music-progress" id="music-progress">
-            <div class="music-progress-fill" id="music-progress-fill"></div>
-          </div>
-          <span class="music-time" id="music-duration">0:00</span>
-        </div>
-
-        <!-- Volume -->
-        <div class="music-volume-row">
-          <i class="fas fa-volume-high volume-icon" id="volume-icon"></i>
-          <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="0.5" />
-        </div>
-
-        <!-- Visualizer -->
-        <canvas id="visualizer-canvas" width="400" height="40" style="margin-top:10px;"></canvas>
-      </div>
-
-      <!-- Visitor Counter row -->
-      <div class="visitors-row">
-        <i class="fas fa-eye"></i>
-        <span class="visitors-count" id="visitor-count">—</span>
-        <span>total visits</span>
-      </div>
-
-      <!-- Card Footer -->
-      <div class="card-footer">
-        <span>made with</span>
-        <i class="fas fa-heart" style="color:var(--accent);font-size:0.65rem;"></i>
-        <span>by</span>
-        <a href="#" style="cursor:none;">zaza</a>
-        &nbsp;·&nbsp;
-        <a href="admin.html" style="color:var(--text-muted);cursor:none;transition:color 0.2s;"
-           onmouseover="this.style.color='var(--accent)'"
-           onmouseout="this.style.color='var(--text-muted)'">admin</a>
-      </div>
-
     </div>
-    <!-- end .profile-card -->
 
-  </main>
+    <!-- ═══ RIGHT ═══ -->
+    <div class="profile-right">
+      <div class="right-eyebrow">find me at</div>
 
-  <!-- ══════════════════════════════════════════
-       THEME FAB (accent color switcher)
-  ══════════════════════════════════════════ -->
-  <button class="theme-fab" id="theme-fab" title="Change theme color" aria-label="Change accent color">
-    <i class="fas fa-palette"></i>
-  </button>
+      <!-- Status -->
+      <div class="status-pill">
+        <span class="status-dot online" id="status-dot"></span>
+        <span id="status-typewriter"></span><span class="tw-cursor"></span>
+      </div>
 
-  <!-- ══════════════════════════════════════════
-       KEYBOARD SHORTCUTS HINT
-  ══════════════════════════════════════════ -->
-  <div class="shortcuts-hint" id="shortcuts-hint">
-    <span class="shortcut-key">space</span> play/pause &nbsp;
-    <span class="shortcut-key">alt+→</span> next &nbsp;
-    <span class="shortcut-key">M</span> mute
+      <!-- Socials -->
+      <div class="social-list" id="socials-container">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
   </div>
+</main>
 
-  <!-- ══════════════════════════════════════════
-       TOAST (injected by JS)
-  ══════════════════════════════════════════ -->
+<!-- Music Bar -->
+<div class="music-bar" id="music-bar" style="display:none;">
+  <div class="music-cover-mini" id="music-cover-mini"><i class="fas fa-music"></i></div>
+  <div class="music-info-mini">
+    <div class="music-title-mini" id="music-title-mini">No track</div>
+    <div class="music-artist-mini" id="music-artist-mini">—</div>
+  </div>
+  <div class="music-progress-mini" id="music-progress-mini">
+    <div class="music-progress-fill-mini" id="music-progress-fill-mini"></div>
+  </div>
+  <span style="font-size:.65rem;color:var(--text-muted);min-width:32px;" id="music-time-mini">0:00</span>
+  <div class="music-controls-mini">
+    <button class="music-btn-mini" id="prev-btn"><i class="fas fa-backward-step"></i></button>
+    <button class="music-btn-mini play" id="play-pause-btn"><i class="fas fa-play"></i></button>
+    <button class="music-btn-mini" id="next-btn"><i class="fas fa-forward-step"></i></button>
+  </div>
+  <canvas id="visualizer-canvas" width="80" height="24"></canvas>
+  <div class="music-vol-mini">
+    <i class="fas fa-volume-high" id="volume-icon"></i>
+    <input type="range" class="vol-slider-mini" id="volume-slider" min="0" max="1" step="0.01" value="0.5" />
+  </div>
+</div>
 
-  <!-- ══════════════════════════════════════════
-       SCRIPTS
-  ══════════════════════════════════════════ -->
-  <!-- Inline config fallback for file:// protocol -->
-  <script>
-    window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/avatar.jpg","status":"online","statusMessages":["vibing to music rn 🎵","cooking something up...","living rent free in your head","making moves quietly 🤫","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","glassColor":"rgba(255,255,255,0.04)","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false},"background":{"videoUrl":"","fallbackGradient":"linear-gradient(135deg, #0a0a0f 0%, #0f0a1e 50%, #0a0f1e 100%)","overlayOpacity":0.6},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"Chill Vibes","artist":"Artist Name","src":"assets/music/track1.mp3","cover":"assets/music/cover1.jpg"}]},"socials":[{"id":"discord","label":"Discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"Twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"Instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"GitHub","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"YouTube","username":"zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"Telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"discord":{"enabled":false,"userId":"","showWidget":false},"spotify":{"enabled":false,"showCurrentlyPlaying":true,"fallbackText":"not listening to anything rn"},"cursor":{"enabled":true,"trailEnabled":true,"color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zaza — personal","description":"living in the moment. creating something real.","ogImage":"assets/avatar.jpg","themeColor":"#a855f7"}};
-  </script>
-  <script src="js/app.js"></script>
+<!-- Theme FAB -->
+<button class="theme-fab" id="theme-fab" title="Change theme" aria-label="Change accent color">
+  <i class="fas fa-palette"></i>
+</button>
 
+<!-- Keyboard hint -->
+<div class="kbd-hint" id="kbd-hint">
+  <span class="kbd">space</span> play/pause &nbsp;
+  <span class="kbd">alt+→</span> next &nbsp;
+  <span class="kbd">M</span> mute
+</div>
+
+<!-- Admin link (hidden, accessible via footer or direct URL) -->
+<a href="admin.html" style="position:fixed;bottom:60px;right:20px;z-index:100;font-size:.6rem;color:rgba(255,255,255,0.15);cursor:none;transition:color .2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='rgba(255,255,255,0.15)'">admin</a>
+
+<!-- Inline config fallback for file:// protocol -->
+<script>
+  window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"discord":{"enabled":false,"userId":""},"spotify":{"enabled":false,"fallbackText":"not listening to anything rn"},"cursor":{"enabled":true,"color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zaza \u2014 personal","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
+</script>
+<script src="js/app.js"></script>
 </body>
 </html>
