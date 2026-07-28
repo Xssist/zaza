@@ -49,7 +49,7 @@ function clearSession() {
 
 /* ── Config Loader ── */
 async function loadConfig() {
-  const res = await fetch('../config.json?v=' + Date.now());
+  const res = await fetch('./config.json?v=' + Date.now());
   if (!res.ok) throw new Error('Failed to load config.json');
   return res.json();
 }
