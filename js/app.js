@@ -85,6 +85,23 @@ function applyTheme() {
   root.style.setProperty('--accent-glow', hexAlpha(t.accentColor || '#a855f7', 0.35));
   const mt = $('meta[name="theme-color"]');
   if (mt) mt.content = t.accentColor || '#a855f7';
+
+  // Font family
+  const fontMap = { 'Space Grotesk':'font-space', 'JetBrains Mono':'font-mono' };
+  document.body.classList.remove('font-space','font-mono');
+  const fc = fontMap[t.fontFamily];
+  if (fc) document.body.classList.add(fc);
+
+  // Glassmorphism
+  if (t.glassmorphism) document.body.classList.add('glass-mode');
+  else document.body.classList.remove('glass-mode');
+
+  // Gradient angle
+  const angle = t.gradientAngle ?? 115;
+  const ov = $('#bg-overlay');
+  if (ov) {
+    ov.style.background = `linear-gradient(${angle}deg,rgba(0,0,0,0.88) 0%,rgba(0,0,0,0.60) 40%,rgba(0,0,0,0.30) 65%,rgba(0,0,0,0.55) 100%)`;
+  }
 }
 
 function hexAlpha(hex, a) {
@@ -100,27 +117,39 @@ function hexAlpha(hex, a) {
    3. LOADING SCREEN
 ══════════════════════════════════════════ */
 function initLoading() {
-  const scr = $('#loading-screen');
-  const bar = $('.loader-bar');
-  const txt = $('.loader-text');
+  const scr  = $('#loading-screen');
+  const body = document.getElementById('terminal-body');
   if (!scr) return;
 
-  const steps = ['loading...', 'setting up...', 'almost done...', 'ready.'];
-  let p = 0, si = 0;
+  const lines = [
+    { prompt:'$', text:' initializing zaza.wtf', delay:0, cls:'' },
+    { prompt:'>', text:' loading assets...', delay:320, cls:'' },
+    { prompt:'>', text:' fetching config.json', delay:640, cls:'' },
+    { prompt:'✓', text:' config loaded', delay:960, cls:'ok' },
+    { prompt:'>', text:' mounting particles engine', delay:1180, cls:'' },
+    { prompt:'✓', text:' renderer ready', delay:1420, cls:'ok' },
+    { prompt:'>', text:' starting music player', delay:1600, cls:'' },
+    { prompt:'✓', text:' all systems online', delay:1800, cls:'ok' },
+    { prompt:'$', text:' boot complete — welcome back, master', delay:2050, cls:'ok' },
+  ];
 
-  const t = setInterval(() => {
-    p += rand(8, 22);
-    if (p > 100) p = 100;
-    if (bar) bar.style.width = p + '%';
+  lines.forEach(l => {
+    setTimeout(() => {
+      if (!body) return;
+      const row = document.createElement('div');
+      row.className = 'term-line';
+      row.innerHTML = `<span class="prompt">${l.prompt}</span><span class="term-text ${l.cls}">${l.text}</span>`;
+      body.appendChild(row);
+      body.scrollTop = body.scrollHeight;
+    }, l.delay);
+  });
 
-    const ni = Math.min(Math.floor((p / 100) * steps.length), steps.length - 1);
-    if (ni !== si && txt) { si = ni; txt.textContent = steps[si]; }
+  // Add blinking cursor
+  setTimeout(() => {
+    if (body) body.insertAdjacentHTML('beforeend', '<span class="term-cursor-blink"></span>');
+  }, 50);
 
-    if (p >= 100) {
-      clearInterval(t);
-      setTimeout(() => scr.classList.add('hidden'), 400);
-    }
-  }, 100);
+  setTimeout(() => scr.classList.add('hidden'), 2600);
 }
 
 /* ══════════════════════════════════════════
@@ -137,10 +166,11 @@ function initBackground() {
     vid.src = videoUrl;
     vid.muted = true;
     vid.style.display = 'block';
+    const blur = S.cfg.background?.blur || 0;
+    if (blur > 0) vid.style.filter = `blur(${blur}px)`;
     vid.load();
     const tryPlay = () => vid.play().catch(() => {});
     tryPlay();
-    // Retry on first user interaction if autoplay blocked
     document.addEventListener('click', tryPlay, { once: true });
   }
 }
@@ -174,6 +204,11 @@ function initCursor() {
   })();
 
   // Hover state via body classes (avoids per-element cursor issues)
+  // Apply cursor style from config
+  const style = S.cfg.cursor?.style || 'dot';
+  document.body.classList.remove('cursor-crosshair','cursor-ring','cursor-emoji');
+  if (style !== 'dot') document.body.classList.add('cursor-' + style);
+
   const hoverSel = 'a, button, [role="button"], .social-row, .badge, .music-btn-mini, .theme-fab, .enter-btn';
   document.addEventListener('mouseover', e => {
     if (e.target.closest(hoverSel)) document.body.classList.add('cursor-hover');
@@ -299,6 +334,15 @@ function renderProfile() {
     }
   }
 
+  // Availability dot
+  const avail = p.availability || p.status || 'online';
+  const dotEl = $('#online-dot');
+  if (dotEl) {
+    dotEl.className = 'online-dot avail-' + avail;
+    if (avail === 'offline') dotEl.style.animation = 'none';
+    else dotEl.style.animation = '';
+  }
+
   // Badges
   renderBadges();
 
@@ -325,7 +369,7 @@ function makeInitial(p) {
 function renderBadges() {
   const row = $('#badges-row');
   if (!row) return;
-  const badges = S.cfg.badges || [
+  const badges = S.cfg.badges?.length ? S.cfg.badges : [
     { icon:'fab fa-js-square', color:'#F7DF1E', label:'JavaScript' },
     { icon:'fab fa-python',    color:'#3776AB', label:'Python'     },
     { icon:'fab fa-discord',   color:'#5865F2', label:'Discord'    },
@@ -337,7 +381,7 @@ function renderBadges() {
   badges.forEach(b => {
     const el = document.createElement('span');
     el.className = 'badge';
-    el.title = b.label;
+    el.title = b.label || '';
     el.innerHTML = `<i class="${b.icon}" style="color:${b.color}"></i>`;
     row.appendChild(el);
   });
@@ -387,19 +431,32 @@ function renderSocials() {
   (S.cfg.socials || [])
     .filter(s => s.enabled !== false)
     .forEach(s => {
-      const a = document.createElement('a');
-      a.className = 'social-row';
-      a.href = s.url || '#';
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.style.setProperty('--icon-color', s.color || 'var(--accent)');
-      a.innerHTML = `
+      const div = document.createElement('div');
+      div.className = 'social-row';
+      div.style.setProperty('--icon-color', s.color || 'var(--accent)');
+      div.innerHTML = `
         <div class="sr-left">
           <i class="${s.icon || 'fas fa-link'} sr-icon"></i>
           <span class="sr-label">${s.label || ''}</span>
         </div>
-        <span class="sr-value">${s.username || ''}</span>`;
-      con.appendChild(a);
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="sr-value">${s.username || ''}</span>
+          <span class="sr-copy-hint">copy</span>
+        </div>`;
+      div.addEventListener('click', () => {
+        const text = s.username || s.url || '';
+        if (!text) return;
+        navigator.clipboard?.writeText(text).catch(() => {});
+        // Show copy toast
+        const ct = document.getElementById('copy-toast');
+        if (ct) {
+          ct.textContent = `copied ${s.label}!`;
+          ct.classList.add('show');
+          clearTimeout(ct._t);
+          ct._t = setTimeout(() => ct.classList.remove('show'), 1800);
+        }
+      });
+      con.appendChild(div);
     });
 }
 
