@@ -11,6 +11,17 @@ const esc = s => String(s)
   .replace(/&/g,'&').replace(/</g,'<')
   .replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,''');
 
+function normalizeAssetPath(path) {
+  if (!path || typeof path !== 'string') return '';
+  path = path.trim();
+  if (!path) return '';
+  if (/^(https?:|data:|blob:)/i.test(path)) return path;
+  if (/^file:/i.test(path)) path = path.replace(/^file:\/+/, '');
+  const m = path.match(/assets[/\\].+$/i);
+  if (m) return m[0].replace(/\\/g, '/');
+  return path.replace(/\\/g, '/').replace(/^\/+/, '');
+}
+
 /* ── GitHub target (token split to bypass secret scanning) ── */
 const GH = {
   owner : 'Xssist',
@@ -265,7 +276,8 @@ function populate(cfg) {
   set('#input-location',    cfg.profile?.location    || '');
   set('#input-join-date',   cfg.profile?.joinDate    || '');
   set('#input-status-msgs', (cfg.profile?.statusMessages || []).join('\n'));
-  set('#input-avatar-url',  cfg.profile?.avatar      || '');
+  const avatarPath = normalizeAssetPath(cfg.profile?.avatar || '');
+  set('#input-avatar-url', avatarPath);
   const ap = $('#avatar-preview-img');
   if (ap && cfg.profile?.avatar) { ap.src = cfg.profile.avatar; ap.style.display = 'block'; }
 
@@ -280,7 +292,7 @@ function populate(cfg) {
   chk('#toggle-rain', cfg.theme?.rainEnabled);
 
   // Background
-  set('#input-video-url', cfg.background?.videoUrl || '');
+  set('#input-video-url', normalizeAssetPath(cfg.background?.videoUrl || ''));
   const op = cfg.background?.overlayOpacity ?? 0.55;
   set('#input-overlay-opacity', op);
   const od = $('#overlay-display'); if (od) od.textContent = Math.round(op * 100);
@@ -304,7 +316,7 @@ function populate(cfg) {
   set('#input-seo-title',        cfg.seo?.title       || '');
   set('#input-seo-title-cycle',  (cfg.seo?.titleCycle || []).join('\n'));
   set('#input-seo-description',  cfg.seo?.description || '');
-  set('#input-og-image',         cfg.seo?.ogImage     || '');
+  set('#input-og-image',         normalizeAssetPath(cfg.seo?.ogImage || ''));
 
   // Security
   set('#input-session-timeout', cfg.admin?.sessionTimeout || 3600);
@@ -336,7 +348,7 @@ function collectAll() {
   cfg.theme.snowEnabled          = gc('#toggle-snow');
   cfg.theme.rainEnabled          = gc('#toggle-rain');
 
-  cfg.background.videoUrl       = g('#input-video-url');
+  cfg.background.videoUrl       = normalizeAssetPath(g('#input-video-url'));
   cfg.background.overlayOpacity = parseFloat(g('#input-overlay-opacity')) || 0.55;
 
   cfg.music.enabled       = gc('#toggle-music');
@@ -349,7 +361,7 @@ function collectAll() {
   cfg.seo.title       = g('#input-seo-title');
   cfg.seo.titleCycle  = g('#input-seo-title-cycle').split('\n').map(s => s.trim()).filter(Boolean);
   cfg.seo.description = g('#input-seo-description');
-  cfg.seo.ogImage     = g('#input-og-image');
+  cfg.seo.ogImage     = normalizeAssetPath(g('#input-og-image'));
 
   cfg.admin.sessionTimeout = parseInt(g('#input-session-timeout')) || 3600;
 }
@@ -439,7 +451,8 @@ window.editTrack = i => {
   const artist = prompt('Artist:', t.artist || ''); if (artist === null) return;
   const src    = prompt('File path / URL:', t.src || ''); if (src === null) return;
   const cover  = prompt('Cover image (optional):', t.cover || '');
-  t.title = title; t.artist = artist; t.src = src; if (cover !== null) t.cover = cover;
+  t.title = title; t.artist = artist; t.src = normalizeAssetPath(src);
+  if (cover !== null) t.cover = normalizeAssetPath(cover);
   renderTracks(AdminState.config.music.tracks); markDirty();
 };
 window.removeTrack = i => {
@@ -453,7 +466,11 @@ function bindTrackButtons() {
     const artist = prompt('Artist name:') || '';
     const src    = prompt('File path / URL (e.g. assets/music/song.mp3):') || '';
     const cover  = prompt('Cover image path / URL (optional):') || '';
-    AdminState.config.music.tracks.push({ id: Date.now(), title, artist, src, cover });
+    AdminState.config.music.tracks.push({
+      id: Date.now(), title, artist,
+      src: normalizeAssetPath(src),
+      cover: normalizeAssetPath(cover),
+    });
     renderTracks(AdminState.config.music.tracks); markDirty();
   });
 }
