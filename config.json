@@ -22,7 +22,7 @@
     "rainEnabled": false
   },
   "background": {
-    "videoUrl": "\"C:\\Users\\PC\\Documents\\zaza\\assets\\images\\background.mp4\"",
+    "videoUrl": "C:\\Users\\PC\\Documents\\zaza\\assets\\images\\background.mp4",
     "overlayOpacity": 0.6
   },
   "music": {
