@@ -119,7 +119,7 @@
     "enabled": true,
     "trailEnabled": true,
     "color": "#a855f7",
-    "style": "crosshair"
+    "style": "emoji"
   },
   "admin": {
     "passwordHash": "6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c",
