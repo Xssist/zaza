@@ -27,7 +27,7 @@
   "background": {
     "videoUrl": "assets/images/background.mp4",
     "overlayOpacity": 0.55,
-    "blur": 20
+    "blur": 0
   },
   "music": {
     "enabled": true,
