@@ -8,12 +8,12 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="zaza — personal" />
   <meta property="og:description" content="living in the moment. creating something real." />
-  <meta property="og:image" content="assets/avatar.jpg" />
+  <meta property="og:image" content="assets/images/avatar.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <title>zaza — personal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -24,11 +24,17 @@
 <div id="cursor-follower"></div>
 <div id="mouse-light"></div>
 
-<!-- Loading -->
+<!-- Terminal Loading Screen -->
 <div id="loading-screen">
-  <div class="loader-logo">zaza</div>
-  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
-  <div class="loader-text">loading...</div>
+  <div class="terminal-window">
+    <div class="terminal-bar">
+      <span class="term-dot red"></span>
+      <span class="term-dot yellow"></span>
+      <span class="term-dot green"></span>
+      <span class="term-title">zaza@system ~ boot</span>
+    </div>
+    <div class="terminal-body" id="terminal-body"></div>
+  </div>
 </div>
 
 <!-- Background -->
@@ -52,7 +58,7 @@
 <main id="main-page">
   <div class="layout">
 
-    <!-- ═══ LEFT ═══ -->
+    <!-- LEFT -->
     <div class="profile-left">
       <div class="section-eyebrow">about me</div>
 
@@ -70,9 +76,7 @@
 
       <p class="bio-text" id="profile-bio">living in the moment. creating something real.</p>
 
-      <div class="badges-row" id="badges-row">
-        <!-- Populated by JS -->
-      </div>
+      <div class="badges-row" id="badges-row"></div>
 
       <div class="stats-strip">
         <div class="stat-item">
@@ -92,20 +96,14 @@
       </div>
     </div>
 
-    <!-- ═══ RIGHT ═══ -->
+    <!-- RIGHT -->
     <div class="profile-right">
       <div class="right-eyebrow">find me at</div>
-
-      <!-- Status -->
       <div class="status-pill">
         <span class="status-dot online" id="status-dot"></span>
         <span id="status-typewriter"></span><span class="tw-cursor"></span>
       </div>
-
-      <!-- Socials -->
-      <div class="social-list" id="socials-container">
-        <!-- Populated by JS -->
-      </div>
+      <div class="social-list" id="socials-container"></div>
     </div>
 
   </div>
@@ -134,17 +132,19 @@
   </div>
 </div>
 
-<!-- Theme FAB (hidden until after enter) -->
+<!-- Theme FAB -->
 <button class="theme-fab" id="theme-fab" title="Change theme" aria-label="Change accent color" style="opacity:0;pointer-events:none;">
   <i class="fas fa-palette"></i>
 </button>
 
-<!-- Admin link -->
-<a href="admin.html" style="position:fixed;bottom:16px;right:20px;z-index:100;font-size:.6rem;color:rgba(255,255,255,0.12);transition:color .2s;pointer-events:auto;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='rgba(255,255,255,0.12)'">admin</a>
+<!-- Copy toast -->
+<div id="copy-toast" class="copy-toast">copied!</div>
 
-<!-- Inline config fallback for file:// protocol -->
+<!-- Admin link -->
+<a href="admin.html" class="admin-corner-link">admin</a>
+
 <script>
-  window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"discord":{"enabled":false,"userId":"","showWidget":false},"spotify":{"enabled":false,"showCurrentlyPlaying":true,"fallbackText":""},"cursor":{"enabled":true,"trailEnabled":true,"color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
+window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"cursor":{"enabled":true,"style":"dot","color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
 </script>
 <script src="js/app.js"></script>
 </body>
