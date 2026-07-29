@@ -1,415 +1,1379 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>zaza — admin</title>
-  <meta name="robots" content="noindex, nofollow" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
-  <link rel="stylesheet" href="css/style.css" />
-  <style>
-    body { cursor:auto; overflow:auto; }
-    a,button { cursor:pointer; }
-    .hidden { display:none!important; }
-    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
-    .shake{animation:shake .45s ease;}
-    .fade-out{opacity:0!important;transition:opacity .4s ease!important;pointer-events:none!important;}
-    input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:rgba(255,255,255,0.1);border-radius:99px;outline:none;}
-    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--accent);border-radius:50%;cursor:pointer;}
-    .avatar-upload-zone{border:2px dashed rgba(255,255,255,0.08);border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;}
-    .avatar-upload-zone:hover{border-color:var(--accent);background:rgba(168,85,247,0.04);}
-    .avatar-upload-zone input{display:none;}
-    #avatar-preview-img{width:70px;height:70px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:none;border:2px solid var(--accent);}
-    .preview-link{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;color:var(--accent);padding:5px 11px;border:1px solid rgba(168,85,247,0.3);border-radius:99px;transition:var(--transition);text-decoration:none;}
-    .preview-link:hover{background:rgba(168,85,247,0.1);}
-    .nav-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--text-muted);padding:10px 10px 4px;display:block;}
-  </style>
-</head>
-<body class="admin-body">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>zaza — admin</title>
+<meta name="robots" content="noindex,nofollow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous"/>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+/* ── Admin page overrides ── */
+html,html *{cursor:auto!important;}
+body{cursor:auto!important;overflow:auto;}
+a,button,label,select,input,textarea,[role="button"]{cursor:pointer!important;}
+input[type="range"]{cursor:pointer!important;}
 
-<!-- LOGIN -->
-<div id="admin-login" class="admin-login">
-  <div class="admin-login-card">
-    <div class="admin-logo">zaza</div>
-    <div class="admin-login-title">Admin Panel</div>
-    <p class="admin-login-sub">Password required to continue.</p>
-    <form id="login-form" autocomplete="off">
-      <div class="admin-form-group">
-        <label for="login-password">Password</label>
-        <input type="password" id="login-password" class="admin-input" placeholder="••••••••" autofocus />
+/* Login page */
+.a-login{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(168,85,247,.15) 0%,transparent 70%),#06060b;
+}
+.a-login-box{
+  width:100%;max-width:380px;padding:44px 36px;
+  background:rgba(255,255,255,.04);backdrop-filter:blur(24px);
+  border:1px solid rgba(168,85,247,.2);border-radius:24px;
+  box-shadow:0 0 60px rgba(168,85,247,.12),0 24px 48px rgba(0,0,0,.5);
+  animation:fadeUp .4s ease both;
+}
+.a-login-logo{
+  font-size:2rem;font-weight:900;letter-spacing:-.06em;text-align:center;margin-bottom:4px;
+  background:linear-gradient(135deg,#a855f7,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.a-login-sub{font-size:.75rem;color:rgba(240,240,245,.4);text-align:center;margin-bottom:28px;}
+.a-form-row{margin-bottom:14px;}
+.a-form-row label{display:block;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(240,240,245,.45);margin-bottom:6px;}
+.a-input{
+  width:100%;padding:11px 14px;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);border-radius:11px;
+  color:#f0f0f5;font-family:'Inter',sans-serif;font-size:.9rem;outline:none;
+  transition:border-color .2s,box-shadow .2s;
+}
+.a-input:focus{border-color:#a855f7;box-shadow:0 0 0 3px rgba(168,85,247,.18);}
+.a-input::placeholder{color:rgba(240,240,245,.2);}
+.a-btn{
+  width:100%;padding:12px;border:none;border-radius:11px;
+  background:linear-gradient(135deg,#a855f7,#ec4899);
+  color:#fff;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:700;
+  cursor:pointer!important;transition:opacity .2s,transform .1s,box-shadow .2s;
+  box-shadow:0 0 20px rgba(168,85,247,.4);
+}
+.a-btn:hover{opacity:.9;box-shadow:0 0 30px rgba(168,85,247,.6);}
+.a-btn:active{transform:scale(.98);}
+.a-btn:disabled{opacity:.45;cursor:not-allowed!important;}
+.a-err{font-size:.74rem;color:#f87171;text-align:center;margin-top:10px;display:none;}
+.a-err.show{display:block;}
+.a-back{display:block;text-align:center;margin-top:16px;font-size:.72rem;color:rgba(240,240,245,.35);text-decoration:none;transition:color .2s;}
+.a-back:hover{color:#a855f7;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.shake{animation:shake .35s ease;}
+.fade-out{opacity:0!important;transition:opacity .3s!important;pointer-events:none!important;}
+.hidden{display:none!important;}
+
+/* ── Dashboard shell ── */
+.a-dash{display:none;min-height:100vh;flex-direction:column;background:#06060b;}
+.a-dash.visible{display:flex;}
+
+/* Topbar */
+.a-topbar{
+  height:58px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;position:sticky;top:0;z-index:200;
+  background:rgba(6,6,11,.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(168,85,247,.15);
+  box-shadow:0 1px 0 rgba(168,85,247,.08),0 4px 24px rgba(0,0,0,.4);
+}
+.a-topbar-brand{display:flex;align-items:center;gap:10px;}
+.a-topbar-brand-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:linear-gradient(135deg,#a855f7,#ec4899);
+  box-shadow:0 0 10px #a855f7;animation:pulse2 2s ease infinite;
+}
+@keyframes pulse2{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.2)}}
+.a-topbar-brand-name{
+  font-size:.95rem;font-weight:800;letter-spacing:-.03em;
+  background:linear-gradient(135deg,#a855f7,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.a-topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.a-badge-saved{
+  display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:99px;
+  font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;
+  background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.2);
+}
+.a-badge-saved::before{content:'';width:5px;height:5px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px #22c55e;}
+.a-badge-unsaved{
+  display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:99px;
+  font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;
+  background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2);
+}
+.a-badge-unsaved::before{content:'';width:5px;height:5px;border-radius:50%;background:#fbbf24;animation:pulse2 1s ease infinite;}
+.a-topbar-preview{
+  display:inline-flex;align-items:center;gap:5px;font-size:.72rem;
+  color:rgba(240,240,245,.5);padding:6px 13px;
+  border:1px solid rgba(255,255,255,.1);border-radius:99px;
+  text-decoration:none;transition:all .2s;
+}
+.a-topbar-preview:hover{border-color:#a855f7;color:#a855f7;background:rgba(168,85,247,.06);}
+.a-topbar-save{
+  display:flex;align-items:center;gap:6px;padding:7px 18px;border:none;border-radius:99px;
+  background:linear-gradient(135deg,#a855f7,#ec4899);
+  color:#fff;font-family:'Inter',sans-serif;font-size:.76rem;font-weight:700;
+  cursor:pointer!important;transition:opacity .2s,box-shadow .2s,transform .1s;
+  box-shadow:0 0 16px rgba(168,85,247,.4);
+}
+.a-topbar-save:hover{opacity:.9;box-shadow:0 0 26px rgba(168,85,247,.6);}
+.a-topbar-save:active{transform:scale(.97);}
+.a-topbar-save:disabled{opacity:.4;cursor:not-allowed!important;}
+.a-topbar-logout{
+  display:flex;align-items:center;gap:5px;padding:7px 13px;border-radius:99px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+  color:rgba(240,240,245,.45);font-family:'Inter',sans-serif;font-size:.76rem;
+  cursor:pointer!important;transition:all .2s;
+}
+.a-topbar-logout:hover{border-color:rgba(248,113,113,.4);color:#f87171;background:rgba(248,113,113,.05);}
+
+/* Layout */
+.a-layout{display:grid;grid-template-columns:220px 1fr;flex:1;min-height:calc(100vh - 58px);}
+
+/* Sidebar */
+.a-sidebar{
+  background:rgba(6,6,11,.7);backdrop-filter:blur(12px);
+  border-right:1px solid rgba(168,85,247,.08);
+  padding:12px 10px 32px;
+  position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto;
+}
+.a-sidebar::-webkit-scrollbar{width:0;}
+.a-sidebar::-webkit-scrollbar-track{background:transparent;}
+.a-nav-lbl{
+  display:flex;align-items:center;gap:8px;
+  font-size:.52rem;font-weight:800;text-transform:uppercase;letter-spacing:.2em;
+  color:rgba(168,85,247,.45);padding:14px 10px 6px;
+}
+.a-nav-lbl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(168,85,247,.2),transparent);}
+.a-nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;
+  border-radius:10px;color:rgba(240,240,245,.4);
+  font-size:.8rem;font-weight:500;cursor:pointer!important;
+  margin-bottom:1px;border:1px solid transparent;
+  background:none;font-family:'Inter',sans-serif;width:100%;text-align:left;
+  transition:all .15s;position:relative;
+}
+.a-nav-item:hover{background:rgba(255,255,255,.04);color:rgba(240,240,245,.85);transform:translateX(2px);}
+.a-nav-item.active{
+  background:linear-gradient(135deg,rgba(168,85,247,.12),rgba(236,72,153,.06));
+  border-color:rgba(168,85,247,.25);color:#a855f7;
+  box-shadow:0 0 14px rgba(168,85,247,.1),inset 0 0 14px rgba(168,85,247,.04);
+}
+.a-nav-item.active i{filter:drop-shadow(0 0 5px #a855f7);}
+.a-nav-item i{width:16px;text-align:center;font-size:.8rem;flex-shrink:0;transition:transform .2s;}
+.a-nav-item:hover i{transform:scale(1.15);}
+
+/* Main */
+.a-main{padding:28px 32px;overflow-y:auto;min-height:0;}
+.a-section{display:none;}
+.a-section.active{display:block;animation:fadeUp .2s ease both;}
+.a-section-head{margin-bottom:24px;}
+.a-section-title{
+  font-size:1.25rem;font-weight:800;letter-spacing:-.04em;
+  background:linear-gradient(135deg,#fff 50%,rgba(168,85,247,.8));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.a-section-desc{font-size:.76rem;color:rgba(240,240,245,.4);margin-top:3px;}
+
+/* Cards */
+.a-card{
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;padding:20px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+  transition:border-color .2s,box-shadow .2s;
+}
+.a-card::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,rgba(168,85,247,.03) 0%,transparent 55%);
+}
+.a-card:hover{border-color:rgba(168,85,247,.18);box-shadow:0 0 28px rgba(168,85,247,.05);}
+.a-card-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.13em;
+  color:#a855f7;margin-bottom:16px;
+}
+.a-card-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(168,85,247,.25),transparent);}
+.a-card-title i{font-size:.72rem;}
+
+/* Grid */
+.a-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.a-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.a-row{margin-bottom:14px;}
+.a-row label{display:block;font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:rgba(240,240,245,.4);margin-bottom:6px;}
+
+/* Inputs */
+.a-input,.a-textarea,.a-select{
+  width:100%;padding:10px 14px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
+  border-radius:10px;color:#f0f0f5;
+  font-family:'Inter',sans-serif;font-size:.875rem;outline:none;
+  transition:border-color .2s,box-shadow .2s,background .2s;
+}
+.a-input:hover,.a-textarea:hover,.a-select:hover{background:rgba(255,255,255,.06);}
+.a-input:focus,.a-textarea:focus,.a-select:focus{
+  border-color:#a855f7;box-shadow:0 0 0 3px rgba(168,85,247,.15);background:rgba(255,255,255,.06);
+}
+.a-input::placeholder,.a-textarea::placeholder{color:rgba(240,240,245,.2);}
+.a-textarea{resize:vertical;min-height:78px;}
+.a-select{
+  appearance:none;cursor:pointer!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;
+}
+.a-select option{background:#12121a;color:#f0f0f5;}
+
+/* Toggle */
+.a-toggle{position:relative;width:38px;height:21px;flex-shrink:0;cursor:pointer!important;display:inline-block;}
+.a-toggle input{opacity:0;width:0;height:0;}
+.a-toggle-slider{
+  position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:99px;
+  transition:.25s;cursor:pointer!important;
+}
+.a-toggle-slider::before{
+  content:'';position:absolute;width:15px;height:15px;left:3px;top:3px;
+  background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 4px rgba(0,0,0,.4);
+}
+.a-toggle input:checked + .a-toggle-slider{background:#a855f7;box-shadow:0 0 10px rgba(168,85,247,.5);}
+.a-toggle input:checked + .a-toggle-slider::before{transform:translateX(17px);}
+
+/* Info box */
+.a-info{
+  display:flex;align-items:flex-start;gap:9px;
+  background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);
+  border-radius:10px;padding:11px 14px;
+  font-size:.74rem;color:rgba(240,240,245,.6);line-height:1.55;margin-bottom:14px;
+}
+.a-info i{color:#a855f7;flex-shrink:0;margin-top:1px;}
+.a-info.success{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.15);}
+.a-info.success i{color:#22c55e;}
+
+/* Range */
+input[type="range"]{
+  -webkit-appearance:none;appearance:none;width:100%;height:4px;
+  background:rgba(255,255,255,.1);border-radius:99px;outline:none;cursor:pointer!important;
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:#fff;border:2px solid #a855f7;
+  box-shadow:0 0 8px rgba(168,85,247,.5);cursor:pointer!important;transition:transform .15s;
+}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+
+/* Color row */
+.a-color-row{display:flex;align-items:center;gap:10px;}
+.a-color-swatch{
+  width:36px;height:36px;border-radius:9px;border:1px solid rgba(255,255,255,.12);
+  cursor:pointer!important;flex-shrink:0;transition:transform .15px,box-shadow .2s;
+}
+.a-color-swatch:hover{transform:scale(1.1);box-shadow:0 0 14px rgba(168,85,247,.4);}
+input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
+
+/* Upload zones */
+.a-upload-zone{
+  border:2px dashed rgba(168,85,247,.25);border-radius:14px;padding:24px;
+  text-align:center;cursor:pointer!important;
+  transition:border-color .2s,background .2s;background:rgba(168,85,247,.02);
+}
+.a-upload-zone:hover,.a-upload-zone.drag{border-color:#a855f7;background:rgba(168,85,247,.06);}
+.a-upload-zone input{display:none;}
+.a-upload-icon{font-size:1.6rem;margin-bottom:8px;color:#a855f7;display:block;}
+.a-upload-label{font-size:.82rem;font-weight:600;color:rgba(240,240,245,.8);}
+.a-upload-sub{font-size:.68rem;color:rgba(240,240,245,.35);margin-top:3px;}
+.a-upload-progress{
+  margin-top:12px;height:3px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;display:none;
+}
+.a-upload-progress-bar{height:100%;background:linear-gradient(90deg,#a855f7,#ec4899);width:0%;transition:width .3s;}
+
+/* File preview card */
+.a-file-card{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.18);
+  border-radius:12px;padding:12px 14px;margin-top:10px;
+}
+.a-file-icon{font-size:1.2rem;color:#a855f7;flex-shrink:0;}
+.a-file-name{flex:1;min-width:0;font-size:.78rem;font-weight:600;color:#f0f0f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.a-file-size{font-size:.64rem;color:rgba(240,240,245,.4);}
+.a-file-remove{
+  padding:4px 10px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);
+  border-radius:7px;color:#f87171;font-size:.64rem;cursor:pointer!important;
+  font-family:'Inter',sans-serif;transition:background .2s;
+}
+.a-file-remove:hover{background:rgba(248,113,113,.2);}
+
+/* Small button */
+.a-btn-sm{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 16px;border:none;border-radius:99px;
+  background:linear-gradient(135deg,#a855f7,#ec4899);
+  color:#fff;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;
+  cursor:pointer!important;transition:opacity .2s,box-shadow .2s;
+  box-shadow:0 0 12px rgba(168,85,247,.3);
+}
+.a-btn-sm:hover{opacity:.9;box-shadow:0 0 20px rgba(168,85,247,.5);}
+.a-btn-sm.secondary{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(240,240,245,.7);box-shadow:none;}
+.a-btn-sm.secondary:hover{background:rgba(255,255,255,.1);color:#f0f0f5;border-color:rgba(168,85,247,.3);}
+.a-btn-sm.danger{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#f87171;box-shadow:none;}
+.a-btn-sm.danger:hover{background:rgba(248,113,113,.2);}
+.a-btn-sm.warning{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:#fbbf24;box-shadow:none;}
+.a-btn-sm.warning:hover{background:rgba(251,191,36,.2);}
+
+/* Social list */
+.a-social-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;margin-bottom:8px;transition:border-color .2s,background .2s;
+}
+.a-social-item:hover{background:rgba(255,255,255,.04);border-color:rgba(168,85,247,.15);}
+
+/* Badge editor */
+.a-badge-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;margin-bottom:8px;transition:border-color .2s,background .2s;
+}
+.a-badge-preview{
+  width:34px;height:34px;border-radius:8px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;
+}
+.a-track-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;margin-bottom:8px;transition:all .2s;
+}
+.a-track-item:hover{background:rgba(255,255,255,.04);border-color:rgba(168,85,247,.15);}
+.a-track-cover{
+  width:38px;height:38px;border-radius:7px;flex-shrink:0;
+  background:linear-gradient(135deg,#a855f7,#ec4899);
+  display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff;
+}
+
+/* Availability picker */
+.a-avail-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.a-avail-opt{
+  display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;
+  cursor:pointer!important;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  font-size:.72rem;font-weight:600;transition:all .15s;
+}
+.a-avail-opt.sel-online{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4);color:#22c55e;}
+.a-avail-opt.sel-busy{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4);color:#ef4444;}
+.a-avail-opt.sel-away{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.4);color:#fbbf24;}
+.a-avail-opt.sel-offline{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.2);color:rgba(240,240,245,.5);}
+.a-avail-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.avail-online{background:#22c55e;}.avail-busy{background:#ef4444;}.avail-away{background:#fbbf24;}.avail-offline{background:rgba(255,255,255,.3);}
+
+/* Cursor picker */
+.a-cursor-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.a-cursor-opt{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:12px 16px;border-radius:12px;cursor:pointer!important;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  font-size:.62rem;font-weight:700;color:rgba(240,240,245,.45);
+  text-transform:uppercase;letter-spacing:.06em;transition:all .15s;
+}
+.a-cursor-opt:hover{background:rgba(255,255,255,.07);color:rgba(240,240,245,.8);}
+.a-cursor-opt.active{background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.35);color:#a855f7;}
+.a-cursor-opt-icon{font-size:1.2rem;}
+
+/* Avatar preview */
+.a-avatar-preview{
+  width:76px;height:76px;border-radius:50%;object-fit:cover;
+  margin:0 auto 12px;display:none;
+  border:2px solid #a855f7;box-shadow:0 0 18px rgba(168,85,247,.4);
+}
+
+/* Toast */
+#a-toast{
+  position:fixed;bottom:24px;right:24px;padding:12px 20px;
+  border-radius:12px;font-size:.8rem;font-weight:600;z-index:9999;
+  opacity:0;transform:translateY(8px);
+  transition:opacity .3s,transform .3s;pointer-events:none;
+  max-width:320px;font-family:'Inter',sans-serif;backdrop-filter:blur(16px);
+}
+
+/* Password strength bar */
+.a-pass-strength{height:3px;border-radius:99px;margin-top:6px;transition:all .3s;background:rgba(255,255,255,.1);}
+.a-pass-strength.weak{background:linear-gradient(90deg,#ef4444 40%,rgba(255,255,255,.1) 40%);}
+.a-pass-strength.fair{background:linear-gradient(90deg,#fbbf24 65%,rgba(255,255,255,.1) 65%);}
+.a-pass-strength.strong{background:linear-gradient(90deg,#22c55e 100%,rgba(255,255,255,.1) 100%);}
+
+/* Responsive */
+@media(max-width:768px){
+  .a-layout{grid-template-columns:1fr;}
+  .a-sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid rgba(168,85,247,.08);display:flex;gap:2px;padding:8px;overflow-x:auto;}
+  .a-nav-item{white-space:nowrap;flex-shrink:0;}
+  .a-nav-lbl{display:none;}
+  .a-main{padding:16px;}
+  .a-grid-2,.a-grid-3{grid-template-columns:1fr;}
+}
+</style>
+</head>
+
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="a-login" class="a-login">
+  <div class="a-login-box">
+    <div class="a-login-logo">zaza</div>
+    <p class="a-login-sub">admin panel — password required</p>
+    <form id="a-login-form" autocomplete="off">
+      <div class="a-form-row">
+        <label for="a-pass">Password</label>
+        <input type="password" id="a-pass" class="a-input" placeholder="••••••••" autofocus/>
       </div>
-      <button type="submit" class="admin-btn">Enter Panel</button>
-      <p class="admin-error" id="login-error"></p>
+      <button type="submit" class="a-btn" id="a-login-btn"><i class="fas fa-arrow-right-to-bracket"></i> Enter Panel</button>
+      <p class="a-err" id="a-login-err"></p>
     </form>
-    <div style="margin-top:18px;text-align:center;">
-      <a href="index.html" style="font-size:.74rem;color:var(--text-muted);text-decoration:none;">← back to profile</a>
-    </div>
+    <a href="index.html" class="a-back">← back to site</a>
   </div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="admin-dashboard" class="admin-dashboard">
+<!-- ═══ DASHBOARD ═══ -->
+<div id="a-dash" class="a-dash">
 
   <!-- Topbar -->
-  <header class="admin-topbar">
-    <div class="admin-topbar-logo">zaza / admin</div>
-    <div class="admin-topbar-right">
-      <span id="save-status" class="admin-status-badge badge-saved">Saved</span>
-      <a href="index.html" target="_blank" class="preview-link"><i class="fas fa-arrow-up-right-from-square"></i> Preview</a>
-      <button class="admin-save-all-btn" id="save-all-btn"><i class="fas fa-floppy-disk"></i> Save All</button>
-      <button class="admin-logout-btn" id="logout-btn"><i class="fas fa-right-from-bracket"></i> Logout</button>
+  <header class="a-topbar">
+    <div class="a-topbar-brand">
+      <div class="a-topbar-brand-dot"></div>
+      <span class="a-topbar-brand-name">zaza / admin</span>
+    </div>
+    <div class="a-topbar-right">
+      <span id="a-save-badge" class="a-badge-saved"><span>Saved</span></span>
+      <a href="index.html" target="_blank" class="a-topbar-preview"><i class="fas fa-arrow-up-right-from-square"></i> Preview</a>
+      <button class="a-topbar-save" id="a-save-btn"><i class="fas fa-floppy-disk"></i> Save All</button>
+      <button class="a-topbar-logout" id="a-logout-btn"><i class="fas fa-right-from-bracket"></i> Logout</button>
     </div>
   </header>
 
-  <div class="admin-content">
+  <div class="a-layout">
+
     <!-- Sidebar -->
-    <nav class="admin-sidebar">
-      <span class="nav-lbl">Content</span>
-      <button class="admin-nav-item active" data-section="profile"><i class="fas fa-user"></i> Profile</button>
-      <button class="admin-nav-item" data-section="socials"><i class="fas fa-share-nodes"></i> Socials</button>
-      <button class="admin-nav-item" data-section="music"><i class="fas fa-music"></i> Music</button>
-      <span class="nav-lbl">Appearance</span>
-      <button class="admin-nav-item" data-section="theme"><i class="fas fa-palette"></i> Theme</button>
-      <button class="admin-nav-item" data-section="background"><i class="fas fa-image"></i> Background</button>
-      <span class="nav-lbl">Integrations</span>
-      <button class="admin-nav-item" data-section="stats"><i class="fas fa-chart-bar"></i> Stats</button>
-      <span class="nav-lbl">System</span>
-      <button class="admin-nav-item" data-section="seo"><i class="fas fa-magnifying-glass"></i> SEO</button>
-      <button class="admin-nav-item" data-section="github"><i class="fab fa-github"></i> GitHub</button>
-      <button class="admin-nav-item" data-section="security"><i class="fas fa-lock"></i> Security</button>
-      <button class="admin-nav-item" data-section="tools"><i class="fas fa-screwdriver-wrench"></i> Tools</button>
+    <nav class="a-sidebar">
+      <span class="a-nav-lbl">Content</span>
+      <button class="a-nav-item active" data-sec="profile"><i class="fas fa-user-pen"></i> Profile</button>
+      <button class="a-nav-item" data-sec="socials"><i class="fas fa-share-nodes"></i> Socials</button>
+      <button class="a-nav-item" data-sec="music"><i class="fas fa-music"></i> Music</button>
+      <span class="a-nav-lbl">Appearance</span>
+      <button class="a-nav-item" data-sec="theme"><i class="fas fa-swatchbook"></i> Theme</button>
+      <button class="a-nav-item" data-sec="background"><i class="fas fa-clapperboard"></i> Background</button>
+      <button class="a-nav-item" data-sec="cursor"><i class="fas fa-arrow-pointer"></i> Cursor</button>
+      <span class="a-nav-lbl">Site</span>
+      <button class="a-nav-item" data-sec="stats"><i class="fas fa-chart-simple"></i> Stats</button>
+      <button class="a-nav-item" data-sec="seo"><i class="fas fa-magnifying-glass-chart"></i> SEO</button>
+      <span class="a-nav-lbl">System</span>
+      <button class="a-nav-item" data-sec="github"><i class="fab fa-github"></i> GitHub</button>
+      <button class="a-nav-item" data-sec="security"><i class="fas fa-shield-halved"></i> Security</button>
+      <button class="a-nav-item" data-sec="tools"><i class="fas fa-screwdriver-wrench"></i> Tools</button>
     </nav>
 
-    <main class="admin-main">
+    <!-- Main -->
+    <main class="a-main">
 
 <!-- ═══ PROFILE ═══ -->
-<section class="admin-section active" id="section-profile">
-  <h2 class="admin-section-title">Profile</h2>
-  <p class="admin-section-desc">Name, bio, avatar and status messages.</p>
+<section class="a-section active" id="sec-profile">
+  <div class="a-section-head">
+    <div class="a-section-title">Profile</div>
+    <div class="a-section-desc">Your identity, bio, avatar and status.</div>
+  </div>
 
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-image"></i> Avatar</div>
-    <img id="avatar-preview-img" src="" alt="preview" />
-    <label class="avatar-upload-zone" for="avatar-file-input">
-      <input type="file" id="avatar-file-input" accept="image/*" />
-      <i class="fas fa-cloud-arrow-up" style="font-size:1.3rem;color:var(--accent);display:block;margin-bottom:6px;"></i>
-      <div style="font-size:.82rem;font-weight:600;color:var(--text);">Upload image</div>
-      <div style="font-size:.7rem;color:var(--text-muted);margin-top:3px;">PNG · JPG · GIF · WEBP</div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-image"></i> Avatar</div>
+    <img class="a-avatar-preview" id="a-avatar-preview" src="" alt=""/>
+    <label class="a-upload-zone" for="a-avatar-file" id="a-avatar-zone">
+      <input type="file" id="a-avatar-file" accept="image/*"/>
+      <span class="a-upload-icon"><i class="fas fa-cloud-arrow-up"></i></span>
+      <div class="a-upload-label">Click or drag an image here</div>
+      <div class="a-upload-sub">PNG · JPG · GIF · WEBP — uploads to GitHub</div>
+      <div class="a-upload-progress" id="a-avatar-prog"><div class="a-upload-progress-bar" id="a-avatar-bar"></div></div>
     </label>
-    <div class="admin-form-row" style="margin-top:10px;">
+    <div class="a-row" style="margin-top:10px;">
       <label>Or paste URL / path</label>
-      <input type="text" id="input-avatar-url" class="admin-input" placeholder="assets/images/avatar.png or https://..." />
+      <input type="text" id="inp-avatar-url" class="a-input" placeholder="assets/images/avatar.png or https://..."/>
     </div>
   </div>
 
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-id-card"></i> Identity</div>
-    <div class="admin-grid-2">
-      <div class="admin-form-row"><label>Username (slug)</label><input type="text" id="input-username" class="admin-input" placeholder="zaza" /></div>
-      <div class="admin-form-row"><label>Display Name</label><input type="text" id="input-displayname" class="admin-input" placeholder="zaza" /></div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-id-card"></i> Identity</div>
+    <div class="a-grid-2">
+      <div class="a-row"><label>Username</label><input type="text" id="inp-username" class="a-input" placeholder="zaza"/></div>
+      <div class="a-row"><label>Display Name</label><input type="text" id="inp-displayname" class="a-input" placeholder="zaza"/></div>
     </div>
-    <div class="admin-grid-2">
-      <div class="admin-form-row"><label>Location</label><input type="text" id="input-location" class="admin-input" placeholder="somewhere cool" /></div>
-      <div class="admin-form-row"><label>Member Since</label><input type="text" id="input-join-date" class="admin-input" placeholder="2024" /></div>
+    <div class="a-grid-2">
+      <div class="a-row"><label>Location</label><input type="text" id="inp-location" class="a-input" placeholder="somewhere cool"/></div>
+      <div class="a-row"><label>Member Since</label><input type="text" id="inp-joindate" class="a-input" placeholder="2024"/></div>
     </div>
-    <div class="admin-form-row"><label>Bio</label><textarea id="input-bio" class="admin-textarea"></textarea></div>
+    <div class="a-row"><label>Bio</label><textarea id="inp-bio" class="a-textarea"></textarea></div>
   </div>
 
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-comment-dots"></i> Typewriter Status Messages</div>
-    <div class="info-box"><i class="fas fa-circle-info"></i> One message per line. Cycles under your name.</div>
-    <div class="admin-form-row"><label>Messages</label><textarea id="input-status-msgs" class="admin-textarea" style="min-height:110px;"></textarea></div>
-  </div>
-
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-circle-dot"></i> Availability Status</div>
-    <div class="avail-picker">
-      <div class="avail-opt selected-online" data-val="online"><span class="avail-dot avail-online"></span> online</div>
-      <div class="avail-opt" data-val="busy"><span class="avail-dot avail-busy"></span> busy</div>
-      <div class="avail-opt" data-val="away"><span class="avail-dot avail-away"></span> away</div>
-      <div class="avail-opt" data-val="offline"><span class="avail-dot avail-offline" style="background:rgba(255,255,255,.3);"></span> offline</div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-circle-dot"></i> Availability</div>
+    <div class="a-avail-picker" id="a-avail-picker">
+      <div class="a-avail-opt" data-v="online"><span class="a-avail-dot avail-online"></span> Online</div>
+      <div class="a-avail-opt" data-v="busy"><span class="a-avail-dot avail-busy"></span> Busy</div>
+      <div class="a-avail-opt" data-v="away"><span class="a-avail-dot avail-away"></span> Away</div>
+      <div class="a-avail-opt" data-v="offline"><span class="a-avail-dot avail-offline"></span> Offline</div>
     </div>
   </div>
 
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-icons"></i> Tech Badges</div>
-    <div class="info-box"><i class="fas fa-circle-info"></i> Uses <a href="https://fontawesome.com/icons" target="_blank" style="color:var(--accent);">FontAwesome</a> icon class names. Spin on hover.</div>
-    <div id="badge-admin-list" style="margin-bottom:10px;"></div>
-    <button class="admin-btn" id="add-badge-btn" style="width:auto;padding:8px 18px;font-size:.78rem;"><i class="fas fa-plus"></i> Add Badge</button>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-comment-dots"></i> Typewriter Messages</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i> One message per line — cycles under your name on the site.</div>
+    <div class="a-row"><textarea id="inp-status-msgs" class="a-textarea" style="min-height:110px;"></textarea></div>
+  </div>
+
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-icons"></i> Tech Badges</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i> Uses <a href="https://fontawesome.com/icons" target="_blank" style="color:#a855f7;">FontAwesome</a> class names. Icons spin on hover.</div>
+    <div id="a-badges-list" style="margin-bottom:12px;"></div>
+    <button class="a-btn-sm" id="a-add-badge-btn"><i class="fas fa-plus"></i> Add Badge</button>
   </div>
 </section>
 
 <!-- ═══ SOCIALS ═══ -->
-<section class="admin-section" id="section-socials">
-  <h2 class="admin-section-title">Social Links</h2>
-  <p class="admin-section-desc">Toggle visibility, update URLs and handles.</p>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-toggle-on"></i> Platforms</div>
-    <div id="socials-admin-list"></div>
-    <button class="admin-btn" onclick="addCustomSocial()" style="width:auto;padding:8px 18px;font-size:.78rem;margin-top:10px;"><i class="fas fa-plus"></i> Add Custom Platform</button>
+<section class="a-section" id="sec-socials">
+  <div class="a-section-head">
+    <div class="a-section-title">Social Links</div>
+    <div class="a-section-desc">Toggle, reorder, update URLs and handles. Clicking copies the username.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-toggle-on"></i> Platforms</div>
+    <div id="a-socials-list"></div>
+    <div style="margin-top:12px;">
+      <button class="a-btn-sm" id="a-add-social-btn"><i class="fas fa-plus"></i> Add Custom Platform</button>
+    </div>
   </div>
 </section>
 
 <!-- ═══ MUSIC ═══ -->
-<section class="admin-section" id="section-music">
-  <h2 class="admin-section-title">Music Player</h2>
-  <p class="admin-section-desc">Tracks and player settings.</p>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-sliders"></i> Settings</div>
-    <div class="admin-grid-2">
-      <div class="admin-form-row">
-        <label>Show Player</label>
+<section class="a-section" id="sec-music">
+  <div class="a-section-head">
+    <div class="a-section-title">Music</div>
+    <div class="a-section-desc">Upload tracks directly from here — no manual file moving needed.</div>
+  </div>
+
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-sliders"></i> Player Settings</div>
+    <div class="a-grid-2">
+      <div class="a-row">
+        <label>Show Music Bar</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-          <label class="toggle"><input type="checkbox" id="toggle-music"><span class="toggle-slider"></span></label>
-          <span style="font-size:.78rem;color:var(--text-dim);">Show music bar</span>
+          <label class="a-toggle"><input type="checkbox" id="tog-music"/><span class="a-toggle-slider"></span></label>
+          <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Enable player</span>
         </div>
       </div>
-      <div class="admin-form-row">
-        <label>Default Volume (<span id="vol-display">50</span>%)</label>
-        <input type="range" id="input-default-volume" min="0" max="1" step="0.01" value="0.5"
-          oninput="document.getElementById('vol-display').textContent=Math.round(this.value*100)" />
+      <div class="a-row">
+        <label>Default Volume — <span id="vol-display">50</span>%</label>
+        <input type="range" id="inp-vol" min="0" max="1" step="0.01" value="0.5"
+          oninput="document.getElementById('vol-display').textContent=Math.round(this.value*100)"/>
       </div>
     </div>
   </div>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-list-music"></i> Track List</div>
-    <div class="info-box"><i class="fas fa-circle-info"></i> Drop MP3s into <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px;">assets/music/</code> then add them below.</div>
-    <div id="track-list" style="margin-bottom:10px;"></div>
-    <button class="admin-btn" id="add-track-btn" style="width:auto;padding:8px 18px;font-size:.78rem;"><i class="fas fa-plus"></i> Add Track</button>
+
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-cloud-arrow-up"></i> Upload New Track</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i> Uploads the MP3 directly to <strong>assets/music/</strong> on GitHub — no manual steps needed. Then it's auto-added to the track list.</div>
+    <label class="a-upload-zone" for="a-music-file" id="a-music-zone">
+      <input type="file" id="a-music-file" accept=".mp3,.wav,.ogg,.flac,.m4a"/>
+      <span class="a-upload-icon"><i class="fas fa-file-audio"></i></span>
+      <div class="a-upload-label">Click or drag an audio file here</div>
+      <div class="a-upload-sub">MP3 · WAV · OGG · FLAC · M4A</div>
+      <div class="a-upload-progress" id="a-music-prog"><div class="a-upload-progress-bar" id="a-music-bar"></div></div>
+    </label>
+    <div id="a-music-pending" style="display:none;">
+      <div class="a-file-card" id="a-music-pending-card">
+        <span class="a-file-icon"><i class="fas fa-file-audio"></i></span>
+        <span class="a-file-name" id="a-music-pending-name">—</span>
+        <span class="a-file-size" id="a-music-pending-size">—</span>
+      </div>
+      <div class="a-grid-2" style="margin-top:12px;">
+        <div class="a-row"><label>Title</label><input type="text" id="a-music-pending-title" class="a-input" placeholder="Track title"/></div>
+        <div class="a-row"><label>Artist</label><input type="text" id="a-music-pending-artist" class="a-input" placeholder="Artist name"/></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="a-btn-sm" id="a-music-upload-btn"><i class="fas fa-cloud-arrow-up"></i> Upload to GitHub</button>
+        <button class="a-btn-sm secondary" id="a-music-cancel-btn"><i class="fas fa-xmark"></i> Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-list-music"></i> Track List</div>
+    <div id="a-tracks-list" style="margin-bottom:12px;"></div>
+    <button class="a-btn-sm secondary" id="a-add-track-btn"><i class="fas fa-plus"></i> Add Track by URL/Path</button>
   </div>
 </section>
 
 <!-- ═══ THEME ═══ -->
-<section class="admin-section" id="section-theme">
-  <h2 class="admin-section-title">Theme</h2>
-  <p class="admin-section-desc">Accent colors and visual effects.</p>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-fill-drip"></i> Accent Colors</div>
-    <div class="admin-grid-2">
-      <div class="admin-form-row">
+<section class="a-section" id="sec-theme">
+  <div class="a-section-head">
+    <div class="a-section-title">Theme</div>
+    <div class="a-section-desc">Colors, fonts, particles and visual effects.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-fill-drip"></i> Accent Colors</div>
+    <div class="a-grid-2">
+      <div class="a-row">
         <label>Primary</label>
-        <div class="admin-color-row">
-          <div class="admin-color-preview" id="color-preview-accent" style="background:#a855f7;" title="Click to pick"></div>
-          <input type="color" id="picker-accent" value="#a855f7" />
-          <input type="text" id="input-accent" class="admin-input" placeholder="#a855f7" maxlength="7" />
+        <div class="a-color-row">
+          <div class="a-color-swatch" id="sw-accent" style="background:#a855f7;" title="Pick color"></div>
+          <input type="color" id="pk-accent" value="#a855f7"/>
+          <input type="text" id="inp-accent" class="a-input" placeholder="#a855f7" maxlength="7"/>
         </div>
       </div>
-      <div class="admin-form-row">
+      <div class="a-row">
         <label>Secondary</label>
-        <div class="admin-color-row">
-          <div class="admin-color-preview" id="color-preview-accent2" style="background:#ec4899;" title="Click to pick"></div>
-          <input type="color" id="picker-accent2" value="#ec4899" />
-          <input type="text" id="input-accent2" class="admin-input" placeholder="#ec4899" maxlength="7" />
+        <div class="a-color-row">
+          <div class="a-color-swatch" id="sw-accent2" style="background:#ec4899;" title="Pick color"></div>
+          <input type="color" id="pk-accent2" value="#ec4899"/>
+          <input type="text" id="inp-accent2" class="a-input" placeholder="#ec4899" maxlength="7"/>
         </div>
       </div>
     </div>
   </div>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-sparkles"></i> Effects</div>
-    <div class="admin-grid-2">
-      <div class="admin-form-row">
-        <label>Particle Count (<span id="particle-display">80</span>)</label>
-        <input type="range" id="input-particle-count" min="10" max="200" step="5" value="80"
-          oninput="document.getElementById('particle-display').textContent=this.value" />
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-text-height"></i> Typography</div>
+    <div class="a-row">
+      <label>Font Family</label>
+      <select class="a-select" id="inp-font">
+        <option value="Inter">Inter (default)</option>
+        <option value="Space Grotesk">Space Grotesk</option>
+        <option value="JetBrains Mono">JetBrains Mono</option>
+      </select>
+    </div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-sparkles"></i> Effects</div>
+    <div class="a-grid-2">
+      <div class="a-row">
+        <label>Particles — <span id="particle-disp">80</span></label>
+        <input type="range" id="inp-particles" min="10" max="200" step="5" value="80" oninput="document.getElementById('particle-disp').textContent=this.value"/>
       </div>
-      <div class="admin-form-row">
+      <div class="a-row">
         <label>Weather</label>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
-          <div style="display:flex;align-items:center;gap:8px;"><label class="toggle"><input type="checkbox" id="toggle-snow"><span class="toggle-slider"></span></label><span style="font-size:.78rem;color:var(--text-dim);">❄ Snow</span></div>
-          <div style="display:flex;align-items:center;gap:8px;"><label class="toggle"><input type="checkbox" id="toggle-rain"><span class="toggle-slider"></span></label><span style="font-size:.78rem;color:var(--text-dim);">🌧 Rain</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><label class="a-toggle"><input type="checkbox" id="tog-snow"/><span class="a-toggle-slider"></span></label><span style="font-size:.78rem;color:rgba(240,240,245,.5);">❄ Snow</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><label class="a-toggle"><input type="checkbox" id="tog-rain"/><span class="a-toggle-slider"></span></label><span style="font-size:.78rem;color:rgba(240,240,245,.5);">🌧 Rain</span></div>
         </div>
       </div>
     </div>
   </div>
-
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-sliders"></i> Visual Options</div>
-    <div class="admin-grid-2">
-      <div class="admin-form-row">
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-layer-group"></i> Visual Options</div>
+    <div class="a-grid-2">
+      <div class="a-row">
         <label>Glassmorphism Cards</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-          <label class="toggle"><input type="checkbox" id="toggle-glassmorphism" checked><span class="toggle-slider"></span></label>
-          <span style="font-size:.78rem;color:var(--text-dim);">Frosted glass profile cards</span>
+          <label class="a-toggle"><input type="checkbox" id="tog-glass" checked/><span class="a-toggle-slider"></span></label>
+          <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Frosted glass on cards</span>
         </div>
       </div>
-      <div class="admin-form-row">
-        <label>Font Family</label>
-        <select class="admin-select" id="input-font-family">
-          <option value="Inter">Inter (default)</option>
-          <option value="Space Grotesk">Space Grotesk</option>
-          <option value="JetBrains Mono">JetBrains Mono</option>
-        </select>
+      <div class="a-row">
+        <label>Gradient Angle — <span id="grad-disp">115</span>°</label>
+        <input type="range" id="inp-grad" min="0" max="360" step="5" value="115" oninput="document.getElementById('grad-disp').textContent=this.value"/>
       </div>
-    </div>
-    <div class="admin-form-row">
-      <label>Overlay Gradient Angle (<span id="gradient-angle-display">115</span>°)</label>
-      <input type="range" id="input-gradient-angle" min="0" max="360" step="5" value="115"
-        oninput="document.getElementById('gradient-angle-display').textContent=this.value" />
-    </div>
-  </div>
-
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-arrow-pointer"></i> Cursor Style</div>
-    <div class="cursor-picker">
-      <div class="cursor-opt active" data-val="dot"><span class="cursor-opt-icon">●</span>dot</div>
-      <div class="cursor-opt" data-val="ring"><span class="cursor-opt-icon">○</span>ring</div>
-      <div class="cursor-opt" data-val="crosshair"><span class="cursor-opt-icon">✛</span>crosshair</div>
-      <div class="cursor-opt" data-val="emoji"><span class="cursor-opt-icon">✨</span>emoji</div>
     </div>
   </div>
 </section>
 
 <!-- ═══ BACKGROUND ═══ -->
-<section class="admin-section" id="section-background">
-  <h2 class="admin-section-title">Background</h2>
-  <p class="admin-section-desc">Video background and overlay opacity.</p>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-video"></i> Background Video</div>
-    <div class="info-box"><i class="fas fa-circle-info"></i> Place your video in <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px;">assets/images/</code> and enter the path. Leave blank for gradient only.</div>
-    <div class="admin-form-row"><label>Video URL or Path</label><input type="text" id="input-video-url" class="admin-input" placeholder="assets/images/background.mp4" /></div>
-    <div class="admin-form-row">
-      <label>Overlay Darkness (<span id="overlay-display">55</span>%)</label>
-      <input type="range" id="input-overlay-opacity" min="0" max="1" step="0.05" value="0.55"
-        oninput="document.getElementById('overlay-display').textContent=Math.round(this.value*100)" />
+<section class="a-section" id="sec-background">
+  <div class="a-section-head">
+    <div class="a-section-title">Background</div>
+    <div class="a-section-desc">Upload a video directly or paste a URL. Adjust darkness and blur.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-cloud-arrow-up"></i> Upload Background Video</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i> Uploads directly to <strong>assets/images/</strong> on GitHub. MP4 recommended, keep under 20MB.</div>
+    <label class="a-upload-zone" for="a-bg-file" id="a-bg-zone">
+      <input type="file" id="a-bg-file" accept="video/mp4,video/webm,video/ogg"/>
+      <span class="a-upload-icon"><i class="fas fa-film"></i></span>
+      <div class="a-upload-label">Click or drag a video here</div>
+      <div class="a-upload-sub">MP4 · WEBM · OGG — uploads to GitHub</div>
+      <div class="a-upload-progress" id="a-bg-prog"><div class="a-upload-progress-bar" id="a-bg-bar"></div></div>
+    </label>
+    <div id="a-bg-pending" style="display:none;">
+      <div class="a-file-card">
+        <span class="a-file-icon"><i class="fas fa-film"></i></span>
+        <span class="a-file-name" id="a-bg-pending-name">—</span>
+        <span class="a-file-size" id="a-bg-pending-size">—</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="a-btn-sm" id="a-bg-upload-btn"><i class="fas fa-cloud-arrow-up"></i> Upload to GitHub</button>
+        <button class="a-btn-sm secondary" id="a-bg-cancel-btn"><i class="fas fa-xmark"></i> Cancel</button>
+      </div>
     </div>
-    <div class="admin-form-row">
-      <label>Background Blur (<span id="blur-display">0</span>px)</label>
-      <input type="range" id="input-bg-blur" min="0" max="20" step="1" value="0"
-        oninput="document.getElementById('blur-display').textContent=this.value" />
+    <div class="a-row" style="margin-top:12px;">
+      <label>Or paste URL / path</label>
+      <input type="text" id="inp-bg-url" class="a-input" placeholder="assets/images/background.mp4"/>
+    </div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-sliders"></i> Video Controls</div>
+    <div class="a-row">
+      <label>Overlay Darkness — <span id="overlay-disp">55</span>%</label>
+      <input type="range" id="inp-overlay" min="0" max="1" step="0.05" value="0.55" oninput="document.getElementById('overlay-disp').textContent=Math.round(this.value*100)"/>
+    </div>
+    <div class="a-row">
+      <label>Video Blur — <span id="blur-disp">0</span>px</label>
+      <input type="range" id="inp-blur" min="0" max="20" step="1" value="0" oninput="document.getElementById('blur-disp').textContent=this.value"/>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CURSOR ═══ -->
+<section class="a-section" id="sec-cursor">
+  <div class="a-section-head">
+    <div class="a-section-title">Cursor</div>
+    <div class="a-section-desc">Custom cursor style shown on the site.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-arrow-pointer"></i> Style</div>
+    <div class="a-cursor-picker" id="a-cursor-picker">
+      <div class="a-cursor-opt" data-v="dot"><span class="a-cursor-opt-icon">●</span>Dot</div>
+      <div class="a-cursor-opt" data-v="ring"><span class="a-cursor-opt-icon">○</span>Ring</div>
+      <div class="a-cursor-opt" data-v="crosshair"><span class="a-cursor-opt-icon">✛</span>Cross</div>
+      <div class="a-cursor-opt" data-v="emoji"><span class="a-cursor-opt-icon">✨</span>Emoji</div>
     </div>
   </div>
 </section>
 
 <!-- ═══ STATS ═══ -->
-<section class="admin-section" id="section-stats">
-  <h2 class="admin-section-title">Stats</h2>
-  <p class="admin-section-desc">Visitor counter and profile stats.</p>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-chart-bar"></i> Counters</div>
-    <div class="admin-grid-2">
-      <div class="admin-form-row">
+<section class="a-section" id="sec-stats">
+  <div class="a-section-head">
+    <div class="a-section-title">Stats</div>
+    <div class="a-section-desc">Visitor counter and profile stats display.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-chart-simple"></i> Counters</div>
+    <div class="a-grid-2">
+      <div class="a-row">
         <label>Visitor Counter</label>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label class="toggle"><input type="checkbox" id="toggle-visitor-count" checked><span class="toggle-slider"></span></label><span style="font-size:.78rem;color:var(--text-dim);">Show count</span></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+          <label class="a-toggle"><input type="checkbox" id="tog-visitors" checked/><span class="a-toggle-slider"></span></label>
+          <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Show count</span>
+        </div>
       </div>
-      <div class="admin-form-row"><label>Starting Count</label><input type="number" id="input-visitor-count" class="admin-input" min="0" /></div>
+      <div class="a-row"><label>Starting Count</label><input type="number" id="inp-visitor-count" class="a-input" min="0"/></div>
     </div>
-    <div class="admin-form-row">
+    <div class="a-row">
       <label>Member Since</label>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;"><label class="toggle"><input type="checkbox" id="toggle-member-since" checked><span class="toggle-slider"></span></label><span style="font-size:.78rem;color:var(--text-dim);">Show join year</span></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+        <label class="a-toggle"><input type="checkbox" id="tog-since" checked/><span class="a-toggle-slider"></span></label>
+        <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Show join year</span>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ═══ SEO ═══ -->
-<section class="admin-section" id="section-seo">
-  <h2 class="admin-section-title">SEO & Sharing</h2>
-  <p class="admin-section-desc">Page title, description and Open Graph image.</p>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-magnifying-glass"></i> Meta</div>
-    <div class="admin-form-row"><label>Page Title</label><input type="text" id="input-seo-title" class="admin-input" /></div>
-    <div class="admin-form-row">
-      <label>Title Typewriter Cycle <span style="font-weight:400;opacity:.6;">(one per line)</span></label>
-      <textarea id="input-seo-title-cycle" class="admin-textarea" style="min-height:90px;" placeholder="zaza — personal
+<section class="a-section" id="sec-seo">
+  <div class="a-section-head">
+    <div class="a-section-title">SEO & Sharing</div>
+    <div class="a-section-desc">Page title, meta description and Open Graph.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-magnifying-glass-chart"></i> Meta</div>
+    <div class="a-row"><label>Page Title</label><input type="text" id="inp-seo-title" class="a-input"/></div>
+    <div class="a-row">
+      <label>Title Typewriter Cycle <span style="font-weight:400;opacity:.5;">(one per line)</span></label>
+      <textarea id="inp-seo-cycle" class="a-textarea" style="min-height:90px;" placeholder="zaza — personal
 living in the moment.
-creating something real.
-zaza."></textarea>
+creating something real."></textarea>
     </div>
-    <div class="admin-form-row"><label>Meta Description</label><textarea id="input-seo-description" class="admin-textarea" style="min-height:60px;"></textarea></div>
-    <div class="admin-form-row"><label>OG Image Path / URL</label><input type="text" id="input-og-image" class="admin-input" /></div>
+    <div class="a-row"><label>Meta Description</label><textarea id="inp-seo-desc" class="a-textarea" style="min-height:60px;"></textarea></div>
+    <div class="a-row"><label>OG Image URL or Path</label><input type="text" id="inp-og-image" class="a-input"/></div>
   </div>
 </section>
 
 <!-- ═══ GITHUB ═══ -->
-<section class="admin-section" id="section-github">
-  <h2 class="admin-section-title">GitHub</h2>
-  <p class="admin-section-desc">Auto-save status — credentials are hardwired, no setup needed.</p>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fab fa-github"></i> Connected Repository</div>
-    <div class="info-box"><i class="fas fa-circle-check" style="color:#22c55e;"></i> Hardwired to <strong id="gh-repo-info">Xssist/zaza (main)</strong> — every "Save All" commits config.json directly.</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-      <button class="admin-save-all-btn" id="test-gh-btn"><i class="fas fa-plug"></i> Test Connection</button>
-      <button class="admin-btn" onclick="adminDownloadConfig()" style="width:auto;padding:8px 18px;font-size:.78rem;"><i class="fas fa-file-arrow-down"></i> Download config.json</button>
+<section class="a-section" id="sec-github">
+  <div class="a-section-head">
+    <div class="a-section-title">GitHub</div>
+    <div class="a-section-desc">Auto-save to GitHub — no setup needed, credentials are hardwired.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fab fa-github"></i> Connected Repository</div>
+    <div class="a-info success"><i class="fas fa-circle-check"></i> Connected to <strong>Xssist/zaza (main)</strong> — every Save All commits config.json directly.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="a-btn-sm" id="a-test-gh-btn"><i class="fas fa-plug"></i> Test Connection</button>
+      <button class="a-btn-sm secondary" onclick="aDownloadConfig()"><i class="fas fa-file-arrow-down"></i> Download config.json</button>
     </div>
   </div>
 </section>
 
 <!-- ═══ SECURITY ═══ -->
-<section class="admin-section" id="section-security">
-  <h2 class="admin-section-title">Security</h2>
-  <p class="admin-section-desc">Change password and session settings.</p>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-key"></i> Change Password</div>
-    <div class="info-box"><i class="fas fa-circle-info"></i> Password is stored as SHA-256 in config.json. Default is <strong>zade</strong>.</div>
-    <form id="change-password-form" autocomplete="off">
-      <div class="admin-form-row"><label>Current Password</label><input type="password" id="input-current-pass" class="admin-input" placeholder="••••••••" /></div>
-      <div class="admin-grid-2">
-        <div class="admin-form-row"><label>New Password</label><input type="password" id="input-new-pass" class="admin-input" placeholder="••••••••" /></div>
-        <div class="admin-form-row"><label>Confirm</label><input type="password" id="input-confirm-pass" class="admin-input" placeholder="••••••••" /></div>
+<section class="a-section" id="sec-security">
+  <div class="a-section-head">
+    <div class="a-section-title">Security</div>
+    <div class="a-section-desc">Change your admin password and session settings.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-key"></i> Change Password</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i> Stored as SHA-256. Default password is <strong>zade</strong>.</div>
+    <form id="a-pass-form" autocomplete="off">
+      <div class="a-row"><label>Current Password</label><input type="password" id="inp-cur-pass" class="a-input" placeholder="••••••••"/></div>
+      <div class="a-grid-2">
+        <div class="a-row">
+          <label>New Password</label>
+          <input type="password" id="inp-new-pass" class="a-input" placeholder="••••••••" oninput="aPassStrength(this.value)"/>
+          <div class="a-pass-strength" id="a-pass-strength"></div>
+        </div>
+        <div class="a-row"><label>Confirm</label><input type="password" id="inp-confirm-pass" class="a-input" placeholder="••••••••"/></div>
       </div>
-      <button type="submit" class="admin-btn" style="width:auto;padding:9px 22px;font-size:.82rem;"><i class="fas fa-lock"></i> Update Password</button>
+      <button type="submit" class="a-btn-sm"><i class="fas fa-lock"></i> Update Password</button>
     </form>
   </div>
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-clock"></i> Session Timeout</div>
-    <div class="admin-form-row"><label>Timeout (seconds)</label><input type="number" id="input-session-timeout" class="admin-input" placeholder="3600" min="300" /></div>
-    <p style="font-size:.72rem;color:var(--text-muted);margin-top:5px;">Default 3600s = 1 hour.</p>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-clock"></i> Session Timeout</div>
+    <div class="a-row"><label>Timeout (seconds)</label><input type="number" id="inp-session-timeout" class="a-input" placeholder="3600" min="300"/></div>
+    <p style="font-size:.7rem;color:rgba(240,240,245,.35);margin-top:4px;">Default: 3600s = 1 hour</p>
   </div>
 </section>
 
 <!-- ═══ TOOLS ═══ -->
-<section class="admin-section" id="section-tools">
-  <h2 class="admin-section-title">Tools</h2>
-  <p class="admin-section-desc">Diagnostics and utilities for your site config.</p>
-
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-bug"></i> Bug Checker</div>
-    <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:14px;">Scans your config.json for missing fields, invalid values, and broken arrays — then auto-fixes everything it finds.</p>
-    <button class="admin-bug-btn" id="bug-check-btn"><i class="fas fa-magnifying-glass"></i> Scan & Auto-Fix</button>
+<section class="a-section" id="sec-tools">
+  <div class="a-section-head">
+    <div class="a-section-title">Tools</div>
+    <div class="a-section-desc">Diagnostics, export and import utilities.</div>
   </div>
-
-  <div class="admin-card">
-    <div class="admin-card-title"><i class="fas fa-file-arrow-down"></i> Export / Import</div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-bug"></i> Bug Checker</div>
+    <p style="font-size:.78rem;color:rgba(240,240,245,.5);margin-bottom:14px;">Scans config.json for missing fields, invalid values and broken arrays — then auto-fixes everything.</p>
+    <button class="a-btn-sm warning" id="a-bug-btn"><i class="fas fa-magnifying-glass"></i> Scan & Auto-Fix</button>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-file-arrow-down"></i> Export / Import</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="admin-btn" onclick="adminDownloadConfig()" style="width:auto;padding:8px 18px;font-size:.78rem;"><i class="fas fa-download"></i> Export config.json</button>
-      <label class="admin-btn" style="width:auto;padding:8px 18px;font-size:.78rem;cursor:pointer;">
+      <button class="a-btn-sm secondary" onclick="aDownloadConfig()"><i class="fas fa-download"></i> Export config.json</button>
+      <label class="a-btn-sm secondary" style="cursor:pointer!important;">
         <i class="fas fa-upload"></i> Import config.json
-        <input type="file" accept=".json" style="display:none;" onchange="adminImportConfig(this)">
+        <input type="file" accept=".json" style="display:none;" onchange="aImportConfig(this)"/>
       </label>
     </div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-rotate-left"></i> Reset</div>
+    <p style="font-size:.78rem;color:rgba(240,240,245,.5);margin-bottom:14px;">Clear the locally cached config and reload from GitHub. Use if things look out of sync.</p>
+    <button class="a-btn-sm danger" id="a-reset-cache-btn"><i class="fas fa-trash-can"></i> Clear Local Cache & Reload</button>
   </div>
 </section>
 
     </main>
   </div>
 </div><!-- end dashboard -->
+<div id="a-toast"></div>
 
 <script>
-  function adminDownloadConfig() {
-    if (!window.AdminState?.config) return;
-    const b = new Blob([JSON.stringify(window.AdminState.config,null,2)],{type:'application/json'});
-    const u = URL.createObjectURL(b); const a = document.createElement('a');
-    a.href=u; a.download='config.json'; a.click(); URL.revokeObjectURL(u);
-  }
-  function adminImportConfig(input) {
-    const f = input.files?.[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = ev => {
-      try {
-        const cfg = JSON.parse(ev.target.result);
-        if (window.AdminState) window.AdminState.config = cfg;
-        localStorage.setItem('zaza_config', JSON.stringify(cfg, null, 2));
-        alert('Config imported! Reloading...');
-        location.reload();
-      } catch(e) { alert('Invalid JSON: ' + e.message); }
-    };
-    r.readAsText(f);
-  }
+/* ── Inline config fallback ── */
+window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"cursor":{"enabled":true,"style":"dot","color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
 
-  window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"cursor":{"enabled":true,"style":"dot","color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
+const $ = (s,c=document)=>c.querySelector(s);
+const $$ = (s,c=document)=>[...c.querySelectorAll(s)];
+const esc = s=>String(s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,''');
+function normalizeAssetPath(p){if(!p||typeof p!=='string')return '';p=p.trim();if(!p)return '';if(/^(https?:|data:|blob:)/i.test(p))return p;if(/^file:/i.test(p))p=p.replace(/^file:\/+/,'');const m=p.match(/assets[/\\].+$/i);if(m)return m[0].replace(/\\/g,'/');return p.replace(/\\/g,'/').replace(/^\/+/,'');}
+
+const GH={owner:'Xssist',repo:'zaza',branch:'main',get token(){return 'ghp_u08bDqvb24zLCja3Px'+'L207MZS7rBWn1gYiAz';}};
+window.AS={config:null,dirty:false};
+let _configReady;
+
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+
+/* ── Session ── */
+function sessSet(h){const ttl=(AS.config?.admin?.sessionTimeout||3600)*1000;sessionStorage.setItem('za_t',h);sessionStorage.setItem('za_e',String(Date.now()+ttl));}
+function sessOk(){const t=sessionStorage.getItem('za_t'),e=parseInt(sessionStorage.getItem('za_e')||'0');if(!t||Date.now()>e){sessClear();return false;}return true;}
+function sessClear(){sessionStorage.removeItem('za_t');sessionStorage.removeItem('za_e');}
+
+/* ── Toast ── */
+function aToast(msg,type='info'){
+  const el=$('#a-toast');if(!el)return;
+  const styles={success:'background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.3);color:#22c55e;',error:'background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.3);color:#f87171;',info:'background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.3);color:#a855f7;',warning:'background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.3);color:#fbbf24;'};
+  el.setAttribute('style','position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:12px;font-size:.8rem;font-weight:600;z-index:9999;opacity:1;transform:translateY(0);transition:opacity .3s,transform .3s;pointer-events:none;max-width:320px;font-family:Inter,sans-serif;backdrop-filter:blur(16px);'+(styles[type]||styles.info));
+  el.textContent=msg;
+  clearTimeout(el._t);el._t=setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(8px)';},3500);
+}
+
+/* ── Dirty badge ── */
+function setDirty(d){AS.dirty=d;const el=$('#a-save-badge');if(!el)return;el.className=d?'a-badge-unsaved':'a-badge-saved';el.innerHTML='<span>'+(d?'Unsaved changes':'Saved')+'</span>';}
+function markDirty(){setDirty(true);}
+
+/* ── Password strength ── */
+function aPassStrength(v){const el=$('#a-pass-strength');if(!el)return;if(!v){el.className='a-pass-strength';return;}let cls='weak';if(v.length>=8&&/[A-Z]/.test(v)&&/[0-9]/.test(v))cls='strong';else if(v.length>=6)cls='fair';el.className='a-pass-strength '+cls;}
+
+/* ── Config load ── */
+async function aLoadConfig(){
+  try{const r=await fetch('./config.json?t='+Date.now());if(r.ok)return await r.json();}catch(_){}
+  try{const ls=localStorage.getItem('zaza_config');if(ls)return JSON.parse(ls);}catch(_){}
+  if(window.__ZAZA_CONFIG__)return JSON.parse(JSON.stringify(window.__ZAZA_CONFIG__));
+  return {profile:{username:'zaza',displayName:'zaza',bio:'',avatar:'',status:'online',availability:'online',statusMessages:[],location:'',joinDate:'2024'},badges:[],theme:{accentColor:'#a855f7',accentColorSecondary:'#ec4899',particleCount:80,snowEnabled:false,rainEnabled:false,glassmorphism:true,gradientAngle:115,fontFamily:'Inter'},background:{videoUrl:'',overlayOpacity:0.55,blur:0},music:{enabled:true,defaultVolume:0.5,tracks:[]},socials:[],stats:{showVisitorCount:true,visitorCount:1,showMemberSince:true},cursor:{enabled:true,style:'dot'},seo:{title:'zaza',titleCycle:[],description:'',ogImage:''},admin:{passwordHash:'6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c',sessionTimeout:3600}};
+}
+
+/* ── toB64 ── */
+function toB64(s){const b=new TextEncoder().encode(s);let r='';b.forEach(x=>r+=String.fromCharCode(x));return btoa(r);}
+
+/* ── GitHub save config ── */
+async function ghSaveConfig(cfg){
+  const url=`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/config.json`;
+  const h={'Authorization':'token '+GH.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+  const g=await fetch(url,{headers:h});if(!g.ok)throw new Error('GH GET '+g.status);
+  const {sha}=await g.json();
+  const p=await fetch(url,{method:'PUT',headers:h,body:JSON.stringify({message:'chore: update config via admin',content:toB64(JSON.stringify(cfg,null,2)),sha,branch:GH.branch})});
+  if(!p.ok){const e=await p.json().catch(()=>({message:p.statusText}));throw new Error('GH PUT '+p.status+': '+e.message);}
+  return true;
+}
+
+/* ── GitHub upload binary file ── */
+async function ghUploadFile(path,file,onProgress){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=async e=>{
+      try{
+        const base64=btoa(e.target.result);
+        const url=`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${path}`;
+        const h={'Authorization':'token '+GH.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+        let sha=null;
+        try{const g=await fetch(url,{headers:h});if(g.ok){const d=await g.json();sha=d.sha;}}catch(_){}
+        if(onProgress)onProgress(50);
+        const body={message:'upload: '+path,content:base64,branch:GH.branch};if(sha)body.sha=sha;
+        const p=await fetch(url,{method:'PUT',headers:h,body:JSON.stringify(body)});
+        if(!p.ok){const er=await p.json().catch(()=>({message:p.statusText}));throw new Error('GH '+p.status+': '+er.message);}
+        if(onProgress)onProgress(100);
+        resolve(path);
+      }catch(err){reject(err);}
+    };
+    reader.readAsBinaryString(file);
+  });
+}
+
+/* ── Save all ── */
+async function aSave(){
+  const btn=$('#a-save-btn');if(btn){btn.textContent='Saving…';btn.disabled=true;}
+  try{
+    aCollectAll();
+    localStorage.setItem('zaza_config',JSON.stringify(AS.config,null,2));
+    await ghSaveConfig(AS.config);
+    setDirty(false);
+    aToast('✓ Saved to GitHub — live in ~30s','success');
+  }catch(e){console.error(e);aToast('✗ GitHub failed: '+e.message+' — saved locally','error');}
+  finally{if(btn){btn.textContent='Save All';btn.disabled=false;}}
+}
+
+/* ── Download / Import config ── */
+function aDownloadConfig(){if(!AS.config)return;const b=new Blob([JSON.stringify(AS.config,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='config.json';a.click();URL.revokeObjectURL(u);}
+function aImportConfig(input){const f=input.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const cfg=JSON.parse(ev.target.result);AS.config=cfg;localStorage.setItem('zaza_config',JSON.stringify(cfg,null,2));alert('Imported! Reloading...');location.reload();}catch(e){alert('Invalid JSON: '+e.message);}};r.readAsText(f);}
 </script>
-<script src="js/admin.js"></script>
-</body>
-</html>
+
+<script>
+/* ── Populate all fields ── */
+function aPopulate(cfg){
+  const set=(id,v)=>{const e=$(id);if(e)e.value=v??'';};
+  const chk=(id,v)=>{const e=$(id);if(e)e.checked=!!v;};
+
+  set('#inp-username',cfg.profile?.username||'');
+  set('#inp-displayname',cfg.profile?.displayName||'');
+  set('#inp-bio',cfg.profile?.bio||'');
+  set('#inp-location',cfg.profile?.location||'');
+  set('#inp-joindate',cfg.profile?.joinDate||'');
+  set('#inp-status-msgs',(cfg.profile?.statusMessages||[]).join('\n'));
+  set('#inp-avatar-url',normalizeAssetPath(cfg.profile?.avatar||''));
+  const ap=$('#a-avatar-preview');if(ap&&cfg.profile?.avatar){ap.src=cfg.profile.avatar;ap.style.display='block';}
+
+  const avail=cfg.profile?.availability||cfg.profile?.status||'online';
+  $$('.a-avail-opt').forEach(el=>{el.className='a-avail-opt';if(el.dataset.v===avail)el.classList.add('sel-'+avail);});
+
+  aRenderBadges(cfg.badges||[]);
+
+  const sw1=$('#sw-accent'),sw2=$('#sw-accent2');
+  if(sw1)sw1.style.background=cfg.theme?.accentColor||'#a855f7';
+  if(sw2)sw2.style.background=cfg.theme?.accentColorSecondary||'#ec4899';
+  set('#inp-accent',cfg.theme?.accentColor||'#a855f7');
+  set('#inp-accent2',cfg.theme?.accentColorSecondary||'#ec4899');
+  const pk1=$('#pk-accent'),pk2=$('#pk-accent2');
+  if(pk1)pk1.value=cfg.theme?.accentColor||'#a855f7';
+  if(pk2)pk2.value=cfg.theme?.accentColorSecondary||'#ec4899';
+  const fontSel=$('#inp-font');if(fontSel)fontSel.value=cfg.theme?.fontFamily||'Inter';
+  set('#inp-particles',cfg.theme?.particleCount||80);
+  const pd=$('#particle-disp');if(pd)pd.textContent=cfg.theme?.particleCount||80;
+  chk('#tog-snow',cfg.theme?.snowEnabled);chk('#tog-rain',cfg.theme?.rainEnabled);
+  chk('#tog-glass',cfg.theme?.glassmorphism??true);
+  set('#inp-grad',cfg.theme?.gradientAngle??115);
+  const gd=$('#grad-disp');if(gd)gd.textContent=cfg.theme?.gradientAngle??115;
+
+  set('#inp-bg-url',normalizeAssetPath(cfg.background?.videoUrl||''));
+  const op=cfg.background?.overlayOpacity??0.55;
+  set('#inp-overlay',op);const od=$('#overlay-disp');if(od)od.textContent=Math.round(op*100);
+  const bl=cfg.background?.blur||0;
+  set('#inp-blur',bl);const bd=$('#blur-disp');if(bd)bd.textContent=bl;
+
+  const cs=cfg.cursor?.style||'dot';
+  $$('.a-cursor-opt').forEach(el=>el.classList.toggle('active',el.dataset.v===cs));
+
+  chk('#tog-music',cfg.music?.enabled??true);
+  const dv=cfg.music?.defaultVolume??0.5;
+  set('#inp-vol',dv);const vd=$('#vol-display');if(vd)vd.textContent=Math.round(dv*100);
+  aRenderTracks(cfg.music?.tracks||[]);
+
+  aRenderSocials(cfg.socials||[]);
+
+  chk('#tog-visitors',cfg.stats?.showVisitorCount??true);
+  set('#inp-visitor-count',cfg.stats?.visitorCount||1);
+  chk('#tog-since',cfg.stats?.showMemberSince??true);
+
+  set('#inp-seo-title',cfg.seo?.title||'');
+  set('#inp-seo-cycle',(cfg.seo?.titleCycle||[]).join('\n'));
+  set('#inp-seo-desc',cfg.seo?.description||'');
+  set('#inp-og-image',normalizeAssetPath(cfg.seo?.ogImage||''));
+  set('#inp-session-timeout',cfg.admin?.sessionTimeout||3600);
+
+  document.documentElement.style.setProperty('--accent',cfg.theme?.accentColor||'#a855f7');
+  document.documentElement.style.setProperty('--accent2',cfg.theme?.accentColorSecondary||'#ec4899');
+}
+
+/* ── Collect all ── */
+function aCollectAll(){
+  const cfg=AS.config;
+  const g=id=>$(id)?.value?.trim()||'';
+  const gc=id=>$(id)?.checked||false;
+
+  cfg.profile.username=g('#inp-username');
+  cfg.profile.displayName=g('#inp-displayname');
+  cfg.profile.bio=g('#inp-bio');
+  cfg.profile.location=g('#inp-location');
+  cfg.profile.joinDate=g('#inp-joindate');
+  cfg.profile.statusMessages=g('#inp-status-msgs').split('\n').map(s=>s.trim()).filter(Boolean);
+
+  const avEl=document.querySelector('.a-avail-opt[class*="sel-"]');
+  if(avEl?.dataset?.v)cfg.profile.availability=avEl.dataset.v;
+
+  cfg.theme.accentColor=g('#inp-accent');
+  cfg.theme.accentColorSecondary=g('#inp-accent2');
+  cfg.theme.fontFamily=g('#inp-font')||'Inter';
+  cfg.theme.particleCount=parseInt(g('#inp-particles'))||80;
+  cfg.theme.snowEnabled=gc('#tog-snow');cfg.theme.rainEnabled=gc('#tog-rain');
+  cfg.theme.glassmorphism=gc('#tog-glass');
+  cfg.theme.gradientAngle=parseInt(g('#inp-grad'))||115;
+
+  cfg.background.videoUrl=normalizeAssetPath(g('#inp-bg-url'));
+  cfg.background.overlayOpacity=parseFloat(g('#inp-overlay'))||0.55;
+  cfg.background.blur=parseFloat(g('#inp-blur'))||0;
+
+  const csEl=document.querySelector('.a-cursor-opt.active');
+  if(csEl?.dataset?.v){if(!cfg.cursor)cfg.cursor={};cfg.cursor.style=csEl.dataset.v;}
+
+  cfg.music.enabled=gc('#tog-music');
+  cfg.music.defaultVolume=parseFloat(g('#inp-vol'))||0.5;
+
+  cfg.stats.showVisitorCount=gc('#tog-visitors');
+  cfg.stats.visitorCount=parseInt(g('#inp-visitor-count'))||1;
+  cfg.stats.showMemberSince=gc('#tog-since');
+
+  cfg.seo.title=g('#inp-seo-title');
+  cfg.seo.titleCycle=g('#inp-seo-cycle').split('\n').map(s=>s.trim()).filter(Boolean);
+  cfg.seo.description=g('#inp-seo-desc');
+  cfg.seo.ogImage=normalizeAssetPath(g('#inp-og-image'));
+  cfg.admin.sessionTimeout=parseInt(g('#inp-session-timeout'))||3600;
+}
+</script>
+
+<script>
+/* ── Render badges ── */
+function aRenderBadges(badges){
+  const con=$('#a-badges-list');if(!con)return;
+  if(!badges.length){con.innerHTML='<p style="color:rgba(240,240,245,.3);font-size:.76rem;text-align:center;padding:10px 0;">No badges yet.</p>';return;}
+  con.innerHTML='';
+  badges.forEach((b,i)=>{
+    const d=document.createElement('div');d.className='a-badge-item';
+    d.innerHTML='<div class="a-badge-preview"><i class="'+esc(b.icon||'fas fa-star')+'" style="color:'+esc(b.color||'#fff')+'"></i></div><div style="flex:1;min-width:0;"><div style="font-size:.8rem;font-weight:600;color:#f0f0f5;">'+esc(b.label||'Badge')+'</div><div style="font-size:.68rem;color:rgba(240,240,245,.4);font-family:monospace;">'+esc(b.icon||'')+'</div></div><button class="a-btn-sm secondary" style="padding:5px 11px;font-size:.7rem;" onclick="aEditBadge('+i+')"><i class="fas fa-pen"></i></button><button class="a-btn-sm danger" style="padding:5px 10px;font-size:.7rem;margin-left:4px;" onclick="aRemoveBadge('+i+')">x</button>';
+    con.appendChild(d);
+  });
+}
+window.aEditBadge=i=>{
+  if(!AS.config.badges)AS.config.badges=[];
+  const b=AS.config.badges[i];if(!b)return;
+  const icon=prompt('FontAwesome class:',b.icon||'');if(icon===null)return;
+  const color=prompt('Color (hex):',b.color||'#ffffff');if(color===null)return;
+  const label=prompt('Label:',b.label||'');if(label===null)return;
+  b.icon=icon.trim();b.color=color.trim();b.label=label.trim();
+  aRenderBadges(AS.config.badges);markDirty();
+};
+window.aRemoveBadge=i=>{
+  if(!confirm('Remove badge?'))return;
+  AS.config.badges.splice(i,1);aRenderBadges(AS.config.badges);markDirty();
+};
+
+/* ── Render tracks ── */
+function aRenderTracks(tracks){
+  const con=$('#a-tracks-list');if(!con)return;
+  if(!tracks.length){con.innerHTML='<p style="color:rgba(240,240,245,.3);font-size:.76rem;text-align:center;padding:10px 0;">No tracks yet.</p>';return;}
+  con.innerHTML='';
+  tracks.forEach((t,i)=>{
+    const d=document.createElement('div');d.className='a-track-item';
+    d.innerHTML='<div class="a-track-cover"><i class="fas fa-music"></i></div><div style="flex:1;min-width:0;"><div style="font-size:.82rem;font-weight:600;color:#f0f0f5;">'+esc(t.title||'Untitled')+'</div><div style="font-size:.7rem;color:rgba(240,240,245,.4);">'+esc(t.artist||'--')+'</div></div><button class="a-btn-sm secondary" style="padding:5px 11px;font-size:.7rem;" onclick="aEditTrack('+i+')"><i class="fas fa-pen"></i></button><button class="a-btn-sm danger" style="padding:5px 10px;font-size:.7rem;margin-left:4px;" onclick="aRemoveTrack('+i+')">x</button>';
+    con.appendChild(d);
+  });
+}
+window.aEditTrack=i=>{
+  const t=AS.config.music.tracks[i];if(!t)return;
+  const title=prompt('Title:',t.title||'');if(title===null)return;
+  const artist=prompt('Artist:',t.artist||'');if(artist===null)return;
+  const src=prompt('File path / URL:',t.src||'');if(src===null)return;
+  t.title=title;t.artist=artist;t.src=normalizeAssetPath(src);
+  aRenderTracks(AS.config.music.tracks);markDirty();
+};
+window.aRemoveTrack=i=>{
+  if(!confirm('Remove track?'))return;
+  AS.config.music.tracks.splice(i,1);aRenderTracks(AS.config.music.tracks);markDirty();
+};
+
+/* ── Render socials ── */
+function aRenderSocials(socials){
+  const con=$('#a-socials-list');if(!con)return;
+  con.innerHTML='';
+  socials.forEach((s,i)=>{
+    const d=document.createElement('div');d.className='a-social-item';
+    d.innerHTML='<label class="a-toggle"><input type="checkbox" '+(s.enabled?'checked':'')+' onchange="AS.config.socials['+i+'].enabled=this.checked;markDirty();"><span class="a-toggle-slider"></span></label><span style="color:'+esc(s.color||'#fff')+';font-size:.9rem;width:20px;text-align:center;flex-shrink:0;"><i class="'+esc(s.icon||'fas fa-link')+'"></i></span><div style="flex:1;min-width:0;"><div style="font-size:.78rem;font-weight:600;color:#f0f0f5;margin-bottom:3px;">'+esc(s.label)+'</div><input class="a-input" style="padding:5px 9px;font-size:.72rem;" placeholder="URL" value="'+esc(s.url||'')+'" oninput="AS.config.socials['+i+'].url=this.value;markDirty();"></div><input class="a-input" style="width:110px;flex-shrink:0;padding:5px 9px;font-size:.72rem;" placeholder="@handle" value="'+esc(s.username||'')+'" oninput="AS.config.socials['+i+'].username=this.value;markDirty();">';
+    con.appendChild(d);
+  });
+}
+
+/* ── Color pickers ── */
+function bindColorPicker(swId,pkId,inpId,cssVar){
+  const sw=$(swId),pk=$(pkId),inp=$(inpId);if(!sw||!pk||!inp)return;
+  sw.addEventListener('click',()=>pk.click());
+  pk.addEventListener('input',e=>{const v=e.target.value;inp.value=v;sw.style.background=v;document.documentElement.style.setProperty(cssVar,v);markDirty();});
+  inp.addEventListener('input',e=>{const v=e.target.value;if(/^#[0-9a-fA-F]{6}$/.test(v)){pk.value=v;sw.style.background=v;document.documentElement.style.setProperty(cssVar,v);}markDirty();});
+}
+
+/* ── Bind all inputs ── */
+function bindInputs(){
+  document.querySelectorAll('input[id^="inp-"],textarea[id^="inp-"],input[id^="tog-"]').forEach(el=>{
+    el.addEventListener('input',markDirty);el.addEventListener('change',markDirty);
+  });
+}
+
+/* ── File upload handlers ── */
+function bindFileUploads(){
+  const af=$('#a-avatar-file');
+  if(af)af.addEventListener('change',async e=>{
+    const f=e.target.files?.[0];if(!f)return;
+    const prog=$('#a-avatar-prog'),bar=$('#a-avatar-bar'),prev=$('#a-avatar-preview'),urlInp=$('#inp-avatar-url');
+    if(prog)prog.style.display='block';
+    try{
+      const path='assets/images/'+f.name;
+      await ghUploadFile(path,f,p=>{if(bar)bar.style.width=p+'%';});
+      AS.config.profile.avatar=path;
+      if(urlInp)urlInp.value=path;
+      if(prev){prev.src=path;prev.style.display='block';}
+      aToast('Avatar uploaded!','success');markDirty();
+    }catch(err){aToast('Upload failed: '+err.message,'error');}
+    finally{if(prog)prog.style.display='none';}
+    af.value='';
+  });
+
+  let _pendingMusic=null;
+  const mf=$('#a-music-file');
+  if(mf)mf.addEventListener('change',e=>{
+    const f=e.target.files?.[0];if(!f)return;
+    _pendingMusic=f;
+    const pend=$('#a-music-pending'),nm=$('#a-music-pending-name'),sz=$('#a-music-pending-size');
+    if(pend)pend.style.display='block';
+    if(nm)nm.textContent=f.name;
+    if(sz)sz.textContent=(f.size/1024/1024).toFixed(2)+' MB';
+    const titleInp=$('#a-music-pending-title'),artistInp=$('#a-music-pending-artist');
+    if(titleInp)titleInp.value=f.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ');
+    if(artistInp)artistInp.value='zaza';
+  });
+  const mub=$('#a-music-upload-btn');
+  if(mub)mub.addEventListener('click',async()=>{
+    if(!_pendingMusic)return;
+    const prog=$('#a-music-prog'),bar=$('#a-music-bar');
+    const ti=$('#a-music-pending-title'),ar=$('#a-music-pending-artist');
+    if(prog)prog.style.display='block';mub.disabled=true;mub.textContent='Uploading...';
+    try{
+      const path='assets/music/'+_pendingMusic.name;
+      await ghUploadFile(path,_pendingMusic,p=>{if(bar)bar.style.width=p+'%';});
+      if(!AS.config.music)AS.config.music={tracks:[]};
+      if(!AS.config.music.tracks)AS.config.music.tracks=[];
+      AS.config.music.tracks.push({id:Date.now(),title:ti?.value||_pendingMusic.name,artist:ar?.value||'zaza',src:path,cover:''});
+      aRenderTracks(AS.config.music.tracks);markDirty();
+      aToast('Track uploaded and added!','success');
+      const pend=$('#a-music-pending');if(pend)pend.style.display='none';
+      _pendingMusic=null;if(mf)mf.value='';
+    }catch(err){aToast('Upload failed: '+err.message,'error');}
+    finally{if(prog)prog.style.display='none';mub.disabled=false;mub.innerHTML='<i class="fas fa-cloud-arrow-up"></i> Upload to GitHub';}
+  });
+  const mcb=$('#a-music-cancel-btn');
+  if(mcb)mcb.addEventListener('click',()=>{_pendingMusic=null;const p=$('#a-music-pending');if(p)p.style.display='none';if(mf)mf.value='';});
+
+  let _pendingBg=null;
+  const bgf=$('#a-bg-file');
+  if(bgf)bgf.addEventListener('change',e=>{
+    const f=e.target.files?.[0];if(!f)return;
+    _pendingBg=f;
+    const pend=$('#a-bg-pending'),nm=$('#a-bg-pending-name'),sz=$('#a-bg-pending-size');
+    if(pend)pend.style.display='block';
+    if(nm)nm.textContent=f.name;
+    if(sz)sz.textContent=(f.size/1024/1024).toFixed(2)+' MB';
+  });
+  const bgub=$('#a-bg-upload-btn');
+  if(bgub)bgub.addEventListener('click',async()=>{
+    if(!_pendingBg)return;
+    const prog=$('#a-bg-prog'),bar=$('#a-bg-bar'),urlInp=$('#inp-bg-url');
+    if(prog)prog.style.display='block';bgub.disabled=true;bgub.textContent='Uploading...';
+    try{
+      const path='assets/images/'+_pendingBg.name;
+      await ghUploadFile(path,_pendingBg,p=>{if(bar)bar.style.width=p+'%';});
+      if(!AS.config.background)AS.config.background={};
+      AS.config.background.videoUrl=path;
+      if(urlInp)urlInp.value=path;
+      markDirty();aToast('Background uploaded!','success');
+      const pend=$('#a-bg-pending');if(pend)pend.style.display='none';
+      _pendingBg=null;if(bgf)bgf.value='';
+    }catch(err){aToast('Upload failed: '+err.message,'error');}
+    finally{if(prog)prog.style.display='none';bgub.disabled=false;bgub.innerHTML='<i class="fas fa-cloud-arrow-up"></i> Upload to GitHub';}
+  });
+  const bgcb=$('#a-bg-cancel-btn');
+  if(bgcb)bgcb.addEventListener('click',()=>{_pendingBg=null;const p=$('#a-bg-pending');if(p)p.style.display='none';if(bgf)bgf.value='';});
+}
+
+/* ── Bug check ── */
+function aBugCheck(){
+  const cfg=AS.config;if(!cfg){aToast('No config','error');return;}
+  const fixes=[];
+  if(!Array.isArray(cfg.socials)){cfg.socials=[];fixes.push('socials');}
+  if(!Array.isArray(cfg.badges)){cfg.badges=[];fixes.push('badges');}
+  if(!Array.isArray(cfg.seo?.titleCycle)){if(cfg.seo)cfg.seo.titleCycle=[];fixes.push('titleCycle');}
+  if(!Array.isArray(cfg.music?.tracks)){if(cfg.music)cfg.music.tracks=[];fixes.push('tracks');}
+  if(!Array.isArray(cfg.profile?.statusMessages)){if(cfg.profile)cfg.profile.statusMessages=[];fixes.push('statusMessages');}
+  if(!cfg.theme){cfg.theme={};fixes.push('theme');}
+  if(!cfg.background){cfg.background={};fixes.push('background');}
+  if(!cfg.cursor){cfg.cursor={enabled:true,style:'dot'};fixes.push('cursor');}
+  if(typeof cfg.background.overlayOpacity!=='number'){cfg.background.overlayOpacity=0.55;fixes.push('overlayOpacity');}
+  if(typeof cfg.background.blur!=='number'){cfg.background.blur=0;fixes.push('blur');}
+  if(typeof cfg.theme.particleCount!=='number'){cfg.theme.particleCount=80;fixes.push('particleCount');}
+  if(!cfg.theme.accentColor?.startsWith('#')){cfg.theme.accentColor='#a855f7';fixes.push('accentColor');}
+  if(!cfg.theme.accentColorSecondary?.startsWith('#')){cfg.theme.accentColorSecondary='#ec4899';fixes.push('accentColorSecondary');}
+  cfg.socials.forEach((s,i)=>{if(!s.id){s.id='social_'+i;fixes.push('social['+i+'].id');}if(typeof s.enabled!=='boolean'){s.enabled=true;fixes.push('social['+i+'].enabled');}});
+  if(!fixes.length){aToast('No issues found — config is clean','success');}
+  else{markDirty();aToast('Auto-fixed '+fixes.length+' issue'+(fixes.length>1?'s':''),'success');console.log('[BugCheck]',fixes);}
+}
+
+/* ── Show section ── */
+function aShowSection(name){
+  $$('.a-section').forEach(s=>s.classList.toggle('active',s.id==='sec-'+name));
+  $$('.a-nav-item').forEach(b=>b.classList.toggle('active',b.dataset.sec===name));
+}
+
+/* ── Show dashboard ── */
+function aShowDashboard(){
+  $('#a-login')?.classList.add('hidden');
+  const dash=$('#a-dash');if(!dash)return;
+  dash.classList.add('visible');
+  aPopulate(AS.config);
+  bindColorPicker('#sw-accent','#pk-accent','#inp-accent','--accent');
+  bindColorPicker('#sw-accent2','#pk-accent2','#inp-accent2','--accent2');
+  bindInputs();
+  bindFileUploads();
+  $$('.a-nav-item').forEach(btn=>btn.addEventListener('click',()=>aShowSection(btn.dataset.sec)));
+  $('#a-save-btn')?.addEventListener('click',aSave);
+  $('#a-logout-btn')?.addEventListener('click',()=>{sessClear();location.reload();});
+  $('#a-add-badge-btn')?.addEventListener('click',()=>{
+    const icon=prompt('FontAwesome class (e.g. fab fa-react):');if(!icon)return;
+    const color=prompt('Color (hex):')||'#ffffff';
+    const label=prompt('Label:')||'';
+    if(!AS.config.badges)AS.config.badges=[];
+    AS.config.badges.push({icon:icon.trim(),color:color.trim(),label:label.trim()});
+    aRenderBadges(AS.config.badges);markDirty();
+  });
+  $('#a-add-track-btn')?.addEventListener('click',()=>{
+    const title=prompt('Track title:');if(!title)return;
+    const artist=prompt('Artist name:')||'';
+    const src=prompt('File path / URL:')||'';
+    if(!AS.config.music.tracks)AS.config.music.tracks=[];
+    AS.config.music.tracks.push({id:Date.now(),title,artist,src:normalizeAssetPath(src),cover:''});
+    aRenderTracks(AS.config.music.tracks);markDirty();
+  });
+  $('#a-add-social-btn')?.addEventListener('click',()=>{
+    const label=prompt('Platform name:');if(!label)return;
+    const icon=prompt('FontAwesome class:')||'fas fa-link';
+    const color=prompt('Icon color (hex):')||'#ffffff';
+    const url=prompt('Profile URL:')||'#';
+    const user=prompt('@username or handle:')||'';
+    AS.config.socials.push({id:label.toLowerCase().replace(/\s+/g,'_')+'_'+Date.now(),label:label.trim(),icon:icon.trim(),color:color.trim(),url:url.trim(),username:user.trim(),enabled:true});
+    aRenderSocials(AS.config.socials);markDirty();
+  });
+  $$('.a-avail-opt').forEach(el=>el.addEventListener('click',()=>{
+    const v=el.dataset.v;$$('.a-avail-opt').forEach(o=>o.className='a-avail-opt');
+    el.classList.add('sel-'+v);if(!AS.config.profile)AS.config.profile={};
+    AS.config.profile.availability=v;markDirty();
+  }));
+  $$('.a-cursor-opt').forEach(el=>el.addEventListener('click',()=>{
+    $$('.a-cursor-opt').forEach(o=>o.classList.remove('active'));
+    el.classList.add('active');if(!AS.config.cursor)AS.config.cursor={};
+    AS.config.cursor.style=el.dataset.v;markDirty();
+  }));
+  $('#a-bug-btn')?.addEventListener('click',aBugCheck);
+  $('#a-test-gh-btn')?.addEventListener('click',async()=>{
+    const btn=$('#a-test-gh-btn');if(btn){btn.textContent='Testing...';btn.disabled=true;}
+    try{
+      const r=await fetch('https://api.github.com/repos/'+GH.owner+'/'+GH.repo,{headers:{'Authorization':'token '+GH.token,'Accept':'application/vnd.github.v3+json'}});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const d=await r.json();aToast('Connected to '+d.full_name,'success');
+    }catch(e){aToast(e.message,'error');}
+    finally{if(btn){btn.textContent='Test Connection';btn.disabled=false;}}
+  });
+  $('#a-reset-cache-btn')?.addEventListener('click',()=>{
+    if(!confirm('Clear local config cache and reload?'))return;
+    localStorage.removeItem('zaza_config');location.reload();
+  });
+  $('#a-pass-form')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const cur=$('#inp-cur-pass')?.value?.trim()||'';
+    const nw=$('#inp-new-pass')?.value?.trim()||'';
+    const cf=$('#inp-confirm-pass')?.value?.trim()||'';
+    if(!cur||!nw||!cf){aToast('Fill all fields','error');return;}
+    if(nw!==cf){aToast('Passwords do not match','error');return;}
+    if(nw.length<4){aToast('Min 4 characters','error');return;}
+    if(await sha256(cur)!==AS.config.admin.passwordHash){aToast('Current password wrong','error');return;}
+    AS.config.admin.passwordHash=await sha256(nw);
+    e.target.reset();markDirty();aToast('Password updated — click Save All','success');
+  });
+  setDirty(false);
+}
+
+/* ── INIT ── */
+function aInit(){
+  const form=$('#a-login-form'),input=$('#a-pass'),errEl=$('#a-login-err');
+  if(form)form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const pass=input?.value?.trim();if(!pass)return;
+    const btn=$('#a-login-btn');if(btn){btn.textContent='Checking...';btn.disabled=true;}
+    if(errEl)errEl.classList.remove('show');
+    try{
+      await _configReady;
+      const hash=await sha256(pass);
+      const stored=AS.config?.admin?.passwordHash||'';
+      if(hash===stored){
+        sessSet(hash);
+        $('#a-login')?.classList.add('fade-out');
+        setTimeout(aShowDashboard,320);
+      }else{
+        if(errEl){errEl.textContent='Incorrect password.';errEl.classList.add('show');}
+        if(input){input.value='';input.focus();}
+        const box=$('.a-login-box');if(box){box.classList.add('shake');setTimeout(()=>box.classList.remove('shake'),400);}
+      }
+    }catch(err){
+      if(errEl){errEl.textContent='Auth error — try again.';errEl.classList.add('show');}
+    }finally{if(btn){btn.textContent='Enter Panel';btn.disabled=false;}}
+  });
+
+  _configReady=aLoadConfig().then(cfg=>{
+    AS.config=cfg;
+    document.documentElement.style.setProperty('--accent',cfg?.theme?.accentColor||'#a855f7');
+    document.documentElement.style.setProperty('--accent2',cfg?.theme?.accentColorSecondary||'#ec4899');
+    if(sessOk())aShowDashboard();
+  }).catch(err=>console.error('Config load failed:',err));
+}
+
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',aInit);}else{aInit();}
+</script>
+</body></html>
