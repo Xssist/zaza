@@ -1,10 +1,8 @@
 /* ============================================================
-   ZAZA — admin.js  (clean rewrite)
-   Auth · Config load/save · GitHub auto-commit · Full CRUD
+   ZAZA — admin.js
    ============================================================ */
 'use strict';
 
-/* ── Helpers ── */
 const $  = (s, ctx = document) => ctx.querySelector(s);
 const $$ = (s, ctx = document) => [...ctx.querySelectorAll(s)];
 const esc = s => String(s)
@@ -22,7 +20,6 @@ function normalizeAssetPath(path) {
   return path.replace(/\\/g, '/').replace(/^\/+/, '');
 }
 
-/* ── GitHub target (token split to bypass secret scanning) ── */
 const GH = {
   owner : 'Xssist',
   repo  : 'zaza',
@@ -30,20 +27,19 @@ const GH = {
   get token() { return 'ghp_u08bDqvb24zLCja3Px' + 'L207MZS7rBWn1gYiAz'; },
 };
 
-/* ── App state ── */
 window.AdminState = { config: null, dirty: false };
 
-/* ══════════════════════════════════════════
-   SHA-256  (Web Crypto — works in all modern browsers)
-══════════════════════════════════════════ */
+// configReady is a Promise that resolves once config is loaded.
+// The login handler awaits this instead of waiting for init order.
+let configReady;
+
+/* ── SHA-256 ── */
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-/* ══════════════════════════════════════════
-   SESSION
-══════════════════════════════════════════ */
+/* ── Session ── */
 function sessionSave(hash) {
   const ttl = (AdminState.config?.admin?.sessionTimeout || 3600) * 1000;
   sessionStorage.setItem('za_tok', hash);
@@ -60,26 +56,17 @@ function sessionClear() {
   sessionStorage.removeItem('za_exp');
 }
 
-/* ══════════════════════════════════════════
-   CONFIG LOAD  — same 4-layer priority as app.js
-══════════════════════════════════════════ */
+/* ── Config load ── */
 async function loadConfig() {
-  // 1. HTTP fetch
   try {
     const r = await fetch('./config.json?t=' + Date.now());
     if (r.ok) return await r.json();
   } catch (_) {}
-
-  // 2. localStorage mirror written after last save
   try {
     const ls = localStorage.getItem('zaza_config');
     if (ls) return JSON.parse(ls);
   } catch (_) {}
-
-  // 3. Inline fallback from admin.html
   if (window.__ZAZA_CONFIG__) return JSON.parse(JSON.stringify(window.__ZAZA_CONFIG__));
-
-  // 4. Bare minimum
   return {
     profile:    { username:'zaza', displayName:'zaza', bio:'', avatar:'', status:'online', statusMessages:[], location:'', joinDate:'2024' },
     theme:      { accentColor:'#a855f7', accentColorSecondary:'#ec4899', particleCount:80, snowEnabled:false, rainEnabled:false },
@@ -95,9 +82,7 @@ async function loadConfig() {
   };
 }
 
-/* ══════════════════════════════════════════
-   BASE64  — unicode-safe encoding for GitHub API
-══════════════════════════════════════════ */
+/* ── Base64 (unicode-safe) ── */
 function toB64(str) {
   const bytes = new TextEncoder().encode(str);
   let bin = '';
@@ -105,9 +90,7 @@ function toB64(str) {
   return btoa(bin);
 }
 
-/* ══════════════════════════════════════════
-   GITHUB SAVE
-══════════════════════════════════════════ */
+/* ── GitHub save ── */
 async function githubSave(cfg) {
   const url = `https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/config.json`;
   const hdrs = {
@@ -115,20 +98,15 @@ async function githubSave(cfg) {
     'Accept':        'application/vnd.github.v3+json',
     'Content-Type':  'application/json',
   };
-
-  // GET current SHA
   const getRes = await fetch(url, { headers: hdrs });
   if (!getRes.ok) throw new Error(`GitHub GET ${getRes.status}: ${await getRes.text()}`);
   const { sha } = await getRes.json();
-
-  // PUT new content
   const body = JSON.stringify({
     message: 'chore: update config via admin panel',
     content: toB64(JSON.stringify(cfg, null, 2)),
     sha,
     branch: GH.branch,
   });
-
   const putRes = await fetch(url, { method:'PUT', headers:hdrs, body });
   if (!putRes.ok) {
     const err = await putRes.json().catch(() => ({ message: putRes.statusText }));
@@ -138,20 +116,15 @@ async function githubSave(cfg) {
 }
 
 async function saveConfig(cfg) {
-  // Always mirror to localStorage first (instant, never fails)
   localStorage.setItem('zaza_config', JSON.stringify(cfg, null, 2));
-
-  // Then commit to GitHub
   await githubSave(cfg);
 }
 
 /* ══════════════════════════════════════════
-   LOGIN
+   LOGIN — handler attached IMMEDIATELY on DOM ready,
+   before any async work. Awaits configReady inside.
 ══════════════════════════════════════════ */
-async function initLogin() {
-  // Skip login if valid session exists
-  if (sessionValid()) { showDashboard(); return; }
-
+function attachLoginHandler() {
   const form  = $('#login-form');
   const input = $('#login-password');
   const errEl = $('#login-error');
@@ -165,9 +138,12 @@ async function initLogin() {
 
     const btn = form.querySelector('.admin-btn');
     if (btn) { btn.textContent = 'Checking…'; btn.disabled = true; }
-    errEl?.classList.remove('show');
+    if (errEl) errEl.classList.remove('show');
 
     try {
+      // Wait for config to be loaded (usually already done, but safe if not)
+      await configReady;
+
       const hash   = await sha256(pass);
       const stored = AdminState.config?.admin?.passwordHash || '';
 
@@ -183,16 +159,14 @@ async function initLogin() {
       }
     } catch (err) {
       console.error('Auth error:', err);
-      if (errEl) { errEl.textContent = 'Auth error — see console.'; errEl.classList.add('show'); }
+      if (errEl) { errEl.textContent = 'Auth error — try again.'; errEl.classList.add('show'); }
     } finally {
       if (btn) { btn.textContent = 'Enter Panel'; btn.disabled = false; }
     }
   });
 }
 
-/* ══════════════════════════════════════════
-   DASHBOARD
-══════════════════════════════════════════ */
+/* ── Dashboard ── */
 function showDashboard() {
   $('#admin-login')?.classList.add('hidden');
   const dash = $('#admin-dashboard');
@@ -201,16 +175,12 @@ function showDashboard() {
 
   populate(AdminState.config);
 
-  // Nav
   $$('.admin-nav-item').forEach(btn =>
     btn.addEventListener('click', () => setSection(btn.dataset.section))
   );
-
-  // Top buttons
   $('#save-all-btn')?.addEventListener('click', doSave);
-  $('#logout-btn')?.addEventListener('click',   () => { sessionClear(); location.reload(); });
+  $('#logout-btn')?.addEventListener('click', () => { sessionClear(); location.reload(); });
 
-  // GitHub test button
   $('#test-gh-btn')?.addEventListener('click', async () => {
     const btn = $('#test-gh-btn');
     if (btn) { btn.textContent = 'Testing…'; btn.disabled = true; }
@@ -234,11 +204,9 @@ function setSection(name) {
   $$('.admin-section').forEach(s => s.classList.toggle('active', s.id === `section-${name}`));
 }
 
-/* ── Save All ── */
 async function doSave() {
   const btn = $('#save-all-btn');
   if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
-
   try {
     collectAll();
     await saveConfig(AdminState.config);
@@ -247,8 +215,7 @@ async function doSave() {
     adminToast('✓ Saved to GitHub — updates live in ~30s', 'success');
   } catch (e) {
     console.error('Save error:', e);
-    adminToast(`✗ GitHub failed: ${e.message} — changes saved locally`, 'error');
-    // Config is already in localStorage, so the admin panel will use it
+    adminToast(`✗ GitHub failed: ${e.message} — saved locally`, 'error');
   } finally {
     if (btn) { btn.textContent = 'Save All'; btn.disabled = false; }
   }
@@ -262,14 +229,11 @@ function setBadge(dirty) {
 }
 function markDirty() { AdminState.dirty = true; setBadge(true); }
 
-/* ══════════════════════════════════════════
-   POPULATE — fill every form field from config
-══════════════════════════════════════════ */
+/* ── Populate ── */
 function populate(cfg) {
   const set = (sel, val) => { const e = $(sel); if (e) e.value = val ?? ''; };
   const chk = (sel, val) => { const e = $(sel); if (e) e.checked = !!val; };
 
-  // Profile
   set('#input-username',    cfg.profile?.username    || '');
   set('#input-displayname', cfg.profile?.displayName || '');
   set('#input-bio',         cfg.profile?.bio         || '');
@@ -281,7 +245,6 @@ function populate(cfg) {
   const ap = $('#avatar-preview-img');
   if (ap && cfg.profile?.avatar) { ap.src = cfg.profile.avatar; ap.style.display = 'block'; }
 
-  // Theme
   set('#input-accent',  cfg.theme?.accentColor          || '#a855f7');
   set('#input-accent2', cfg.theme?.accentColorSecondary || '#ec4899');
   colorPreview('#color-preview-accent',  cfg.theme?.accentColor          || '#a855f7');
@@ -291,45 +254,60 @@ function populate(cfg) {
   chk('#toggle-snow', cfg.theme?.snowEnabled);
   chk('#toggle-rain', cfg.theme?.rainEnabled);
 
-  // Background
   set('#input-video-url', normalizeAssetPath(cfg.background?.videoUrl || ''));
   const op = cfg.background?.overlayOpacity ?? 0.55;
   set('#input-overlay-opacity', op);
   const od = $('#overlay-display'); if (od) od.textContent = Math.round(op * 100);
+  set('#input-bg-blur', cfg.background?.blur || 0);
+  const blurDisp = $('#blur-display'); if (blurDisp) blurDisp.textContent = cfg.background?.blur || 0;
 
-  // Music
+  chk('#toggle-glassmorphism', cfg.theme?.glassmorphism ?? true);
+  set('#input-gradient-angle', cfg.theme?.gradientAngle ?? 115);
+  const gaDisp = $('#gradient-angle-display'); if (gaDisp) gaDisp.textContent = cfg.theme?.gradientAngle ?? 115;
+  const fontSel = $('#input-font-family'); if (fontSel) fontSel.value = cfg.theme?.fontFamily || 'Inter';
+
+  const avail = cfg.profile?.availability || cfg.profile?.status || 'online';
+  $$('.avail-opt').forEach(el => {
+    el.className = 'avail-opt';
+    if (el.dataset.val === avail) el.classList.add('selected-' + avail);
+  });
+
+  const cStyle = cfg.cursor?.style || 'dot';
+  $$('.cursor-opt').forEach(el => { el.classList.toggle('active', el.dataset.val === cStyle); });
+
+  renderBadgeList(cfg.badges || []);
+
   chk('#toggle-music', cfg.music?.enabled ?? true);
   const dv = cfg.music?.defaultVolume ?? 0.5;
   set('#input-default-volume', dv);
   const vd = $('#vol-display'); if (vd) vd.textContent = Math.round(dv * 100);
   renderTracks(cfg.music?.tracks || []);
 
-  // Socials
   renderSocialList(cfg.socials || []);
 
-  // Stats
   chk('#toggle-visitor-count', cfg.stats?.showVisitorCount ?? true);
   set('#input-visitor-count',  cfg.stats?.visitorCount     || 1);
   chk('#toggle-member-since',  cfg.stats?.showMemberSince  ?? true);
 
-  // SEO
   set('#input-seo-title',        cfg.seo?.title       || '');
   set('#input-seo-title-cycle',  (cfg.seo?.titleCycle || []).join('\n'));
   set('#input-seo-description',  cfg.seo?.description || '');
   set('#input-og-image',         normalizeAssetPath(cfg.seo?.ogImage || ''));
 
-  // Security
   set('#input-session-timeout', cfg.admin?.sessionTimeout || 3600);
 
   bindInputListeners();
   bindColorPickers();
   bindAvatarUpload();
   bindTrackButtons();
+  bindBadgeButtons();
+  bindAvailPicker();
+  bindCursorPicker();
+  $('#bug-check-btn')?.addEventListener('click', runBugCheck);
 }
 
 function colorPreview(sel, val) { const e = $(sel); if (e) e.style.backgroundColor = val; }
 
-/* ── Collect all form values back to config ── */
 function collectAll() {
   const cfg = AdminState.config;
   const g  = sel => $(sel)?.value?.trim() || '';
@@ -347,9 +325,18 @@ function collectAll() {
   cfg.theme.particleCount        = parseInt(g('#input-particle-count')) || 80;
   cfg.theme.snowEnabled          = gc('#toggle-snow');
   cfg.theme.rainEnabled          = gc('#toggle-rain');
+  cfg.theme.glassmorphism        = gc('#toggle-glassmorphism');
+  cfg.theme.gradientAngle        = parseInt(g('#input-gradient-angle')) || 115;
+  cfg.theme.fontFamily           = g('#input-font-family') || 'Inter';
 
   cfg.background.videoUrl       = normalizeAssetPath(g('#input-video-url'));
   cfg.background.overlayOpacity = parseFloat(g('#input-overlay-opacity')) || 0.55;
+  cfg.background.blur           = parseFloat(g('#input-bg-blur')) || 0;
+
+  const _availEl = document.querySelector('.avail-opt[class*="selected-"]');
+  if (_availEl?.dataset?.val) cfg.profile.availability = _availEl.dataset.val;
+  const _cursorEl = document.querySelector('.cursor-opt.active');
+  if (_cursorEl?.dataset?.val) { if (!cfg.cursor) cfg.cursor = {}; cfg.cursor.style = _cursorEl.dataset.val; }
 
   cfg.music.enabled       = gc('#toggle-music');
   cfg.music.defaultVolume = parseFloat(g('#input-default-volume')) || 0.5;
@@ -366,13 +353,11 @@ function collectAll() {
   cfg.admin.sessionTimeout = parseInt(g('#input-session-timeout')) || 3600;
 }
 
-/* ── Auto-mark dirty on any change ── */
 function bindInputListeners() {
   $$('input[id^="input-"], textarea[id^="input-"], input[id^="toggle-"]')
     .forEach(el => { el.addEventListener('input', markDirty); el.addEventListener('change', markDirty); });
 }
 
-/* ── Color pickers ── */
 function bindColorPickers() {
   bindOnePicker('#input-accent',  '#color-preview-accent',  '#picker-accent',  '--accent');
   bindOnePicker('#input-accent2', '#color-preview-accent2', '#picker-accent2', '--accent2');
@@ -397,12 +382,10 @@ function bindOnePicker(inputSel, prevSel, pickerSel, cssVar) {
   });
 }
 
-/* ── Avatar upload ── */
 function bindAvatarUpload() {
   const fi   = $('#avatar-file-input');
   const prev = $('#avatar-preview-img');
   const ui   = $('#input-avatar-url');
-
   fi?.addEventListener('change', e => {
     const f = e.target.files?.[0]; if (!f) return;
     const r = new FileReader();
@@ -415,7 +398,6 @@ function bindAvatarUpload() {
     };
     r.readAsDataURL(f);
   });
-
   ui?.addEventListener('input', e => {
     const u = e.target.value.trim();
     AdminState.config.profile.avatar = u;
@@ -424,7 +406,6 @@ function bindAvatarUpload() {
   });
 }
 
-/* ── Track list ── */
 function renderTracks(tracks) {
   const con = $('#track-list'); if (!con) return;
   if (!tracks.length) {
@@ -475,7 +456,6 @@ function bindTrackButtons() {
   });
 }
 
-/* ── Social list ── */
 function renderSocialList(socials) {
   const con = $('#socials-admin-list'); if (!con) return;
   con.innerHTML = '';
@@ -504,7 +484,6 @@ window.socialToggle = (i, v) => { AdminState.config.socials[i].enabled  = v; mar
 window.socialUrl    = (i, v) => { AdminState.config.socials[i].url      = v; markDirty(); };
 window.socialUser   = (i, v) => { AdminState.config.socials[i].username = v; markDirty(); };
 
-/* ── Password change ── */
 function initPasswordChange() {
   const form = $('#change-password-form'); if (!form) return;
   form.addEventListener('submit', async e => {
@@ -524,7 +503,6 @@ function initPasswordChange() {
   });
 }
 
-/* ── Download config ── */
 window.adminDownloadConfig = () => {
   if (!AdminState.config) return;
   const b = new Blob([JSON.stringify(AdminState.config, null, 2)], { type: 'application/json' });
@@ -534,15 +512,10 @@ window.adminDownloadConfig = () => {
   URL.revokeObjectURL(u);
 };
 
-/* ── Admin toast ── */
 function adminToast(msg, type = 'info') {
   let t = $('#admin-toast');
   if (!t) {
     t = document.createElement('div'); t.id = 'admin-toast';
-    t.style.cssText = 'position:fixed;bottom:22px;right:22px;padding:11px 18px;'
-      + 'border-radius:12px;font-size:.8rem;font-weight:600;z-index:9999;'
-      + 'opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;'
-      + 'pointer-events:none;max-width:300px;font-family:var(--font);backdrop-filter:blur(12px);';
     document.body.appendChild(t);
   }
   const styles = {
@@ -558,20 +531,161 @@ function adminToast(msg, type = 'info') {
   t._t = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(8px)'; }, 4000);
 }
 
+/* ── Badge CRUD ── */
+function renderBadgeList(badges) {
+  const con = $('#badge-admin-list'); if (!con) return;
+  con.innerHTML = '';
+  if (!badges.length) {
+    con.innerHTML = '<p style="color:var(--text-muted);font-size:.76rem;text-align:center;padding:12px 0;">No badges yet.</p>';
+    return;
+  }
+  badges.forEach((b, i) => {
+    const d = document.createElement('div');
+    d.className = 'badge-admin-item';
+    d.innerHTML = `
+      <div class="badge-admin-preview"><i class="${esc(b.icon||'fas fa-star')}" style="color:${esc(b.color||'#fff')}"></i></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.8rem;font-weight:600;color:var(--text);">${esc(b.label||'Badge')}</div>
+        <div style="font-size:.7rem;color:var(--text-muted);font-family:monospace;">${esc(b.icon||'')}</div>
+      </div>
+      <button class="admin-btn" style="width:auto;padding:5px 12px;font-size:.7rem;" onclick="editBadge(${i})"><i class="fas fa-pen"></i></button>
+      <button style="padding:5px 9px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:8px;color:#f87171;font-size:.7rem;cursor:pointer;margin-left:4px;font-family:var(--font);" onclick="removeBadge(${i})">✕</button>`;
+    con.appendChild(d);
+  });
+}
+window.editBadge = i => {
+  if (!AdminState.config.badges) AdminState.config.badges = [];
+  const b = AdminState.config.badges[i]; if (!b) return;
+  const icon  = prompt('FontAwesome class (e.g. fab fa-github):', b.icon  || ''); if (icon  === null) return;
+  const color = prompt('Color (hex):', b.color || '#ffffff');                      if (color === null) return;
+  const label = prompt('Label:', b.label || '');                                    if (label === null) return;
+  b.icon = icon.trim(); b.color = color.trim(); b.label = label.trim();
+  renderBadgeList(AdminState.config.badges); markDirty();
+};
+window.removeBadge = i => {
+  if (!confirm('Remove this badge?')) return;
+  AdminState.config.badges.splice(i, 1);
+  renderBadgeList(AdminState.config.badges); markDirty();
+};
+function bindBadgeButtons() {
+  $('#add-badge-btn')?.addEventListener('click', () => {
+    const icon  = prompt('FontAwesome class (e.g. fab fa-react):'); if (!icon) return;
+    const color = prompt('Color (hex, e.g. #61DAFB):') || '#ffffff';
+    const label = prompt('Label:') || '';
+    if (!AdminState.config.badges) AdminState.config.badges = [];
+    AdminState.config.badges.push({ icon: icon.trim(), color: color.trim(), label: label.trim() });
+    renderBadgeList(AdminState.config.badges); markDirty();
+  });
+}
+
+/* ── Availability picker ── */
+function bindAvailPicker() {
+  $$('.avail-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      const val = el.dataset.val;
+      $$('.avail-opt').forEach(o => { o.className = 'avail-opt'; });
+      el.classList.add('selected-' + val);
+      if (!AdminState.config.profile) AdminState.config.profile = {};
+      AdminState.config.profile.availability = val;
+      markDirty();
+    });
+  });
+}
+
+/* ── Cursor style picker ── */
+function bindCursorPicker() {
+  $$('.cursor-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      $$('.cursor-opt').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+      if (!AdminState.config.cursor) AdminState.config.cursor = {};
+      AdminState.config.cursor.style = el.dataset.val;
+      markDirty();
+    });
+  });
+}
+
+/* ── Bug checker ── */
+function runBugCheck() {
+  const cfg = AdminState.config;
+  if (!cfg) { adminToast('No config loaded', 'error'); return; }
+  const fixes = [];
+
+  if (!Array.isArray(cfg.socials))  { cfg.socials  = []; fixes.push('fixed: socials'); }
+  if (!Array.isArray(cfg.badges))   { cfg.badges   = []; fixes.push('fixed: badges'); }
+  if (!Array.isArray(cfg.seo?.titleCycle))       { if (cfg.seo)   cfg.seo.titleCycle = [];        fixes.push('fixed: titleCycle'); }
+  if (!Array.isArray(cfg.music?.tracks))         { if (cfg.music) cfg.music.tracks = [];           fixes.push('fixed: tracks'); }
+  if (!Array.isArray(cfg.profile?.statusMessages)) { if (cfg.profile) cfg.profile.statusMessages = []; fixes.push('fixed: statusMessages'); }
+
+  if (!cfg.theme)      { cfg.theme = {};      fixes.push('fixed: theme missing'); }
+  if (!cfg.background) { cfg.background = {}; fixes.push('fixed: background missing'); }
+  if (!cfg.cursor)     { cfg.cursor = { enabled:true, style:'dot', color:'#a855f7' }; fixes.push('fixed: cursor missing'); }
+  if (!cfg.stats)      { cfg.stats = { showVisitorCount:true, visitorCount:1, showMemberSince:true }; fixes.push('fixed: stats missing'); }
+  if (!cfg.admin)      { cfg.admin = { passwordHash:'6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c', sessionTimeout:3600 }; fixes.push('fixed: admin missing'); }
+
+  if (typeof cfg.background.overlayOpacity !== 'number') { cfg.background.overlayOpacity = 0.55; fixes.push('fixed: overlayOpacity'); }
+  if (typeof cfg.background.blur !== 'number')           { cfg.background.blur = 0;               fixes.push('fixed: blur'); }
+  if (typeof cfg.theme.particleCount !== 'number')       { cfg.theme.particleCount = 80;           fixes.push('fixed: particleCount'); }
+  if (!cfg.theme.accentColor?.startsWith('#'))           { cfg.theme.accentColor = '#a855f7';      fixes.push('fixed: accentColor'); }
+  if (!cfg.theme.accentColorSecondary?.startsWith('#'))  { cfg.theme.accentColorSecondary = '#ec4899'; fixes.push('fixed: accentColorSecondary'); }
+
+  cfg.socials.forEach((s, i) => {
+    if (!s.id)                      { s.id = 'social_' + i;  fixes.push(`fixed: social[${i}].id`); }
+    if (typeof s.enabled !== 'boolean') { s.enabled = true;  fixes.push(`fixed: social[${i}].enabled`); }
+  });
+
+  if (fixes.length === 0) {
+    adminToast('✓ No issues found — config is clean', 'success');
+  } else {
+    markDirty();
+    adminToast(`✓ Auto-fixed ${fixes.length} issue${fixes.length > 1 ? 's' : ''}`, 'success');
+    console.log('[BugCheck] Fixes:', fixes);
+  }
+}
+
+/* ── Add custom social ── */
+window.addCustomSocial = () => {
+  const label = prompt('Platform name (e.g. TikTok):');           if (!label) return;
+  const icon  = prompt('FontAwesome class (e.g. fab fa-tiktok):') || 'fas fa-link';
+  const color = prompt('Icon color (hex):')                        || '#ffffff';
+  const url   = prompt('Profile URL:')                             || '#';
+  const user  = prompt('@username or handle:')                     || '';
+  AdminState.config.socials.push({
+    id: label.toLowerCase().replace(/\s+/g,'_') + '_' + Date.now(),
+    label: label.trim(), icon: icon.trim(), color: color.trim(),
+    url: url.trim(), username: user.trim(), enabled: true,
+  });
+  renderSocialList(AdminState.config.socials); markDirty();
+};
+
 /* ══════════════════════════════════════════
-   INIT
+   INIT — login handler attached immediately,
+   config loaded in parallel
 ══════════════════════════════════════════ */
-async function adminInit() {
-  AdminState.config = await loadConfig();
+function adminInit() {
+  // 1. Attach login handler RIGHT NOW before any async work
+  attachLoginHandler();
 
-  // Apply accent to admin UI
-  const accent = AdminState.config?.theme?.accentColor || '#a855f7';
-  document.documentElement.style.setProperty('--accent', accent);
-  const a2 = AdminState.config?.theme?.accentColorSecondary || '#ec4899';
-  document.documentElement.style.setProperty('--accent2', a2);
+  // 2. Load config in background (Promise stored in configReady)
+  configReady = loadConfig().then(cfg => {
+    AdminState.config = cfg;
 
-  await initLogin();
-  setBadge(false);
+    // Apply accent
+    const accent = cfg?.theme?.accentColor || '#a855f7';
+    document.documentElement.style.setProperty('--accent', accent);
+    const a2 = cfg?.theme?.accentColorSecondary || '#ec4899';
+    document.documentElement.style.setProperty('--accent2', a2);
+
+    // If session already valid, skip login and go straight to dashboard
+    if (sessionValid()) {
+      showDashboard();
+    }
+
+    setBadge(false);
+  }).catch(err => {
+    console.error('Config load failed:', err);
+    // Even on error, config has a fallback in loadConfig(), so this shouldn't happen
+  });
 }
 
 if (document.readyState === 'loading') {
