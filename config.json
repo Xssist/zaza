@@ -35,10 +35,10 @@
     "defaultVolume": 0.66,
     "tracks": [
       {
-        "id": 1785355246880,
-        "title": "ssstik.io 1785355143762",
+        "id": 1785355383455,
+        "title": "song",
         "artist": "zaza",
-        "src": "assets/music/ssstik.io_1785355143762.mp3",
+        "src": "assets/music/song.mp3",
         "cover": ""
       }
     ]
