@@ -27,7 +27,9 @@ body {
   overflow-x: hidden;
   min-height: 100dvh;
   width: 100vw;
+  cursor: none;
 }
+a, button, [role="button"], label, select, input, textarea { cursor: none; }
 a { color:inherit; text-decoration:none; }
 button { border:none; background:none; font-family:var(--font); }
 ::-webkit-scrollbar { width:3px; }
@@ -62,6 +64,10 @@ button { border:none; background:none; font-family:var(--font); }
 body.cursor-hover #cursor { width:18px; height:18px; }
 body.cursor-hover #cursor-follower { width:50px; height:50px; border-color:var(--accent2); }
 body.cursor-click #cursor { transform:translate(-50%,-50%) scale(0.7); }
+
+/* Guarantee no native cursor anywhere on the page */
+html, html * { cursor: none !important; }
+.admin-body, .admin-body * { cursor: auto !important; }
 
 /* ── Mouse glow ── */
 #mouse-light {
@@ -492,6 +498,7 @@ body.cursor-click #cursor { transform:translate(-50%,-50%) scale(0.7); }
   cursor:pointer; transition:border-color .2s, color .2s, background .2s;
 }
 .admin-logout-btn:hover { border-color:rgba(248,113,113,.4); color:#f87171; background:rgba(248,113,113,.05); }
+
 /* ── Layout ── */
 .admin-content { display:grid; grid-template-columns:220px 1fr; flex:1; min-height:0; }
 
@@ -732,20 +739,56 @@ input[type="range"]::-webkit-slider-thumb:hover { transform:scale(1.2); }
 .admin-corner-link:hover { color:var(--accent); }
 
 /* ── Cursor styles ── */
+/* ring — hollow circle, no fill */
+body.cursor-ring #cursor {
+  background: transparent;
+  border: 2px solid var(--accent);
+  width: 20px; height: 20px;
+  mix-blend-mode: normal;
+}
+
+/* crosshair — two lines through center using box-shadow trick */
 body.cursor-crosshair #cursor {
-  background:transparent;
-  border:2px solid var(--accent);
-  border-radius:0;
-  width:16px; height:16px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  width: 2px; height: 20px;
+  mix-blend-mode: normal;
+  box-shadow:
+    0 0 0 0 transparent,
+    -9px 9px 0 0 var(--accent),
+    9px 9px 0 0 var(--accent),
+    -9px -9px 0 0 var(--accent),
+    9px -9px 0 0 var(--accent);
 }
-body.cursor-crosshair #cursor::before,
+/* Use an overlay div approach — the cursor div becomes the vertical bar */
 body.cursor-crosshair #cursor::after {
-  content:''; position:absolute; background:var(--accent);
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background: var(--accent);
+  display: block;
 }
-body.cursor-crosshair #cursor::before { width:2px; height:20px; left:50%; top:50%; transform:translate(-50%,-50%); }
-body.cursor-crosshair #cursor::after  { width:20px; height:2px; left:50%; top:50%; transform:translate(-50%,-50%); }
-body.cursor-ring #cursor { background:transparent; border:2px solid var(--accent); width:20px; height:20px; }
-body.cursor-emoji #cursor { background:transparent; border:none; mix-blend-mode:normal; font-size:18px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+
+/* emoji — show as text */
+body.cursor-emoji #cursor {
+  background: transparent;
+  border: none;
+  mix-blend-mode: normal;
+  font-size: 18px;
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 0;
+}
+body.cursor-emoji #cursor::after {
+  content: '✨';
+  font-size: 18px;
+  line-height: 1;
+}
 
 /* ── Glassmorphism card mode ── */
 body.glass-mode .profile-left,
@@ -757,17 +800,7 @@ body.glass-mode .profile-right {
   padding:28px;
 }
 
-/* ── Better admin ── */
-.admin-section-header {
-  display:flex; align-items:center; justify-content:space-between;
-  margin-bottom:22px;
-}
-.admin-section-header .admin-section-title { margin-bottom:0; }
-.admin-section-header .admin-section-desc { margin-bottom:0; font-size:.74rem; }
-.admin-card { transition:border-color .2s; }
-.admin-card:hover { border-color:rgba(168,85,247,0.2); }
-.admin-card-title { display:flex; align-items:center; gap:7px; }
-.admin-card-title i { opacity:.8; }
+
 
 /* Badge editor in admin */
 .badge-admin-item {
@@ -798,11 +831,7 @@ body.glass-mode .profile-right {
 body.font-space  { --font: 'Space Grotesk', sans-serif; }
 body.font-mono   { --font: 'JetBrains Mono', monospace; }
 
-/* ── Improved admin sidebar ── */
-.admin-sidebar { scrollbar-width:none; }
-.admin-sidebar::-webkit-scrollbar { display:none; }
-.admin-nav-item { border-left:2px solid transparent; transition:background .15s, color .15s, border-color .15s; }
-.admin-nav-item.active { border-left-color:var(--accent); }
+
 
 /* Better select style */
 .admin-select {
