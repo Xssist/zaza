@@ -9,6 +9,18 @@ const $$  = (s, ctx = document) => [...ctx.querySelectorAll(s)];
 const rand = (a, b) => Math.random() * (b - a) + a;
 const lerp = (a, b, t) => a + (b - a) * t;
 
+/** Turn local Windows/file paths into web-relative paths for GitHub Pages */
+function normalizeAssetPath(path) {
+  if (!path || typeof path !== 'string') return '';
+  path = path.trim();
+  if (!path) return '';
+  if (/^(https?:|data:|blob:)/i.test(path)) return path;
+  if (/^file:/i.test(path)) path = path.replace(/^file:\/+/, '');
+  const m = path.match(/assets[/\\].+$/i);
+  if (m) return m[0].replace(/\\/g, '/');
+  return path.replace(/\\/g, '/').replace(/^\/+/, '');
+}
+
 /* ── Global state ── */
 const S = {
   cfg: null,
@@ -120,8 +132,9 @@ function initBackground() {
 
   if (ov) ov.style.opacity = S.cfg.background?.overlayOpacity ?? 0.55;
 
-  if (vid && S.cfg.background?.videoUrl) {
-    vid.src = S.cfg.background.videoUrl;
+  const videoUrl = normalizeAssetPath(S.cfg.background?.videoUrl);
+  if (vid && videoUrl) {
+    vid.src = videoUrl;
     vid.muted = true;
     vid.style.display = 'block';
     vid.load();
@@ -268,9 +281,10 @@ function renderProfile() {
 
   // Avatar
   const wrap = $('#avatar-wrap');
-  if (wrap && p.avatar) {
+  const avatarUrl = normalizeAssetPath(p.avatar);
+  if (wrap && avatarUrl) {
     const img = document.createElement('img');
-    img.src = p.avatar;
+    img.src = avatarUrl;
     img.alt = p.displayName || 'avatar';
     img.className = 'avatar-img';
     img.onerror = () => img.replaceWith(makeInitial(p));
@@ -508,7 +522,7 @@ function initMusic() {
         coverEl.innerHTML = '<i class="fas fa-music"></i>';
       }
     }
-    S.audioEl.src = track.src;
+    S.audioEl.src = normalizeAssetPath(track.src);
     S.audioEl.load();
     const fill = $('#music-progress-fill-mini');
     const time = $('#music-time-mini');
