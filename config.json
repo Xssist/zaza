@@ -11,7 +11,7 @@
     ],
     "location": "somewhere cool",
     "joinDate": "2001",
-    "availability": "online"
+    "availability": "away"
   },
   "theme": {
     "accentColor": "#ffffff",
@@ -119,7 +119,7 @@
     "enabled": true,
     "trailEnabled": true,
     "color": "#a855f7",
-    "style": "crosshair"
+    "style": "dot"
   },
   "admin": {
     "passwordHash": "6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c",
@@ -135,5 +135,11 @@
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#a855f7"
   },
-  "badges": []
+  "badges": [
+    {
+      "icon": "dab",
+      "color": "#003366",
+      "label": "im a goat"
+    }
+  ]
 }
