@@ -40,6 +40,13 @@
         "artist": "zaza",
         "src": "assets/music/song.mp3",
         "cover": ""
+      },
+      {
+        "id": 1785355630848,
+        "title": "song",
+        "artist": "zaza",
+        "src": "assets/music/song.mp3",
+        "cover": ""
       }
     ]
   },
