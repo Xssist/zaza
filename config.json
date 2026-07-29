@@ -2,7 +2,7 @@
   "profile": {
     "username": "zade",
     "displayName": "zade",
-    "bio": "beginner dev,ahk scripter",
+    "bio": "beginner html dev,ahk scripter",
     "avatar": "assets/images/togif.png",
     "status": "online",
     "statusMessages": [
@@ -11,7 +11,7 @@
     ],
     "location": "Tokyo,Japan",
     "joinDate": "2001",
-    "availability": "away"
+    "availability": "online"
   },
   "theme": {
     "accentColor": "#ffffff",
