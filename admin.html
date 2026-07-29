@@ -80,6 +80,7 @@
       <button class="admin-nav-item" data-section="seo"><i class="fas fa-magnifying-glass"></i> SEO</button>
       <button class="admin-nav-item" data-section="github"><i class="fab fa-github"></i> GitHub</button>
       <button class="admin-nav-item" data-section="security"><i class="fas fa-lock"></i> Security</button>
+      <button class="admin-nav-item" data-section="tools"><i class="fas fa-screwdriver-wrench"></i> Tools</button>
     </nav>
 
     <main class="admin-main">
@@ -122,6 +123,23 @@
     <div class="info-box"><i class="fas fa-circle-info"></i> One message per line. Cycles under your name.</div>
     <div class="admin-form-row"><label>Messages</label><textarea id="input-status-msgs" class="admin-textarea" style="min-height:110px;"></textarea></div>
   </div>
+
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-circle-dot"></i> Availability Status</div>
+    <div class="avail-picker">
+      <div class="avail-opt selected-online" data-val="online"><span class="avail-dot avail-online"></span> online</div>
+      <div class="avail-opt" data-val="busy"><span class="avail-dot avail-busy"></span> busy</div>
+      <div class="avail-opt" data-val="away"><span class="avail-dot avail-away"></span> away</div>
+      <div class="avail-opt" data-val="offline"><span class="avail-dot avail-offline" style="background:rgba(255,255,255,.3);"></span> offline</div>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-icons"></i> Tech Badges</div>
+    <div class="info-box"><i class="fas fa-circle-info"></i> Uses <a href="https://fontawesome.com/icons" target="_blank" style="color:var(--accent);">FontAwesome</a> icon class names. Spin on hover.</div>
+    <div id="badge-admin-list" style="margin-bottom:10px;"></div>
+    <button class="admin-btn" id="add-badge-btn" style="width:auto;padding:8px 18px;font-size:.78rem;"><i class="fas fa-plus"></i> Add Badge</button>
+  </div>
 </section>
 
 <!-- ═══ SOCIALS ═══ -->
@@ -131,6 +149,7 @@
   <div class="admin-card">
     <div class="admin-card-title"><i class="fas fa-toggle-on"></i> Platforms</div>
     <div id="socials-admin-list"></div>
+    <button class="admin-btn" onclick="addCustomSocial()" style="width:auto;padding:8px 18px;font-size:.78rem;margin-top:10px;"><i class="fas fa-plus"></i> Add Custom Platform</button>
   </div>
 </section>
 
@@ -205,6 +224,42 @@
       </div>
     </div>
   </div>
+
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-sliders"></i> Visual Options</div>
+    <div class="admin-grid-2">
+      <div class="admin-form-row">
+        <label>Glassmorphism Cards</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+          <label class="toggle"><input type="checkbox" id="toggle-glassmorphism" checked><span class="toggle-slider"></span></label>
+          <span style="font-size:.78rem;color:var(--text-dim);">Frosted glass profile cards</span>
+        </div>
+      </div>
+      <div class="admin-form-row">
+        <label>Font Family</label>
+        <select class="admin-select" id="input-font-family">
+          <option value="Inter">Inter (default)</option>
+          <option value="Space Grotesk">Space Grotesk</option>
+          <option value="JetBrains Mono">JetBrains Mono</option>
+        </select>
+      </div>
+    </div>
+    <div class="admin-form-row">
+      <label>Overlay Gradient Angle (<span id="gradient-angle-display">115</span>°)</label>
+      <input type="range" id="input-gradient-angle" min="0" max="360" step="5" value="115"
+        oninput="document.getElementById('gradient-angle-display').textContent=this.value" />
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-arrow-pointer"></i> Cursor Style</div>
+    <div class="cursor-picker">
+      <div class="cursor-opt active" data-val="dot"><span class="cursor-opt-icon">●</span>dot</div>
+      <div class="cursor-opt" data-val="ring"><span class="cursor-opt-icon">○</span>ring</div>
+      <div class="cursor-opt" data-val="crosshair"><span class="cursor-opt-icon">✛</span>crosshair</div>
+      <div class="cursor-opt" data-val="emoji"><span class="cursor-opt-icon">✨</span>emoji</div>
+    </div>
+  </div>
 </section>
 
 <!-- ═══ BACKGROUND ═══ -->
@@ -219,6 +274,11 @@
       <label>Overlay Darkness (<span id="overlay-display">55</span>%)</label>
       <input type="range" id="input-overlay-opacity" min="0" max="1" step="0.05" value="0.55"
         oninput="document.getElementById('overlay-display').textContent=Math.round(this.value*100)" />
+    </div>
+    <div class="admin-form-row">
+      <label>Background Blur (<span id="blur-display">0</span>px)</label>
+      <input type="range" id="input-bg-blur" min="0" max="20" step="1" value="0"
+        oninput="document.getElementById('blur-display').textContent=this.value" />
     </div>
   </div>
 </section>
@@ -296,6 +356,29 @@ zaza."></textarea>
     <div class="admin-card-title"><i class="fas fa-clock"></i> Session Timeout</div>
     <div class="admin-form-row"><label>Timeout (seconds)</label><input type="number" id="input-session-timeout" class="admin-input" placeholder="3600" min="300" /></div>
     <p style="font-size:.72rem;color:var(--text-muted);margin-top:5px;">Default 3600s = 1 hour.</p>
+  </div>
+</section>
+
+<!-- ═══ TOOLS ═══ -->
+<section class="admin-section" id="section-tools">
+  <h2 class="admin-section-title">Tools</h2>
+  <p class="admin-section-desc">Diagnostics and utilities for your site config.</p>
+
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-bug"></i> Bug Checker</div>
+    <p style="font-size:.78rem;color:var(--text-dim);margin-bottom:14px;">Scans your config.json for missing fields, invalid values, and broken arrays — then auto-fixes everything it finds.</p>
+    <button class="admin-bug-btn" id="bug-check-btn"><i class="fas fa-magnifying-glass"></i> Scan & Auto-Fix</button>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-title"><i class="fas fa-file-arrow-down"></i> Export / Import</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="admin-btn" onclick="adminDownloadConfig()" style="width:auto;padding:8px 18px;font-size:.78rem;"><i class="fas fa-download"></i> Export config.json</button>
+      <label class="admin-btn" style="width:auto;padding:8px 18px;font-size:.78rem;cursor:pointer;">
+        <i class="fas fa-upload"></i> Import config.json
+        <input type="file" accept=".json" style="display:none;" onchange="adminImportConfig(this)">
+      </label>
+    </div>
   </div>
 </section>
 
