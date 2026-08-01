@@ -456,6 +456,8 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
       <span class="a-nav-lbl">Appearance</span>
       <button class="a-nav-item" data-sec="theme"><i class="fas fa-swatchbook"></i> Theme</button>
       <button class="a-nav-item" data-sec="background"><i class="fas fa-clapperboard"></i> Background</button>
+      <button class="a-nav-item" data-sec="spotify"><i class="fab fa-spotify"></i> Spotify</button>
+      <button class="a-nav-item" data-sec="banner"><i class="fas fa-megaphone"></i> Banner</button>
       <button class="a-nav-item" data-sec="cursor"><i class="fas fa-arrow-pointer"></i> Cursor</button>
       <span class="a-nav-lbl">Site</span>
       <button class="a-nav-item" data-sec="stats"><i class="fas fa-chart-simple"></i> Stats</button>
@@ -768,7 +770,7 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
 <!-- ═══ SEO ═══ -->
 <section class="a-section" id="sec-seo">
   <div class="a-section-head">
-    <div class="a-section-title">SEO & Sharing</div>
+    <div class="a-section-title">SEO &amp; Sharing</div>
     <div class="a-section-desc">Page title, meta description and Open Graph.</div>
   </div>
   <div class="a-card">
@@ -776,9 +778,7 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
     <div class="a-row"><label>Page Title</label><input type="text" id="inp-seo-title" class="a-input"/></div>
     <div class="a-row">
       <label>Title Typewriter Cycle <span style="font-weight:400;opacity:.5;">(one per line)</span></label>
-      <textarea id="inp-seo-cycle" class="a-textarea" style="min-height:90px;" placeholder="zaza — personal
-living in the moment.
-creating something real."></textarea>
+      <textarea id="inp-seo-cycle" class="a-textarea" style="min-height:90px;" placeholder="zaza — personal&#10;living in the moment.&#10;creating something real."></textarea>
     </div>
     <div class="a-row"><label>Meta Description</label><textarea id="inp-seo-desc" class="a-textarea" style="min-height:60px;"></textarea></div>
     <div class="a-row"><label>OG Image URL or Path</label><input type="text" id="inp-og-image" class="a-input"/></div>
@@ -839,7 +839,7 @@ creating something real."></textarea>
   <div class="a-card">
     <div class="a-card-title"><i class="fas fa-bug"></i> Bug Checker</div>
     <p style="font-size:.78rem;color:rgba(240,240,245,.5);margin-bottom:14px;">Scans config.json for missing fields, invalid values and broken arrays — then auto-fixes everything.</p>
-    <button class="a-btn-sm warning" id="a-bug-btn"><i class="fas fa-magnifying-glass"></i> Scan & Auto-Fix</button>
+    <button class="a-btn-sm warning" id="a-bug-btn"><i class="fas fa-magnifying-glass"></i> Scan &amp; Auto-Fix</button>
   </div>
   <div class="a-card">
     <div class="a-card-title"><i class="fas fa-file-arrow-down"></i> Export / Import</div>
@@ -854,7 +854,62 @@ creating something real."></textarea>
   <div class="a-card">
     <div class="a-card-title"><i class="fas fa-rotate-left"></i> Reset</div>
     <p style="font-size:.78rem;color:rgba(240,240,245,.5);margin-bottom:14px;">Clear the locally cached config and reload from GitHub. Use if things look out of sync.</p>
-    <button class="a-btn-sm danger" id="a-reset-cache-btn"><i class="fas fa-trash-can"></i> Clear Local Cache & Reload</button>
+    <button class="a-btn-sm danger" id="a-reset-cache-btn"><i class="fas fa-trash-can"></i> Clear Local Cache &amp; Reload</button>
+  </div>
+</section>
+
+<!-- ═══ SPOTIFY ═══ -->
+<section class="a-section" id="sec-spotify">
+  <div class="a-section-head">
+    <div class="a-section-title">Spotify</div>
+    <div class="a-section-desc">Show your currently playing track live on the site.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fab fa-spotify"></i> Spotify Now Playing</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i> You need a Spotify Access Token. Go to <a href="https://developer.spotify.com/console/get-users-currently-playing-track/" target="_blank" style="color:#1ed760;">Spotify Developer Console</a>, click "Get Token", check <strong>user-read-currently-playing</strong>, then paste the token below. It expires in ~1 hour.</div>
+    <div class="a-row">
+      <label>Enable Spotify Widget</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+        <label class="a-toggle"><input type="checkbox" id="tog-spotify"/><span class="a-toggle-slider"></span></label>
+        <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Show now-playing on site</span>
+      </div>
+    </div>
+    <div class="a-row"><label>Access Token</label><input type="text" id="inp-spotify-token" class="a-input" placeholder="BQA...paste your token here"/></div>
+    <div class="a-row"><label>Fallback Text (when not playing)</label><input type="text" id="inp-spotify-fallback" class="a-input" placeholder="not playing"/></div>
+    <div style="margin-top:8px;">
+      <button class="a-btn-sm" id="a-test-spotify-btn"><i class="fas fa-plug"></i> Test Token</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BANNER ═══ -->
+<section class="a-section" id="sec-banner">
+  <div class="a-section-head">
+    <div class="a-section-title">Announcement Banner</div>
+    <div class="a-section-desc">A dismissible glassmorphism banner at the top of your site.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-megaphone"></i> Banner Settings</div>
+    <div class="a-row">
+      <label>Enable Banner</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+        <label class="a-toggle"><input type="checkbox" id="tog-banner"/><span class="a-toggle-slider"></span></label>
+        <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Show banner on site</span>
+      </div>
+    </div>
+    <div class="a-grid-2">
+      <div class="a-row"><label>Emoji</label><input type="text" id="inp-banner-emoji" class="a-input" placeholder="📢" maxlength="4"/></div>
+      <div class="a-row">
+        <label>Accent Color</label>
+        <div class="a-color-row">
+          <div class="a-color-swatch" id="sw-banner-color" style="background:#a855f7;" title="Pick color"></div>
+          <input type="color" id="pk-banner-color" value="#a855f7"/>
+          <input type="text" id="inp-banner-color" class="a-input" placeholder="#a855f7" maxlength="7"/>
+        </div>
+      </div>
+    </div>
+    <div class="a-row"><label>Message</label><input type="text" id="inp-banner-text" class="a-input" placeholder="✨ Something exciting is happening..."/></div>
+    <div class="a-info" style="margin-top:8px;"><i class="fas fa-circle-info"></i> The banner is dismissible per session. Changing the text resets dismissal for all visitors.</div>
   </div>
 </section>
 
@@ -869,7 +924,7 @@ window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio
 
 const $ = (s,c=document)=>c.querySelector(s);
 const $$ = (s,c=document)=>[...c.querySelectorAll(s)];
-const esc = s=>String(s).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,''');
+const esc = s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 function normalizeAssetPath(p){if(!p||typeof p!=='string')return '';p=p.trim();if(!p)return '';if(/^(https?:|data:|blob:)/i.test(p))return p;if(/^file:/i.test(p))p=p.replace(/^file:\/+/,'');const m=p.match(/assets[/\\].+$/i);if(m)return m[0].replace(/\\/g,'/');return p.replace(/\\/g,'/').replace(/^\/+/,'');}
 
 const GH={owner:'Xssist',repo:'zaza',branch:'main',get token(){return 'ghp_u08bDqvb24zLCja3Px'+'L207MZS7rBWn1gYiAz';}};
@@ -1024,6 +1079,20 @@ function aPopulate(cfg){
   set('#inp-og-image',normalizeAssetPath(cfg.seo?.ogImage||''));
   set('#inp-session-timeout',cfg.admin?.sessionTimeout||3600);
 
+  // Spotify
+  const chkSp=$(''+'#tog-spotify');if(chkSp)chkSp.checked=!!(cfg.spotify?.enabled);
+  set('#inp-spotify-token',cfg.spotify?.accessToken||'');
+  set('#inp-spotify-fallback',cfg.spotify?.fallbackText||'not playing');
+
+  // Banner
+  const chkBn=$(''+'#tog-banner');if(chkBn)chkBn.checked=!!(cfg.announcement?.enabled);
+  set('#inp-banner-text',cfg.announcement?.text||'');
+  set('#inp-banner-emoji',cfg.announcement?.emoji||'📢');
+  set('#inp-banner-color',cfg.announcement?.color||'#a855f7');
+  const swBn=$('#sw-banner-color'),pkBn=$('#pk-banner-color');
+  if(swBn)swBn.style.background=cfg.announcement?.color||'#a855f7';
+  if(pkBn)pkBn.value=cfg.announcement?.color||'#a855f7';
+
   document.documentElement.style.setProperty('--accent',cfg.theme?.accentColor||'#a855f7');
   document.documentElement.style.setProperty('--accent2',cfg.theme?.accentColorSecondary||'#ec4899');
 }
@@ -1071,6 +1140,18 @@ function aCollectAll(){
   cfg.seo.description=g('#inp-seo-desc');
   cfg.seo.ogImage=normalizeAssetPath(g('#inp-og-image'));
   cfg.admin.sessionTimeout=parseInt(g('#inp-session-timeout'))||3600;
+
+  if(!cfg.spotify)cfg.spotify={};
+  cfg.spotify.enabled=gc('#tog-spotify');
+  cfg.spotify.accessToken=g('#inp-spotify-token');
+  cfg.spotify.fallbackText=g('#inp-spotify-fallback')||'not playing';
+  cfg.spotify.showWidget=true;
+
+  if(!cfg.announcement)cfg.announcement={};
+  cfg.announcement.enabled=gc('#tog-banner');
+  cfg.announcement.text=g('#inp-banner-text');
+  cfg.announcement.emoji=g('#inp-banner-emoji')||'📢';
+  cfg.announcement.color=g('#inp-banner-color')||'#a855f7';
 }
 </script>
 
@@ -1321,6 +1402,27 @@ function aShowDashboard(){
     }catch(e){aToast(e.message,'error');}
     finally{if(btn){btn.textContent='Test Connection';btn.disabled=false;}}
   });
+  // Spotify test
+  $('#a-test-spotify-btn')?.addEventListener('click',async()=>{
+    const btn=$('#a-test-spotify-btn'),tok=$('#inp-spotify-token')?.value?.trim();
+    if(!tok){aToast('Paste a token first','error');return;}
+    if(btn){btn.textContent='Testing...';btn.disabled=true;}
+    try{
+      const r=await fetch('https://api.spotify.com/v1/me',{headers:{Authorization:'Bearer '+tok}});
+      const d=await r.json();
+      if(r.ok)aToast('Connected as '+d.display_name,'success');
+      else aToast('Token error: '+d.error?.message,'error');
+    }catch(e){aToast('Network error','error');}
+    finally{if(btn){btn.textContent='Test Token';btn.disabled=false;}}
+  });
+  // Banner color picker
+  const swBnD=$('#sw-banner-color'),pkBnD=$('#pk-banner-color'),inpBnD=$('#inp-banner-color');
+  if(swBnD&&pkBnD&&inpBnD){
+    swBnD.addEventListener('click',()=>pkBnD.click());
+    pkBnD.addEventListener('input',e=>{const v=e.target.value;inpBnD.value=v;swBnD.style.background=v;markDirty();});
+    inpBnD.addEventListener('input',e=>{const v=e.target.value;if(/^#[0-9a-fA-F]{6}$/.test(v)){pkBnD.value=v;swBnD.style.background=v;}markDirty();});
+  }
+
   $('#a-reset-cache-btn')?.addEventListener('click',()=>{
     if(!confirm('Clear local config cache and reload?'))return;
     localStorage.removeItem('zaza_config');location.reload();
@@ -1343,8 +1445,32 @@ function aShowDashboard(){
 /* ── INIT ── */
 function aInit(){
   const form=$('#a-login-form'),input=$('#a-pass'),errEl=$('#a-login-err');
+  // Rate-limit state
+  const RL_KEY='za_fails', RL_LOCK='za_lock';
+  function isLocked(){const t=parseInt(localStorage.getItem(RL_LOCK)||'0');return Date.now()<t;}
+  function getLockRemaining(){return Math.ceil((parseInt(localStorage.getItem(RL_LOCK)||'0')-Date.now())/1000);}
+  function showLockout(){
+    let ov=document.getElementById('lockout-overlay');
+    if(!ov){
+      ov=document.createElement('div');ov.id='lockout-overlay';ov.className='lockout-overlay';
+      ov.innerHTML='<div class="lockout-icon"><i class="fas fa-lock"></i></div><div class="lockout-title">Too many attempts</div><div class="lockout-sub">Admin locked for</div><div class="lockout-timer" id="lockout-timer">5:00</div><div class="lockout-msg">You entered the wrong password 3 times.</div>';
+      document.body.appendChild(ov);
+    }
+    ov.style.display='flex';
+    const timer=document.getElementById('lockout-timer');
+    const tick=()=>{
+      const s=getLockRemaining();
+      if(s<=0){ov.style.display='none';localStorage.removeItem(RL_LOCK);localStorage.removeItem(RL_KEY);return;}
+      if(timer)timer.textContent=Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0');
+      setTimeout(tick,1000);
+    };
+    tick();
+  }
+  if(isLocked())showLockout();
+
   if(form)form.addEventListener('submit',async e=>{
     e.preventDefault();
+    if(isLocked()){showLockout();return;}
     const pass=input?.value?.trim();if(!pass)return;
     const btn=$('#a-login-btn');if(btn){btn.textContent='Checking...';btn.disabled=true;}
     if(errEl)errEl.classList.remove('show');
@@ -1353,13 +1479,23 @@ function aInit(){
       const hash=await sha256(pass);
       const stored=AS.config?.admin?.passwordHash||'';
       if(hash===stored){
+        localStorage.removeItem(RL_KEY);localStorage.removeItem(RL_LOCK);
         sessSet(hash);
         $('#a-login')?.classList.add('fade-out');
         setTimeout(aShowDashboard,320);
       }else{
-        if(errEl){errEl.textContent='Incorrect password.';errEl.classList.add('show');}
-        if(input){input.value='';input.focus();}
-        const box=$('.a-login-box');if(box){box.classList.add('shake');setTimeout(()=>box.classList.remove('shake'),400);}
+        let fails=parseInt(localStorage.getItem(RL_KEY)||'0')+1;
+        localStorage.setItem(RL_KEY,String(fails));
+        const remaining=3-fails;
+        if(fails>=3){
+          localStorage.setItem(RL_LOCK,String(Date.now()+5*60*1000));
+          localStorage.removeItem(RL_KEY);
+          showLockout();
+        }else{
+          if(errEl){errEl.textContent=`Incorrect password. ${remaining} attempt${remaining===1?'':'s'} left.`;errEl.classList.add('show');}
+          if(input){input.value='';input.focus();}
+          const box=$('.a-login-box');if(box){box.classList.add('shake');setTimeout(()=>box.classList.remove('shake'),400);}
+        }
       }
     }catch(err){
       if(errEl){errEl.textContent='Auth error — try again.';errEl.classList.add('show');}
