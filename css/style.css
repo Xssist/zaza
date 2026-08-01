@@ -211,12 +211,12 @@ html, html * { cursor: none !important; }
 .layout {
   width:100%; display:flex;
   align-items:flex-end; justify-content:space-between;
-  padding:0 6vw; gap:40px;
+  padding:0 4vw 0 2vw; gap:40px;
 }
 
 /* ── Left column — always glassy ── */
 .profile-left {
-  flex:1; max-width:580px;
+  flex:1; max-width:700px; margin-left:-1vw;
   animation:fadeUp .8s .1s var(--ease) both;
   background:rgba(8,8,14,0.28);
   backdrop-filter:blur(32px) saturate(1.4);
@@ -388,9 +388,18 @@ html, html * { cursor: none !important; }
 .vol-row i { font-size:.7rem; color:var(--text-muted); }
 .vol-slider {
   -webkit-appearance:none; appearance:none;
-  width:60px; height:3px; background:rgba(255,255,255,0.1); border-radius:99px; outline:none; cursor:pointer;
+  width:60px; height:4px;
+  background:linear-gradient(90deg, var(--accent) var(--pct,50%), rgba(255,255,255,0.12) var(--pct,50%));
+  border-radius:99px; outline:none; cursor:pointer;
 }
-.vol-slider::-webkit-slider-thumb { -webkit-appearance:none; width:11px; height:11px; background:var(--accent); border-radius:50%; cursor:pointer; }
+.vol-slider::-webkit-slider-thumb {
+  -webkit-appearance:none; width:13px; height:13px;
+  background:#fff; border-radius:50%; cursor:pointer;
+  border:2px solid var(--accent);
+  box-shadow:0 0 6px rgba(168,85,247,.5);
+  transition:transform .15s;
+}
+.vol-slider::-webkit-slider-thumb:hover { transform:scale(1.2); }
 #visualizer-canvas { width:80px; height:24px; opacity:.7; flex-shrink:0; }
 
 /* ── Theme FAB ── */
