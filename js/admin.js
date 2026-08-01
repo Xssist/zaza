@@ -6,8 +6,8 @@
 const $  = (s, ctx = document) => ctx.querySelector(s);
 const $$ = (s, ctx = document) => [...ctx.querySelectorAll(s)];
 const esc = s => String(s)
-  .replace(/&/g,'&').replace(/</g,'<')
-  .replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,''');
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 
 function normalizeAssetPath(path) {
   if (!path || typeof path !== 'string') return '';
