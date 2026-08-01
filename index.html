@@ -54,6 +54,15 @@
   <button id="enter-btn" class="enter-btn"><span>enter</span></button>
 </div>
 
+<!-- Announcement Banner -->
+<div class="ann-banner hidden" id="ann-banner">
+  <div class="ann-inner">
+    <span class="ann-emoji" id="ann-emoji">📢</span>
+    <span class="ann-text" id="ann-text"></span>
+  </div>
+  <button class="ann-close" id="ann-close" aria-label="Close banner"><i class="fas fa-xmark"></i></button>
+</div>
+
 <!-- Main Page -->
 <main id="main-page">
   <div class="layout">
@@ -69,7 +78,7 @@
           <span class="online-dot" id="online-dot"></span>
         </div>
         <div class="name-text-wrap">
-          <div class="name-greeting">hey, i'm</div>
+          <div class="name-greeting">hi, my name is</div>
           <div class="name-main" id="profile-username">zaza</div>
         </div>
       </div>
@@ -78,20 +87,24 @@
 
       <div class="badges-row" id="badges-row"></div>
 
-      <div class="stats-strip">
-        <div class="stat-item">
-          <span class="stat-value" id="stat-visits">—</span>
-          <span class="stat-label">visitors</span>
+      <!-- Spotify Now Playing -->
+      <div class="spotify-widget" id="spotify-widget" style="display:none;">
+        <div class="spotify-icon"><i class="fab fa-spotify"></i></div>
+        <div class="spotify-info">
+          <div class="spotify-label">now playing</div>
+          <div class="spotify-track" id="spotify-track">—</div>
+          <div class="spotify-artist" id="spotify-artist">—</div>
         </div>
-        <div class="stat-sep"></div>
-        <div class="stat-item">
-          <span class="stat-value" id="stat-views">—</span>
-          <span class="stat-label">views</span>
+        <div class="spotify-bars" id="spotify-bars">
+          <span></span><span></span><span></span><span></span>
         </div>
-        <div class="stat-sep"></div>
-        <div class="stat-item">
-          <span class="stat-value" id="stat-since">—</span>
-          <span class="stat-label">since</span>
+      </div>
+      <!-- Spotify not playing fallback -->
+      <div class="spotify-widget spotify-idle" id="spotify-idle" style="display:none;">
+        <div class="spotify-icon"><i class="fab fa-spotify"></i></div>
+        <div class="spotify-info">
+          <div class="spotify-label">spotify</div>
+          <div class="spotify-track" id="spotify-idle-text">not playing</div>
         </div>
       </div>
     </div>
@@ -144,7 +157,7 @@
 <a href="admin.html" class="admin-corner-link">admin</a>
 
 <script>
-window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"cursor":{"enabled":true,"style":"dot","color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
+window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":false,"visitorCount":1,"showMemberSince":false,"showViews":false},"spotify":{"enabled":false,"accessToken":"","refreshToken":"","clientId":"","clientSecret":"","showWidget":true,"fallbackText":"not playing"},"announcement":{"enabled":false,"text":"","emoji":"📢","color":"#a855f7"},"cursor":{"enabled":true,"style":"dot","color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
 </script>
 <script src="js/app.js"></script>
 </body>
