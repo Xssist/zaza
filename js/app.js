@@ -346,9 +346,6 @@ function renderProfile() {
   // Badges
   renderBadges();
 
-  // Stats
-  renderStats();
-
   // Socials
   renderSocials();
 
@@ -387,41 +384,90 @@ function renderBadges() {
   });
 }
 
-function renderStats() {
-  const sinceEl  = $('#stat-since');
-  const viewsEl  = $('#stat-views');
-  const visitsEl = $('#stat-visits');
+/* ══════════════════════════════════════════
+   SPOTIFY NOW PLAYING
+   Uses the Spotify Web API /me/player/currently-playing
+   Token is stored in config.spotify.accessToken
+   Poll every 15s after entering the site
+══════════════════════════════════════════ */
+function initSpotify() {
+  const sp = S.cfg.spotify;
+  if (!sp?.enabled) return;
 
-  if (sinceEl) sinceEl.textContent = S.cfg.profile?.joinDate || '2024';
-  if (viewsEl) countUp(viewsEl, Math.floor(rand(800, 9999)), 600);
-  if (visitsEl && S.cfg.stats?.showVisitorCount) {
-    countUp(visitsEl, getVisitCount(), 900);
+  const widget    = $('#spotify-widget');
+  const idleEl    = $('#spotify-idle');
+  const trackEl   = $('#spotify-track');
+  const artistEl  = $('#spotify-artist');
+  const barsEl    = $('#spotify-bars');
+  const idleText  = $('#spotify-idle-text');
+
+  if (!widget) return;
+
+  // Show idle by default if enabled
+  if (idleEl) { idleEl.style.display = 'flex'; }
+  if (idleText) idleText.textContent = sp.fallbackText || 'not playing';
+
+  async function poll() {
+    const token = sp.accessToken;
+    if (!token) return;
+    try {
+      const r = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+
+      if (r.status === 204 || r.status === 404) {
+        // Nothing playing
+        if (widget) widget.style.display = 'none';
+        if (idleEl) idleEl.style.display = 'flex';
+        return;
+      }
+
+      if (!r.ok) {
+        // Token expired or error — hide both
+        if (widget) widget.style.display = 'none';
+        if (idleEl) idleEl.style.display = 'none';
+        return;
+      }
+
+      const data = await r.json();
+      if (!data || !data.item) {
+        if (widget) widget.style.display = 'none';
+        if (idleEl) idleEl.style.display = 'flex';
+        return;
+      }
+
+      const track   = data.item.name || 'Unknown';
+      const artists = (data.item.artists || []).map(a => a.name).join(', ') || '—';
+      const playing = data.is_playing;
+      const albumArt = data.item.album?.images?.[0]?.url;
+
+      if (trackEl)  trackEl.textContent  = track;
+      if (artistEl) artistEl.textContent = artists;
+
+      // Album art in the icon area
+      const iconEl = widget?.querySelector('.spotify-icon');
+      if (iconEl && albumArt) {
+        iconEl.innerHTML = `<img src="${albumArt}" class="spotify-cover" alt=""/>`;
+      } else if (iconEl) {
+        iconEl.innerHTML = '<i class="fab fa-spotify"></i>';
+      }
+
+      // Animate bars based on playing state
+      if (barsEl) {
+        barsEl.classList.toggle('paused', !playing);
+      }
+
+      if (widget) widget.style.display = 'flex';
+      if (idleEl) idleEl.style.display = 'none';
+
+    } catch (e) {
+      // Network error — silent fail
+    }
   }
-}
 
-function getVisitCount() {
-  const KEY = 'zaza_visits', DAY = 'zaza_visit_day';
-  let n = parseInt(localStorage.getItem(KEY) || '0') || (S.cfg.stats?.visitorCount || 1);
-  const today = new Date().toDateString();
-  if (localStorage.getItem(DAY) !== today) {
-    n++;
-    localStorage.setItem(KEY, String(n));
-    localStorage.setItem(DAY, today);
-  }
-  return n;
-}
-
-function countUp(el, target, delay) {
-  setTimeout(() => {
-    const start = performance.now(), dur = 1000;
-    (function frame(now) {
-      const p = Math.min((now - start) / dur, 1);
-      const ease = 1 - Math.pow(1 - p, 3);
-      el.textContent = Math.floor(ease * target).toLocaleString();
-      if (p < 1) requestAnimationFrame(frame);
-      else el.textContent = target.toLocaleString();
-    })(performance.now());
-  }, delay);
+  // Poll immediately then every 15s
+  poll();
+  setInterval(poll, 15000);
 }
 
 function renderSocials() {
@@ -499,6 +545,9 @@ function titleCycle(titles) {
   if (!titles || !titles.length) return;
   let ti = 0, ci = 0, deleting = false, paused = false;
 
+  // Set title immediately so users never see the static HTML <title>
+  document.title = titles[0];
+
   function tick() {
     if (paused) return;
     const t = titles[ti];
@@ -518,7 +567,7 @@ function titleCycle(titles) {
     step();
   }
   function step() { setTimeout(tick, deleting ? 34 : rand(60, 100)); }
-  setTimeout(step, 2500);
+  setTimeout(step, 800);
 }
 
 /* ══════════════════════════════════════════
@@ -635,14 +684,23 @@ function initMusic() {
     }
   });
 
-  // Volume
+  // Volume — update fill track via CSS custom property
+  function syncSliderFill(el) {
+    const min = parseFloat(el.min) || 0;
+    const max = parseFloat(el.max) || 1;
+    const pct = ((parseFloat(el.value) - min) / (max - min)) * 100;
+    el.style.setProperty('--pct', pct + '%');
+  }
+
   const volSlider = $('#volume-slider');
   if (volSlider) {
     volSlider.value = S.audioEl.volume;
+    syncSliderFill(volSlider);
     volSlider.addEventListener('input', e => {
       const v = parseFloat(e.target.value);
       S.audioEl.volume = v;
       if (S.gainNode) S.gainNode.gain.value = v;
+      syncSliderFill(e.target);
     });
   }
 
@@ -846,6 +904,187 @@ function toast(msg, dur = 1800) {
 }
 
 /* ══════════════════════════════════════════
+   ANNOUNCEMENT BANNER
+══════════════════════════════════════════ */
+function initAnnouncement() {
+  const ann = S.cfg.announcement;
+  if (!ann?.enabled || !ann?.text) return;
+
+  const banner  = $('#ann-banner');
+  const textEl  = $('#ann-text');
+  const emojiEl = $('#ann-emoji');
+  const closeEl = $('#ann-close');
+  if (!banner) return;
+
+  // Check if dismissed this session
+  const dismissed = sessionStorage.getItem('ann_dismissed');
+  if (dismissed === ann.text) return;
+
+  if (textEl)  textEl.textContent  = ann.text;
+  if (emojiEl) emojiEl.textContent = ann.emoji || '📢';
+
+  // Apply custom color to banner border
+  if (ann.color) {
+    banner.style.borderBottomColor = ann.color + '44';
+    banner.style.boxShadow = `0 1px 0 ${ann.color}22, 0 8px 32px rgba(0,0,0,.3)`;
+  }
+
+  banner.classList.remove('hidden');
+  document.body.classList.add('has-banner');
+
+  closeEl?.addEventListener('click', () => {
+    banner.classList.add('hidden');
+    document.body.classList.remove('has-banner');
+    sessionStorage.setItem('ann_dismissed', ann.text);
+  });
+}
+
+/* ══════════════════════════════════════════
+   BACKGROUND PATTERNS
+   Modes: aurora, matrix, starfield, mesh
+   Set via S.cfg.background.pattern
+══════════════════════════════════════════ */
+function initBgPattern() {
+  const pattern = S.cfg.background?.pattern;
+  if (!pattern || pattern === 'none' || pattern === 'video') return;
+
+  // Create canvas
+  let cv = document.getElementById('bg-pattern-canvas');
+  if (!cv) {
+    cv = document.createElement('canvas');
+    cv.id = 'bg-pattern-canvas';
+    cv.style.cssText = 'position:fixed;inset:0;z-index:0;pointer-events:none;';
+    document.getElementById('bg-layer')?.appendChild(cv);
+  }
+
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0;
+  const resize = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
+  resize();
+  window.addEventListener('resize', resize);
+
+  const ac = S.cfg.theme?.accentColor || '#a855f7';
+  const a2 = S.cfg.theme?.accentColorSecondary || '#ec4899';
+
+  if (pattern === 'aurora') {
+    // Flowing aurora waves
+    const waves = Array.from({length: 5}, (_, i) => ({
+      offset: i * Math.PI * 0.4,
+      speed:  0.0003 + i * 0.0001,
+      amp:    60 + i * 25,
+      y:      0.3 + i * 0.08,
+      color:  i % 2 === 0 ? ac : a2,
+      alpha:  0.04 + i * 0.01,
+    }));
+
+    let t = 0;
+    (function draw() {
+      requestAnimationFrame(draw);
+      ctx.clearRect(0, 0, W, H);
+      t += 1;
+      waves.forEach(w => {
+        ctx.beginPath();
+        ctx.moveTo(0, H * w.y);
+        for (let x = 0; x <= W; x += 4) {
+          const y = H * w.y + Math.sin((x * 0.005) + t * w.speed * 1000 + w.offset) * w.amp
+                            + Math.sin((x * 0.002) + t * w.speed * 500) * (w.amp * 0.5);
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+        const grad = ctx.createLinearGradient(0, 0, W, 0);
+        grad.addColorStop(0,   w.color + '00');
+        grad.addColorStop(0.3, w.color + Math.round(w.alpha * 255).toString(16).padStart(2,'0'));
+        grad.addColorStop(0.7, w.color + Math.round(w.alpha * 255).toString(16).padStart(2,'0'));
+        grad.addColorStop(1,   w.color + '00');
+        ctx.fillStyle = grad;
+        ctx.fill();
+      });
+    })();
+
+  } else if (pattern === 'matrix') {
+    // Matrix rain with accent color
+    const cols  = Math.floor(W / 14);
+    const drops = Array.from({length: cols}, () => Math.floor(rand(0, H / 14)));
+    const chars = '01アイウエオカキクケコサシスセソタチツテト';
+    let t = 0;
+
+    (function draw() {
+      requestAnimationFrame(draw);
+      t++;
+      ctx.fillStyle = 'rgba(6,6,11,0.05)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.font = '13px "JetBrains Mono", monospace';
+      drops.forEach((y, i) => {
+        const ch = chars[Math.floor(Math.random() * chars.length)];
+        const brightness = Math.random() > 0.95 ? 'rgba(255,255,255,0.9)' : ac + 'aa';
+        ctx.fillStyle = brightness;
+        ctx.fillText(ch, i * 14, y * 14);
+        if (y * 14 > H && Math.random() > 0.975) drops[i] = 0;
+        else drops[i]++;
+      });
+    })();
+
+  } else if (pattern === 'starfield') {
+    // 3D starfield warp
+    const stars = Array.from({length: 200}, () => ({
+      x: rand(-W/2, W/2), y: rand(-H/2, H/2), z: rand(0, W),
+      px: 0, py: 0,
+    }));
+
+    (function draw() {
+      requestAnimationFrame(draw);
+      ctx.fillStyle = 'rgba(6,6,11,0.15)';
+      ctx.fillRect(0, 0, W, H);
+
+      const cx = W / 2, cy = H / 2;
+      stars.forEach(s => {
+        const sx = (s.x / s.z) * W + cx;
+        const sy = (s.y / s.z) * H + cy;
+        const r  = Math.max(0.1, (1 - s.z / W) * 2.5);
+        const op = (1 - s.z / W);
+
+        if (s.px !== 0) {
+          ctx.strokeStyle = ac + Math.round(op * 180).toString(16).padStart(2,'0');
+          ctx.lineWidth = r * 0.6;
+          ctx.beginPath(); ctx.moveTo(s.px, s.py); ctx.lineTo(sx, sy); ctx.stroke();
+        }
+        ctx.fillStyle = ac + Math.round(op * 220).toString(16).padStart(2,'0');
+        ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+
+        s.px = sx; s.py = sy;
+        s.z -= 2;
+        if (s.z <= 0) { s.x = rand(-W/2, W/2); s.y = rand(-H/2, H/2); s.z = W; s.px = 0; s.py = 0; }
+      });
+    })();
+
+  } else if (pattern === 'mesh') {
+    // Flowing gradient mesh
+    const pts = Array.from({length: 8}, (_, i) => ({
+      x: rand(0, W), y: rand(0, H),
+      vx: rand(-0.4, 0.4), vy: rand(-0.4, 0.4),
+      color: i % 2 === 0 ? ac : a2,
+      r: rand(200, 400),
+    }));
+
+    (function draw() {
+      requestAnimationFrame(draw);
+      ctx.clearRect(0, 0, W, H);
+      pts.forEach(p => {
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+        grad.addColorStop(0,   p.color + '18');
+        grad.addColorStop(0.5, p.color + '08');
+        grad.addColorStop(1,   p.color + '00');
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < -p.r || p.x > W + p.r) p.vx *= -1;
+        if (p.y < -p.r || p.y > H + p.r) p.vy *= -1;
+      });
+    })();
+  }
+}
+
+/* ══════════════════════════════════════════
    MAIN INIT
 ══════════════════════════════════════════ */
 async function init() {
@@ -853,12 +1092,15 @@ async function init() {
   await loadConfig();
   applyTheme();
   initBackground();
+  initBgPattern();
   initCursor();
   initParticles();
   initWeather();
+  initAnnouncement();
   initEnter();
   initMusic();
   renderProfile();
+  initSpotify();
   initKeys();
   initThemeFab();
 }
