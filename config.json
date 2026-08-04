@@ -6,7 +6,7 @@
     "avatar": "assets/images/a7a8ee1961d881ac5c6478d210629015.jpg",
     "status": "online",
     "statusMessages": [
-      "im a goat",
+      "im goated",
       "dab",
       "credits to y3e.me"
     ],
@@ -151,13 +151,7 @@
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#a855f7"
   },
-  "badges": [
-    {
-      "icon": "dab",
-      "color": "#003366",
-      "label": "im a goat"
-    }
-  ],
+  "badges": [],
   "announcement": {
     "enabled": false,
     "text": "",
