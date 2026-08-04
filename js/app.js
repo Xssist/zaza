@@ -1103,6 +1103,212 @@ async function init() {
   initSpotify();
   initKeys();
   initThemeFab();
+  initVisualFeatures();
+}
+
+/* ══════════════════════════════════════════
+   16. VISUAL FEATURES ENGINE
+   Sub-systems: SVG filter injection, cursor trail,
+   3D card tilt + specular, magnetic enter button
+══════════════════════════════════════════ */
+function initVisualFeatures() {
+  _injectSVGFilters();
+  _initCursorTrail();
+  _initCardTilt();
+  _initMagneticButton();
+}
+
+/* ── SVG filter injection (grain noise) ── */
+function _injectSVGFilters() {
+  if (document.getElementById('zaza-svg-filters')) return;
+
+  // Hidden SVG with feTurbulence for grain
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.id = 'zaza-svg-filters';
+  svg.setAttribute('width', '0');
+  svg.setAttribute('height', '0');
+  svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;';
+  svg.innerHTML = `
+    <defs>
+      <filter id="grain" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="linearRGB">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.75"
+          numOctaves="4"
+          stitchTiles="stitch"
+          result="noise"/>
+        <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
+        <feComposite in="SourceGraphic" in2="grayNoise" operator="in"/>
+      </filter>
+    </defs>`;
+  document.body.insertAdjacentElement('afterbegin', svg);
+
+  // Grain overlay div (styled by CSS, references #grain filter)
+  if (!document.getElementById('grain-overlay')) {
+    const div = document.createElement('div');
+    div.id = 'grain-overlay';
+    document.body.appendChild(div);
+  }
+}
+
+/* ── Cursor trail spawner ── */
+function _initCursorTrail() {
+  const trailCfg = S.cfg.cursor?.trail || {};
+  const style    = trailCfg.style || 'dots';
+  const maxLen   = trailCfg.length ?? 12;
+  const fadeSpeed = trailCfg.fadeSpeed ?? 300; // ms
+
+  // Apply trail body class (controls CSS appearance)
+  document.body.classList.remove('trail-dots','trail-sparkle','trail-comet','trail-rings','trail-none');
+  document.body.classList.add('trail-' + style);
+  if (style === 'none') return;
+
+  // Override trail color via CSS var if specified
+  if (trailCfg.color) {
+    document.documentElement.style.setProperty('--trail-color', trailCfg.color);
+    // Re-bind --accent for trail elements that use var(--accent)
+    // CSS already uses var(--accent) so this is additive only
+  }
+
+  const pool = [];    // reusable DOM nodes
+  const active = [];  // { el, x, y, born }
+
+  function getNode() {
+    const el = pool.pop() || document.createElement('div');
+    el.className = 'cursor-trail-dot';
+    el.style.opacity = '1';
+    el.style.transform = 'translate(-50%, -50%) scale(1)';
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function recycleNode(el) {
+    el.remove();
+    pool.push(el);
+  }
+
+  let lastX = -999, lastY = -999;
+  const MIN_DIST = 8; // px minimum movement before spawning new dot
+
+  document.addEventListener('mousemove', e => {
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    if (dx*dx + dy*dy < MIN_DIST * MIN_DIST) return;
+    lastX = e.clientX; lastY = e.clientY;
+
+    const el = getNode();
+    el.style.left = e.clientX + 'px';
+    el.style.top  = e.clientY + 'px';
+    active.push({ el, born: performance.now() });
+
+    // Enforce max trail length
+    while (active.length > maxLen) {
+      const old = active.shift();
+      recycleNode(old.el);
+    }
+  });
+
+  // Fade loop
+  (function fade() {
+    const now = performance.now();
+    for (let i = active.length - 1; i >= 0; i--) {
+      const item = active[i];
+      const age  = now - item.born;
+      const t    = Math.min(age / fadeSpeed, 1);
+      item.el.style.opacity = String((1 - t).toFixed(3));
+      item.el.style.transform = `translate(-50%, -50%) scale(${1 - t * 0.5})`;
+      if (t >= 1) {
+        recycleNode(item.el);
+        active.splice(i, 1);
+      }
+    }
+    requestAnimationFrame(fade);
+  })();
+}
+
+/* ── 3D Card tilt + specular highlight ── */
+function _initCardTilt() {
+  const card = document.querySelector('.profile-left');
+  if (!card) return;
+
+  // Inject specular highlight div
+  let spec = card.querySelector('.specular-highlight');
+  if (!spec) {
+    spec = document.createElement('div');
+    spec.className = 'specular-highlight';
+    card.appendChild(spec);
+  }
+
+  const MAX_TILT = 8; // degrees max tilt each axis
+
+  function onMove(e) {
+    const rect  = card.getBoundingClientRect();
+    const cx    = rect.left + rect.width  / 2;
+    const cy    = rect.top  + rect.height / 2;
+    const dx    = (e.clientX - cx) / (rect.width  / 2); // -1 to 1
+    const dy    = (e.clientY - cy) / (rect.height / 2); // -1 to 1
+
+    const tiltX = (-dy * MAX_TILT).toFixed(2) + 'deg';
+    const tiltY = ( dx * MAX_TILT).toFixed(2) + 'deg';
+
+    card.style.setProperty('--tilt-x', tiltX);
+    card.style.setProperty('--tilt-y', tiltY);
+
+    // Specular highlight follows cursor within card
+    const relX = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1) + '%';
+    const relY = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1) + '%';
+    card.style.setProperty('--spec-x', relX);
+    card.style.setProperty('--spec-y', relY);
+    if (spec) {
+      spec.style.setProperty('--spec-x', relX);
+      spec.style.setProperty('--spec-y', relY);
+    }
+  }
+
+  function onLeave() {
+    card.style.setProperty('--tilt-x', '0deg');
+    card.style.setProperty('--tilt-y', '0deg');
+    card.style.setProperty('--spec-x', '50%');
+    card.style.setProperty('--spec-y', '50%');
+  }
+
+  card.addEventListener('mousemove', onMove);
+  card.addEventListener('mouseleave', onLeave);
+}
+
+/* ── Magnetic enter button ── */
+function _initMagneticButton() {
+  const btn = document.querySelector('.enter-btn');
+  if (!btn) return;
+
+  const STRENGTH = 0.35; // 0 = no pull, 1 = full cursor-to-center
+
+  function onMove(e) {
+    const rect = btn.getBoundingClientRect();
+    const cx   = rect.left + rect.width  / 2;
+    const cy   = rect.top  + rect.height / 2;
+    // Distance from cursor to button center
+    const dx   = e.clientX - cx;
+    const dy   = e.clientY - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const RADIUS = Math.max(rect.width, rect.height) * 1.4;
+
+    if (dist < RADIUS) {
+      const pull = (1 - dist / RADIUS) * STRENGTH;
+      btn.style.setProperty('--mx', (dx * pull).toFixed(1) + 'px');
+      btn.style.setProperty('--my', (dy * pull).toFixed(1) + 'px');
+    } else {
+      btn.style.setProperty('--mx', '0px');
+      btn.style.setProperty('--my', '0px');
+    }
+  }
+
+  function onLeave() {
+    btn.style.setProperty('--mx', '0px');
+    btn.style.setProperty('--my', '0px');
+  }
+
+  document.addEventListener('mousemove', onMove);
+  btn.addEventListener('mouseleave', onLeave);
 }
 
 if (document.readyState === 'loading') {
