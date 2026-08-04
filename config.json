@@ -22,7 +22,7 @@
     "particleCount": 80,
     "snowEnabled": true,
     "rainEnabled": false,
-    "glassmorphism": true,
+    "glassmorphism": false,
     "gradientAngle": 155
   },
   "background": {
