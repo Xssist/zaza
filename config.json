@@ -131,7 +131,7 @@
     "color": "#a855f7",
     "style": "ring",
     "trail": {
-      "style": "comet",
+      "style": "rings",
       "length": 12,
       "fadeSpeed": 300,
       "color": ""
