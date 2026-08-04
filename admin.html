@@ -726,15 +726,62 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
 <section class="a-section" id="sec-cursor">
   <div class="a-section-head">
     <div class="a-section-title">Cursor</div>
-    <div class="a-section-desc">Custom cursor style shown on the site.</div>
+    <div class="a-section-desc">Custom cursor style and trail effects shown on the site.</div>
   </div>
+
   <div class="a-card">
-    <div class="a-card-title"><i class="fas fa-arrow-pointer"></i> Style</div>
+    <div class="a-card-title"><i class="fas fa-arrow-pointer"></i> Cursor Style</div>
     <div class="a-cursor-picker" id="a-cursor-picker">
       <div class="a-cursor-opt" data-v="dot"><span class="a-cursor-opt-icon">●</span>Dot</div>
       <div class="a-cursor-opt" data-v="ring"><span class="a-cursor-opt-icon">○</span>Ring</div>
       <div class="a-cursor-opt" data-v="crosshair"><span class="a-cursor-opt-icon">✛</span>Cross</div>
       <div class="a-cursor-opt" data-v="emoji"><span class="a-cursor-opt-icon">✨</span>Emoji</div>
+    </div>
+    <div class="a-row" style="margin-top:16px;">
+      <label>Cursor Color</label>
+      <div class="a-color-row">
+        <div class="a-color-swatch" id="sw-cursor-color" style="background:#a855f7;" title="Pick color"></div>
+        <input type="color" id="pk-cursor-color" value="#a855f7"/>
+        <input type="text" id="inp-cursor-color" class="a-input" placeholder="#a855f7" maxlength="7"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-wand-sparkles"></i> Cursor Trail</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i> Spawns animated particles behind your cursor as you move.</div>
+
+    <div class="a-row">
+      <label>Trail Style</label>
+      <div class="a-cursor-picker" id="a-trail-picker" style="margin-top:8px;">
+        <div class="a-cursor-opt" data-v="none"   ><span class="a-cursor-opt-icon">✕</span>None</div>
+        <div class="a-cursor-opt" data-v="dots"   ><span class="a-cursor-opt-icon">•••</span>Dots</div>
+        <div class="a-cursor-opt" data-v="sparkle"><span class="a-cursor-opt-icon">✦✦</span>Sparkle</div>
+        <div class="a-cursor-opt" data-v="comet"  ><span class="a-cursor-opt-icon">—</span>Comet</div>
+        <div class="a-cursor-opt" data-v="rings"  ><span class="a-cursor-opt-icon">◯◯</span>Rings</div>
+      </div>
+    </div>
+
+    <div class="a-grid-2" style="margin-top:14px;">
+      <div class="a-row">
+        <label>Trail Length — <span id="trail-len-disp">12</span> dots</label>
+        <input type="range" id="inp-trail-length" min="3" max="30" step="1" value="12"
+          oninput="document.getElementById('trail-len-disp').textContent=this.value"/>
+      </div>
+      <div class="a-row">
+        <label>Fade Speed — <span id="trail-fade-disp">300</span> ms</label>
+        <input type="range" id="inp-trail-fade" min="80" max="800" step="20" value="300"
+          oninput="document.getElementById('trail-fade-disp').textContent=this.value"/>
+      </div>
+    </div>
+
+    <div class="a-row">
+      <label>Trail Color</label>
+      <div class="a-color-row">
+        <div class="a-color-swatch" id="sw-trail-color" style="background:#a855f7;" title="Pick color"></div>
+        <input type="color" id="pk-trail-color" value="#a855f7"/>
+        <input type="text" id="inp-trail-color" class="a-input" placeholder="#a855f7 (leave blank to follow accent)" maxlength="7"/>
+      </div>
     </div>
   </div>
 </section>
@@ -920,7 +967,7 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
 
 <script>
 /* ── Inline config fallback ── */
-window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"cursor":{"enabled":true,"style":"dot","color":"#a855f7"},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
+window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"cursor":{"enabled":true,"style":"dot","color":"#a855f7","trail":{"style":"dots","length":12,"fadeSpeed":300,"color":""}},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
 
 const $ = (s,c=document)=>c.querySelector(s);
 const $$ = (s,c=document)=>[...c.querySelectorAll(s)];
@@ -1060,7 +1107,28 @@ function aPopulate(cfg){
   set('#inp-blur',bl);const bd=$('#blur-disp');if(bd)bd.textContent=bl;
 
   const cs=cfg.cursor?.style||'dot';
-  $$('.a-cursor-opt').forEach(el=>el.classList.toggle('active',el.dataset.v===cs));
+  $$('#a-cursor-picker .a-cursor-opt').forEach(el=>el.classList.toggle('active',el.dataset.v===cs));
+
+  // Cursor color
+  const curColor=cfg.cursor?.color||'#a855f7';
+  set('#inp-cursor-color',curColor);
+  const swCur=$('#sw-cursor-color'),pkCur=$('#pk-cursor-color');
+  if(swCur)swCur.style.background=curColor;
+  if(pkCur)pkCur.value=curColor;
+
+  // Trail
+  const trail=cfg.cursor?.trail||{};
+  const trailStyle=trail.style||'dots';
+  $$('#a-trail-picker .a-cursor-opt').forEach(el=>el.classList.toggle('active',el.dataset.v===trailStyle));
+  set('#inp-trail-length',trail.length??12);
+  const tld=$('#trail-len-disp');if(tld)tld.textContent=trail.length??12;
+  set('#inp-trail-fade',trail.fadeSpeed??300);
+  const tfd=$('#trail-fade-disp');if(tfd)tfd.textContent=trail.fadeSpeed??300;
+  const trailColor=trail.color||'#a855f7';
+  set('#inp-trail-color',trail.color||'');
+  const swTr=$('#sw-trail-color'),pkTr=$('#pk-trail-color');
+  if(swTr)swTr.style.background=trailColor;
+  if(pkTr)pkTr.value=trailColor;
 
   chk('#tog-music',cfg.music?.enabled??true);
   const dv=cfg.music?.defaultVolume??0.5;
@@ -1127,6 +1195,14 @@ function aCollectAll(){
 
   const csEl=document.querySelector('.a-cursor-opt.active');
   if(csEl?.dataset?.v){if(!cfg.cursor)cfg.cursor={};cfg.cursor.style=csEl.dataset.v;}
+  cfg.cursor.color=g('#inp-cursor-color')||'#a855f7';
+  // Trail
+  if(!cfg.cursor.trail)cfg.cursor.trail={};
+  const trailEl=document.querySelector('#a-trail-picker .a-cursor-opt.active');
+  if(trailEl?.dataset?.v)cfg.cursor.trail.style=trailEl.dataset.v;
+  cfg.cursor.trail.length=parseInt(g('#inp-trail-length'))||12;
+  cfg.cursor.trail.fadeSpeed=parseInt(g('#inp-trail-fade'))||300;
+  const tc=g('#inp-trail-color');cfg.cursor.trail.color=tc||'';
 
   cfg.music.enabled=gc('#tog-music');
   cfg.music.defaultVolume=parseFloat(g('#inp-vol'))||0.5;
@@ -1387,11 +1463,35 @@ function aShowDashboard(){
     el.classList.add('sel-'+v);if(!AS.config.profile)AS.config.profile={};
     AS.config.profile.availability=v;markDirty();
   }));
-  $$('.a-cursor-opt').forEach(el=>el.addEventListener('click',()=>{
-    $$('.a-cursor-opt').forEach(o=>o.classList.remove('active'));
+  $$('#a-cursor-picker .a-cursor-opt').forEach(el=>el.addEventListener('click',()=>{
+    $$('#a-cursor-picker .a-cursor-opt').forEach(o=>o.classList.remove('active'));
     el.classList.add('active');if(!AS.config.cursor)AS.config.cursor={};
     AS.config.cursor.style=el.dataset.v;markDirty();
   }));
+  // Trail style picker (separate from cursor style picker)
+  $$('#a-trail-picker .a-cursor-opt').forEach(el=>el.addEventListener('click',()=>{
+    $$('#a-trail-picker .a-cursor-opt').forEach(o=>o.classList.remove('active'));
+    el.classList.add('active');
+    if(!AS.config.cursor)AS.config.cursor={};
+    if(!AS.config.cursor.trail)AS.config.cursor.trail={};
+    AS.config.cursor.trail.style=el.dataset.v;markDirty();
+  }));
+  // Cursor color swatch
+  (()=>{
+    const sw=$('#sw-cursor-color'),pk=$('#pk-cursor-color'),inp=$('#inp-cursor-color');
+    if(!sw||!pk||!inp)return;
+    sw.addEventListener('click',()=>pk.click());
+    pk.addEventListener('input',e=>{const v=e.target.value;inp.value=v;sw.style.background=v;markDirty();});
+    inp.addEventListener('input',e=>{const v=e.target.value;if(/^#[0-9a-fA-F]{6}$/.test(v)){pk.value=v;sw.style.background=v;}markDirty();});
+  })();
+  // Trail color swatch
+  (()=>{
+    const sw=$('#sw-trail-color'),pk=$('#pk-trail-color'),inp=$('#inp-trail-color');
+    if(!sw||!pk||!inp)return;
+    sw.addEventListener('click',()=>pk.click());
+    pk.addEventListener('input',e=>{const v=e.target.value;inp.value=v;sw.style.background=v;markDirty();});
+    inp.addEventListener('input',e=>{const v=e.target.value;if(/^#[0-9a-fA-F]{6}$/.test(v)){pk.value=v;sw.style.background=v;}markDirty();});
+  })();
   $('#a-bug-btn')?.addEventListener('click',aBugCheck);
   $('#a-test-gh-btn')?.addEventListener('click',async()=>{
     const btn=$('#a-test-gh-btn');if(btn){btn.textContent='Testing...';btn.disabled=true;}
