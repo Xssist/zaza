@@ -22,7 +22,7 @@
     "particleCount": 80,
     "snowEnabled": true,
     "rainEnabled": false,
-    "glassmorphism": false,
+    "glassmorphism": true,
     "gradientAngle": 155
   },
   "background": {
@@ -114,7 +114,7 @@
     "showViews": true
   },
   "discord": {
-    "enabled": true,
+    "enabled": false,
     "userId": "1246068508039708672",
     "showWidget": true
   },
