@@ -87,6 +87,47 @@
 
       <div class="badges-row" id="badges-row"></div>
 
+      <!-- Discord Presence Panel -->
+      <div class="discord-panel" id="discord-panel" style="display:none;">
+        <div class="discord-card dc-connecting" id="dc-card">
+          <div class="dc-avatar-wrap">
+            <div class="dc-avatar-initial" id="dc-avatar-wrap-inner">Z</div>
+            <span class="dc-status-dot offline" id="dc-status-dot"></span>
+          </div>
+          <div class="dc-info">
+            <div class="dc-label">discord</div>
+            <div class="dc-username" id="dc-username">connecting...</div>
+            <div class="dc-status-text" id="dc-status-text">loading presence</div>
+          </div>
+          <i class="fab fa-discord dc-logo"></i>
+        </div>
+        <div class="discord-activity" id="dc-activity">
+          <div class="dc-act-img-wrap">
+            <div class="dc-act-placeholder" id="dc-act-placeholder">🎮</div>
+            <img class="dc-act-img" id="dc-act-img" src="" alt="" style="display:none;"/>
+            <img class="dc-act-small-img" id="dc-act-small-img" src="" alt="" style="display:none;"/>
+          </div>
+          <div class="dc-act-info">
+            <div class="dc-act-type" id="dc-act-type">Playing</div>
+            <div class="dc-act-name" id="dc-act-name">—</div>
+            <div class="dc-act-detail" id="dc-act-detail"></div>
+            <div class="dc-act-state" id="dc-act-state"></div>
+          </div>
+          <div class="dc-act-elapsed" id="dc-act-elapsed"></div>
+        </div>
+        <div class="discord-spotify" id="dc-spotify">
+          <img class="dc-sp-cover" id="dc-sp-cover" src="" alt=""/>
+          <div class="dc-sp-info">
+            <div class="dc-sp-label">listening on spotify</div>
+            <div class="dc-sp-track" id="dc-sp-track">—</div>
+            <div class="dc-sp-artist" id="dc-sp-artist">—</div>
+          </div>
+          <div class="dc-sp-bars">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+
       <!-- Spotify Now Playing -->
       <div class="spotify-widget" id="spotify-widget" style="display:none;">
         <div class="spotify-icon"><i class="fab fa-spotify"></i></div>
@@ -155,6 +196,9 @@
 
 <!-- Admin link -->
 <a href="admin.html" class="admin-corner-link">admin</a>
+
+<!-- Custom context menu -->
+<div id="ctx-menu" role="menu" aria-label="Site menu"></div>
 
 <script>
 window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":false,"visitorCount":1,"showMemberSince":false,"showViews":false},"spotify":{"enabled":false,"accessToken":"","refreshToken":"","clientId":"","clientSecret":"","showWidget":true,"fallbackText":"not playing"},"announcement":{"enabled":false,"text":"","emoji":"📢","color":"#a855f7"},"cursor":{"enabled":true,"style":"dot","color":"#a855f7","trail":{"style":"dots","length":12,"fadeSpeed":300,"color":""}},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
