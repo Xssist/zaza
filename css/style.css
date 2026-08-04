@@ -201,8 +201,8 @@ html, html * { cursor: none !important; }
 /* ── Main Page ── */
 #main-page {
   position:fixed; inset:0; z-index:10;
-  display:flex; align-items:flex-end;
-  padding:0 0 56px;
+  display:flex; align-items:center;
+  padding:0 0 80px;
   opacity:0; visibility:hidden; pointer-events:none;
   transition: opacity .8s var(--ease), visibility .8s var(--ease);
 }
