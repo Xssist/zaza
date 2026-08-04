@@ -459,6 +459,7 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
       <button class="a-nav-item" data-sec="spotify"><i class="fab fa-spotify"></i> Spotify</button>
       <button class="a-nav-item" data-sec="banner"><i class="fas fa-megaphone"></i> Banner</button>
       <button class="a-nav-item" data-sec="cursor"><i class="fas fa-arrow-pointer"></i> Cursor</button>
+      <button class="a-nav-item" data-sec="discord"><i class="fab fa-discord"></i> Discord</button>
       <span class="a-nav-lbl">Site</span>
       <button class="a-nav-item" data-sec="stats"><i class="fas fa-chart-simple"></i> Stats</button>
       <button class="a-nav-item" data-sec="seo"><i class="fas fa-magnifying-glass-chart"></i> SEO</button>
@@ -960,6 +961,37 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
   </div>
 </section>
 
+<!-- ═══ DISCORD ═══ -->
+<section class="a-section" id="sec-discord">
+  <div class="a-section-head">
+    <div class="a-section-title">Discord</div>
+    <div class="a-section-desc">Live presence widget powered by Lanyard. Avatar auto-syncs from Discord.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fab fa-discord"></i> Lanyard Presence</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i>
+      Uses <a href="https://lanyard.rest" target="_blank" style="color:#a855f7;">Lanyard API</a> — no token needed.
+      You must join the <a href="https://discord.gg/lanyard" target="_blank" style="color:#a855f7;">Lanyard Discord server</a> for your presence to be tracked, or self-host Lanyard.
+    </div>
+    <div class="a-row">
+      <label>Enable Discord Widget</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+        <label class="a-toggle"><input type="checkbox" id="tog-discord"/><span class="a-toggle-slider"></span></label>
+        <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Show presence on site</span>
+      </div>
+    </div>
+    <div class="a-row"><label>Discord User ID</label><input type="text" id="inp-discord-uid" class="a-input" placeholder="1246068508039708672"/></div>
+    <div class="a-info" style="margin-top:8px;"><i class="fas fa-circle-info"></i> Enable Developer Mode in Discord → right-click your profile → Copy User ID.</div>
+    <div style="margin-top:8px;">
+      <button class="a-btn-sm" id="a-test-discord-btn"><i class="fas fa-plug"></i> Test Lanyard</button>
+    </div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-image"></i> Avatar Sync</div>
+    <div class="a-info success"><i class="fas fa-circle-check"></i> When the Discord widget is enabled, your Discord profile picture automatically replaces the site avatar in real time — no manual upload needed.</div>
+  </div>
+</section>
+
     </main>
   </div>
 </div><!-- end dashboard -->
@@ -1152,6 +1184,10 @@ function aPopulate(cfg){
   set('#inp-spotify-token',cfg.spotify?.accessToken||'');
   set('#inp-spotify-fallback',cfg.spotify?.fallbackText||'not playing');
 
+  // Discord
+  const chkDc=$('#tog-discord');if(chkDc)chkDc.checked=!!(cfg.discord?.enabled);
+  set('#inp-discord-uid',cfg.discord?.userId||'');
+
   // Banner
   const chkBn=$(''+'#tog-banner');if(chkBn)chkBn.checked=!!(cfg.announcement?.enabled);
   set('#inp-banner-text',cfg.announcement?.text||'');
@@ -1222,6 +1258,11 @@ function aCollectAll(){
   cfg.spotify.accessToken=g('#inp-spotify-token');
   cfg.spotify.fallbackText=g('#inp-spotify-fallback')||'not playing';
   cfg.spotify.showWidget=true;
+
+  if(!cfg.discord)cfg.discord={};
+  cfg.discord.enabled=gc('#tog-discord');
+  cfg.discord.userId=g('#inp-discord-uid')||'';
+  cfg.discord.showWidget=true;
 
   if(!cfg.announcement)cfg.announcement={};
   cfg.announcement.enabled=gc('#tog-banner');
@@ -1514,6 +1555,26 @@ function aShowDashboard(){
       else aToast('Token error: '+d.error?.message,'error');
     }catch(e){aToast('Network error','error');}
     finally{if(btn){btn.textContent='Test Token';btn.disabled=false;}}
+  });
+  // Discord / Lanyard test
+  $('#a-test-discord-btn')?.addEventListener('click',async()=>{
+    const btn=$('#a-test-discord-btn');
+    const uid=($('#inp-discord-uid')?.value||'').trim();
+    if(!uid){aToast('Enter a User ID first','error');return;}
+    if(btn){btn.textContent='Testing...';btn.disabled=true;}
+    try{
+      const r=await fetch('https://api.lanyard.rest/v1/users/'+uid);
+      const d=await r.json();
+      if(d.success){
+        const u=d.data?.discord_user;
+        const name=u?.global_name||u?.username||uid;
+        const status=d.data?.discord_status||'unknown';
+        aToast('Connected: '+name+' ('+status+')','success');
+      } else {
+        aToast('Lanyard error: '+(d.error?.message||'not found'),'error');
+      }
+    }catch(e){aToast('Network error','error');}
+    finally{if(btn){btn.textContent='Test Lanyard';btn.disabled=false;}}
   });
   // Banner color picker
   const swBnD=$('#sw-banner-color'),pkBnD=$('#pk-banner-color'),inpBnD=$('#inp-banner-color');
