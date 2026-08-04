@@ -1022,3 +1022,362 @@ body.has-banner .ann-banner ~ #enter-screen { margin-top:42px; }
 .lockout-sub { font-size:.8rem; color:rgba(240,240,245,.5); }
 .lockout-timer { font-size:2rem; font-weight:900; color:#fbbf24; font-family:'JetBrains Mono',monospace; letter-spacing:.05em; }
 .lockout-msg { font-size:.72rem; color:rgba(240,240,245,.35); }
+
+/* ═══════════════════════════════════════════════════════════
+   VISUAL FEATURE PACK — holographic, liquid, shimmer, tilt,
+   scanlines, SVG glow, circuit underlines, cursor trail
+═══════════════════════════════════════════════════════════ */
+
+/* ── 1. CSS Custom Property Registration (animatable) ── */
+@property --holo-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --liquid-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --shimmer-pos {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: -50%;
+}
+@property --tilt-x {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --tilt-y {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --spec-x {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+@property --spec-y {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 50%;
+}
+
+/* ── 2. Holographic / Iridescent card sheen ── */
+.profile-left {
+  --holo-angle: 0deg;
+  transform-style: preserve-3d;
+  transform: perspective(1000px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+.profile-left::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: conic-gradient(
+    from var(--holo-angle),
+    rgba(255,0,128,0)     0%,
+    rgba(255,0,128,0.06)  8%,
+    rgba(255,165,0,0.08)  16%,
+    rgba(255,255,0,0.06)  24%,
+    rgba(0,255,128,0.08)  32%,
+    rgba(0,200,255,0.06)  40%,
+    rgba(128,0,255,0.08)  48%,
+    rgba(255,0,200,0.06)  56%,
+    rgba(255,0,128,0)     64%,
+    transparent           100%
+  );
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: screen;
+  animation: holoSweep 6s linear infinite;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.profile-left:hover::after { opacity: 1; }
+@keyframes holoSweep {
+  0%   { --holo-angle: 0deg; }
+  100% { --holo-angle: 360deg; }
+}
+
+/* ── 3. Liquid spinning gradient border ── */
+.profile-left-wrapper {
+  position: relative;
+  border-radius: 26px;
+  padding: 2px;
+  --liquid-angle: 0deg;
+  animation: liquidSpin 4s linear infinite;
+}
+@keyframes liquidSpin {
+  0%   { --liquid-angle: 0deg; }
+  100% { --liquid-angle: 360deg; }
+}
+.profile-left-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  background: conic-gradient(
+    from var(--liquid-angle),
+    #a855f7, #ec4899, #f97316, #eab308,
+    #22c55e, #06b6d4, #3b82f6, #a855f7
+  );
+  z-index: -1;
+  filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.profile-left-wrapper:hover::before { opacity: 0.7; }
+/* Static accent glow as default border replacement */
+.profile-left-wrapper .profile-left {
+  margin: 0;
+}
+
+/* ── 4. Chrome text shimmer on .name-main ── */
+.name-main {
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    #fff 0%,
+    #fff 35%,
+    rgba(255,255,255,0.4) 45%,
+    #fff 50%,
+    rgba(255,255,255,0.9) 55%,
+    #fff 65%,
+    #fff 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: chromeShimmer 3.5s linear infinite;
+}
+@keyframes chromeShimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* ── 5. Specular highlight tracking on card ── */
+.profile-left .specular-highlight {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: radial-gradient(
+    circle 180px at var(--spec-x, 50%) var(--spec-y, 50%),
+    rgba(255,255,255,0.07) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 3;
+  transition: --spec-x 0.05s, --spec-y 0.05s;
+}
+
+/* ── 6. Scanline + Film Grain overlay (whole site) ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+  background-size: 100% 4px;
+  opacity: 1;
+  mix-blend-mode: multiply;
+}
+/* SVG noise grain layer — injected via JS */
+#grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99989;
+  pointer-events: none;
+  opacity: 0.025;
+  filter: url(#grain);
+  background: rgba(255,255,255,1);
+  animation: grainShift 0.15s steps(1) infinite;
+}
+@keyframes grainShift {
+  0%   { transform: translate(0, 0); }
+  10%  { transform: translate(-2%, -3%); }
+  20%  { transform: translate(3%, 2%); }
+  30%  { transform: translate(-1%, 4%); }
+  40%  { transform: translate(4%, -1%); }
+  50%  { transform: translate(-3%, 1%); }
+  60%  { transform: translate(2%, -4%); }
+  70%  { transform: translate(-4%, 3%); }
+  80%  { transform: translate(1%, -2%); }
+  90%  { transform: translate(-2%, 4%); }
+  100% { transform: translate(3%, -3%); }
+}
+
+/* ── 7. 3D Card Tilt — perspective container ── */
+#main-page { perspective: 1200px; }
+.profile-left {
+  will-change: transform;
+  transform: perspective(1200px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(0px);
+  transition: transform 0.08s ease-out, box-shadow 0.15s ease;
+}
+.profile-left:hover {
+  box-shadow:
+    0 20px 80px rgba(0,0,0,0.4),
+    0 0 40px rgba(168,85,247,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+/* ── 8. Magnetic enter button ── */
+.enter-btn {
+  --mx: 0px;
+  --my: 0px;
+  transform: translate(var(--mx), var(--my));
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), border-color .25s, box-shadow .25s;
+}
+
+/* ── 9. Neon border pulse on profile-left (SVG glow) ── */
+.profile-left {
+  filter: drop-shadow(0 0 0px transparent);
+  transition: filter 0.4s ease, transform 0.08s ease-out, box-shadow 0.15s ease;
+}
+.profile-left:hover {
+  filter: drop-shadow(0 0 12px rgba(168,85,247,0.5)) drop-shadow(0 0 28px rgba(168,85,247,0.2));
+}
+
+/* ── 10. Circuit-board underlines on social rows ── */
+.social-row {
+  overflow: hidden;
+}
+.social-row::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 1px;
+  width: 0%;
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    var(--accent2) 40%,
+    transparent 100%
+  );
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 6px var(--accent);
+}
+.social-row:hover::after { width: 100%; }
+
+/* Circuit corner dot */
+.social-row::before {
+  content: '';
+  position: absolute;
+  bottom: -2px; right: 8px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent2);
+  box-shadow: 0 0 8px var(--accent2);
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.2s 0.2s ease, transform 0.2s 0.2s ease;
+}
+.social-row:hover::before { opacity: 1; transform: scale(1); }
+
+/* ── 11. Cursor trail particles ── */
+.cursor-trail-dot {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99997;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  will-change: left, top, opacity, transform;
+}
+/* Trail style: dots */
+body.trail-dots .cursor-trail-dot {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+/* Trail style: sparkle */
+body.trail-sparkle .cursor-trail-dot {
+  width: 4px; height: 4px;
+  background: #fff;
+  box-shadow: 0 0 4px var(--accent), 0 0 10px var(--accent2);
+}
+/* Trail style: comet */
+body.trail-comet .cursor-trail-dot {
+  width: 8px; height: 2px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  box-shadow: 0 0 8px var(--accent);
+}
+/* Trail style: glow rings */
+body.trail-rings .cursor-trail-dot {
+  width: 12px; height: 12px;
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  box-shadow: 0 0 8px var(--accent), inset 0 0 4px rgba(168,85,247,0.3);
+}
+/* Trail style: none */
+body.trail-none .cursor-trail-dot { display: none; }
+
+/* ── 12. Frosted glass depth layers ── */
+.profile-left {
+  isolation: isolate;
+}
+/* Extra depth inner shadow */
+.profile-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.07) 0%,
+    rgba(255,255,255,0.01) 50%,
+    rgba(168,85,247,0.04) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── 13. Typewriter cursor glow trail ── */
+.tw-cursor {
+  position: relative;
+  box-shadow: 0 0 8px var(--accent), 0 0 16px rgba(168,85,247,0.5);
+}
+.tw-cursor::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: var(--accent);
+  border-radius: 1px;
+  opacity: 0.4;
+  filter: blur(4px);
+  transform: scaleY(1.5);
+  animation: twGlow 0.8s step-end infinite;
+}
+@keyframes twGlow {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0; }
+}
+
+/* ── 14. Online dot ripple pulse ── */
+.online-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #22c55e;
+  opacity: 0;
+  animation: dotRipple 2s ease-out infinite;
+}
+@keyframes dotRipple {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
