@@ -149,8 +149,8 @@ html, html * { cursor: none !important; }
   color:#22c55e;
   min-height:160px;
 }
-.term-line { display:flex; gap:8px; }
-.term-line .prompt { color:var(--accent); flex-shrink:0; }
+.term-line { display:flex; gap:0; align-items:baseline; flex-wrap:wrap; }
+.term-line .prompt { color:#22c55e; flex-shrink:0; font-weight:700; margin-right:6px; }
 .term-line .term-text { color:#d4d4d4; }
 .term-line .term-text.ok   { color:#22c55e; }
 .term-line .term-text.warn { color:#fbbf24; }
@@ -201,8 +201,8 @@ html, html * { cursor: none !important; }
 /* ── Main Page ── */
 #main-page {
   position:fixed; inset:0; z-index:10;
-  display:flex; align-items:center;
-  padding:0 0 80px;
+  display:flex; align-items:flex-end;
+  padding:0 0 56px;
   opacity:0; visibility:hidden; pointer-events:none;
   transition: opacity .8s var(--ease), visibility .8s var(--ease);
 }
