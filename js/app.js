@@ -1104,6 +1104,8 @@ async function init() {
   initKeys();
   initThemeFab();
   initVisualFeatures();
+  initDiscord();
+  initContextMenu();
 }
 
 /* ══════════════════════════════════════════
@@ -1315,4 +1317,517 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
+}
+
+/* ══════════════════════════════════════════
+   17. DISCORD LANYARD PRESENCE
+   WebSocket connection to wss://api.lanyard.rest/socket
+   - Real-time status, activity, Spotify via Lanyard
+   - Discord avatar synced to profile picture
+   - Reconnects on disconnect with exponential backoff
+══════════════════════════════════════════ */
+function initDiscord() {
+  const userId = S.cfg.discord?.userId || '1246068508039708672';
+  if (!userId) return;
+
+  const panel     = $('#discord-panel');
+  const card      = $('#dc-card');
+  const dcAvWrap  = $('#dc-avatar-wrap-inner');
+  const statusDot = $('#dc-status-dot');
+  const dcUser    = $('#dc-username');
+  const dcStatus  = $('#dc-status-text');
+  const actPanel  = $('#dc-activity');
+  const actType   = $('#dc-act-type');
+  const actName   = $('#dc-act-name');
+  const actDetail = $('#dc-act-detail');
+  const actState  = $('#dc-act-state');
+  const actImg    = $('#dc-act-img');
+  const actSmall  = $('#dc-act-small-img');
+  const actPH     = $('#dc-act-placeholder');
+  const actElapsed= $('#dc-act-elapsed');
+  const spPanel   = $('#dc-spotify');
+  const spCover   = $('#dc-sp-cover');
+  const spTrack   = $('#dc-sp-track');
+  const spArtist  = $('#dc-sp-artist');
+  if (!panel) return;
+
+  panel.style.display = 'flex';
+
+  const STATUS_TEXT = {
+    online:  'online',
+    idle:    'away',
+    dnd:     'do not disturb',
+    offline: 'offline',
+  };
+
+  const ACTIVITY_TYPE = {
+    0: 'Playing',
+    1: 'Streaming',
+    2: 'Listening to',
+    3: 'Watching',
+    5: 'Competing in',
+  };
+
+  let elapsedTimer = null;
+  let actStartMs   = null;
+  let ws           = null;
+  let heartbeatInterval = null;
+  let reconnectDelay    = 1000;
+  let dead = false;
+
+  /* ── Elapsed timer ── */
+  function startElapsed(timestampMs) {
+    actStartMs = timestampMs;
+    clearInterval(elapsedTimer);
+    elapsedTimer = setInterval(() => {
+      if (!actStartMs || !actElapsed) return;
+      const s = Math.floor((Date.now() - actStartMs) / 1000);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = s % 60;
+      actElapsed.textContent = h > 0
+        ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+        : `${m}:${String(sec).padStart(2,'0')}`;
+    }, 1000);
+  }
+
+  function stopElapsed() {
+    clearInterval(elapsedTimer);
+    actStartMs = null;
+    if (actElapsed) actElapsed.textContent = '';
+  }
+
+  /* ── Lanyard CDN asset URL ── */
+  function lanyardAsset(appId, assetId) {
+    if (!assetId) return '';
+    if (assetId.startsWith('mp:external/')) {
+      // External image (e.g. Spotify cover)
+      const path = assetId.replace('mp:external/', '');
+      return `https://media.discordapp.net/external/${path}`;
+    }
+    return `https://cdn.discordapp.com/app-assets/${appId}/${assetId}.png`;
+  }
+
+  /* ── Apply Discord avatar to profile picture ── */
+  function applyDiscordAvatar(avatarHash, userId) {
+    if (!avatarHash) return;
+    const ext = avatarHash.startsWith('a_') ? 'gif' : 'png';
+    const url = `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${ext}?size=256`;
+
+    // Update the profile avatar wrap on the page
+    const wrap = $('#avatar-wrap');
+    if (!wrap) return;
+    let img = wrap.querySelector('img.avatar-img');
+    if (!img) {
+      img = document.createElement('img');
+      img.className = 'avatar-img';
+      img.alt = 'avatar';
+      const ring = wrap.querySelector('.avatar-ring');
+      if (ring) ring.insertAdjacentElement('afterend', img);
+      else wrap.insertBefore(img, wrap.firstChild);
+    }
+    if (img.src !== url) {
+      img.style.transition = 'opacity 0.4s ease';
+      img.style.opacity = '0';
+      img.onload = () => { img.style.opacity = '1'; };
+      img.src = url;
+    }
+
+    // Update Discord panel avatar too
+    if (dcAvWrap) {
+      const existing = dcAvWrap.querySelector('img');
+      if (existing) {
+        if (existing.src !== url) existing.src = url;
+      } else {
+        const dcImg = document.createElement('img');
+        dcImg.className = 'dc-avatar';
+        dcImg.src = url;
+        dcImg.alt = 'discord avatar';
+        dcAvWrap.parentElement.replaceChild(dcImg, dcAvWrap);
+      }
+    }
+  }
+
+  /* ── Render presence data ── */
+  function renderPresence(data) {
+    if (!data) return;
+    card?.classList.remove('dc-connecting');
+
+    const status = data.discord_status || 'offline';
+
+    // Status dot
+    if (statusDot) {
+      statusDot.className = `dc-status-dot ${status}`;
+    }
+
+    // Username
+    const name = data.discord_user?.global_name || data.discord_user?.username || 'zaza';
+    if (dcUser) dcUser.textContent = name;
+    if (dcStatus) dcStatus.textContent = STATUS_TEXT[status] || status;
+
+    // Avatar sync
+    const avatarHash = data.discord_user?.avatar;
+    const uid = data.discord_user?.id || userId;
+    if (avatarHash) applyDiscordAvatar(avatarHash, uid);
+
+    // Clear previous activity state
+    actPanel?.classList.remove('show');
+    spPanel?.classList.remove('show');
+    stopElapsed();
+
+    // Spotify via Lanyard (if Spotify widget not already active)
+    const sp = data.spotify;
+    const spotifyWidgetActive = S.cfg.spotify?.enabled && S.cfg.spotify?.accessToken;
+    if (sp && !spotifyWidgetActive) {
+      if (spTrack)  spTrack.textContent  = sp.song  || '—';
+      if (spArtist) spArtist.textContent = sp.artist || '—';
+      if (spCover && sp.album_art_url) {
+        spCover.src = sp.album_art_url;
+        spCover.style.display = 'block';
+      }
+      spPanel?.classList.add('show');
+    }
+
+    // Activities — pick most interesting (not Spotify type 2 if we showed it above)
+    const activities = (data.activities || []).filter(a => {
+      if (a.type === 4) return false; // custom status — skip
+      if (a.id === 'spotify:1') return false; // Spotify handled above
+      return true;
+    });
+
+    const act = activities[0];
+    if (act) {
+      const typeLabel = ACTIVITY_TYPE[act.type] || 'Playing';
+      if (actType)   actType.textContent   = typeLabel;
+      if (actName)   actName.textContent   = act.name || '—';
+      if (actDetail) actDetail.textContent = act.details || '';
+      if (actState)  actState.textContent  = act.state  || '';
+
+      // Large image
+      const largeKey = act.assets?.large_image;
+      const appId    = act.application_id;
+      const imgUrl   = largeKey ? lanyardAsset(appId, largeKey) : '';
+
+      if (imgUrl && actImg) {
+        actImg.src = imgUrl;
+        actImg.style.display = 'block';
+        if (actPH) actPH.style.display = 'none';
+      } else {
+        if (actImg) actImg.style.display = 'none';
+        if (actPH) {
+          actPH.style.display = 'flex';
+          const emojiMap = { 0:'🎮', 1:'📺', 2:'🎵', 3:'👁️', 5:'🏆' };
+          actPH.textContent = emojiMap[act.type] || '🎮';
+        }
+      }
+
+      // Small image (app icon overlay)
+      const smallKey = act.assets?.small_image;
+      const smallUrl = smallKey ? lanyardAsset(appId, smallKey) : '';
+      if (actSmall) {
+        if (smallUrl) { actSmall.src = smallUrl; actSmall.style.display = 'block'; }
+        else actSmall.style.display = 'none';
+      }
+
+      // Elapsed time
+      if (act.timestamps?.start) {
+        startElapsed(act.timestamps.start);
+      }
+
+      actPanel?.classList.add('show');
+    }
+  }
+
+  /* ── WebSocket connect ── */
+  function connect() {
+    if (dead) return;
+    ws = new WebSocket('wss://api.lanyard.rest/socket');
+
+    ws.addEventListener('open', () => {
+      reconnectDelay = 1000; // reset backoff on success
+    });
+
+    ws.addEventListener('message', e => {
+      let msg;
+      try { msg = JSON.parse(e.data); } catch { return; }
+
+      switch (msg.op) {
+        case 1: { // Hello — start heartbeat and identify
+          const interval = msg.d?.heartbeat_interval || 30000;
+          clearInterval(heartbeatInterval);
+          heartbeatInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ op: 3 }));
+            }
+          }, interval);
+
+          // Identify
+          ws.send(JSON.stringify({
+            op: 2,
+            d: { subscribe_to_id: userId }
+          }));
+          break;
+        }
+
+        case 0: { // Event
+          const t = msg.t;
+          const d = msg.d;
+          if (t === 'INIT_STATE' || t === 'PRESENCE_UPDATE') {
+            // INIT_STATE is { [userId]: presenceData }
+            // PRESENCE_UPDATE is the presenceData directly
+            const presence = t === 'INIT_STATE' ? d[userId] : d;
+            if (presence) renderPresence(presence);
+          }
+          break;
+        }
+      }
+    });
+
+    ws.addEventListener('close', () => {
+      clearInterval(heartbeatInterval);
+      if (!dead) {
+        setTimeout(connect, Math.min(reconnectDelay, 30000));
+        reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+      }
+    });
+
+    ws.addEventListener('error', () => {
+      ws.close();
+    });
+  }
+
+  // Kick off
+  connect();
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    dead = true;
+    clearInterval(heartbeatInterval);
+    clearInterval(elapsedTimer);
+    ws?.close();
+  });
+}
+
+/* ══════════════════════════════════════════
+   18. CUSTOM RIGHT-CLICK CONTEXT MENU
+   Full keyboard navigation, auto-bounds check,
+   closes on Escape / outside click / scroll
+══════════════════════════════════════════ */
+function initContextMenu() {
+  const menu = $('#ctx-menu');
+  if (!menu) return;
+
+  let focusedIndex = -1;
+  let isOpen = false;
+
+  /* ── Menu items definition ── */
+  function buildItems() {
+    const musicLabel = S.musicPlaying ? 'Pause Music' : 'Play Music';
+    const musicIcon  = S.musicPlaying ? 'fa-pause' : 'fa-play';
+
+    return [
+      { label: 'Profile', icon: 'fa-user', section: true },
+      {
+        label: 'Copy Profile Link',
+        icon: 'fa-link',
+        kbd: 'Ctrl+C',
+        action: () => {
+          navigator.clipboard?.writeText(window.location.href).catch(() => {});
+          toast('🔗 Profile link copied!');
+        }
+      },
+      {
+        label: 'Copy Discord',
+        icon: 'fa-discord fab',
+        action: () => {
+          const dc = (S.cfg.socials || []).find(s => s.id === 'discord');
+          if (dc) {
+            navigator.clipboard?.writeText(dc.username || dc.url).catch(() => {});
+            toast('💬 Discord copied!');
+          } else {
+            toast('No Discord set');
+          }
+        }
+      },
+      { sep: true },
+      { label: 'Music', icon: 'fa-music', section: true },
+      {
+        label: musicLabel,
+        icon: musicIcon,
+        kbd: 'Space',
+        action: () => { S.playPause?.(); }
+      },
+      {
+        label: 'Next Track',
+        icon: 'fa-forward-step',
+        kbd: 'Alt →',
+        action: () => { $('#next-btn')?.click(); }
+      },
+      {
+        label: 'Previous Track',
+        icon: 'fa-backward-step',
+        kbd: 'Alt ←',
+        action: () => { $('#prev-btn')?.click(); }
+      },
+      { sep: true },
+      { label: 'Site', icon: 'fa-globe', section: true },
+      {
+        label: 'Change Theme',
+        icon: 'fa-palette',
+        action: () => { $('#theme-fab')?.click(); }
+      },
+      {
+        label: 'Admin Panel',
+        icon: 'fa-screwdriver-wrench',
+        cls: 'accent',
+        action: () => { window.location.href = 'admin.html'; }
+      },
+      { sep: true },
+      {
+        label: 'View Source',
+        icon: 'fa-code',
+        action: () => { window.open('https://github.com/Xssist/zaza', '_blank'); }
+      },
+    ];
+  }
+
+  /* ── Render menu at position ── */
+  function openAt(x, y) {
+    const items = buildItems();
+    menu.innerHTML = '';
+    focusedIndex = -1;
+
+    const clickableItems = [];
+
+    items.forEach(item => {
+      if (item.sep) {
+        const sep = document.createElement('div');
+        sep.className = 'ctx-sep';
+        sep.setAttribute('role', 'separator');
+        menu.appendChild(sep);
+        return;
+      }
+      if (item.section) {
+        const lbl = document.createElement('div');
+        lbl.className = 'ctx-section-lbl';
+        lbl.textContent = item.label;
+        menu.appendChild(lbl);
+        return;
+      }
+
+      const el = document.createElement('div');
+      el.className = 'ctx-item' + (item.cls ? ' ' + item.cls : '');
+      el.setAttribute('role', 'menuitem');
+      el.setAttribute('tabindex', '-1');
+
+      const iconClass = item.icon.includes('fab') ? item.icon : 'fas ' + item.icon;
+      el.innerHTML = `<i class="${iconClass}"></i><span class="ctx-label">${item.label}</span>${item.kbd ? `<span class="ctx-kbd">${item.kbd}</span>` : ''}`;
+
+      el.addEventListener('click', () => {
+        closeMenu();
+        item.action?.();
+      });
+      el.addEventListener('mouseenter', () => {
+        setFocus(clickableItems.indexOf(el));
+      });
+
+      menu.appendChild(el);
+      clickableItems.push(el);
+    });
+
+    // Store for keyboard nav
+    menu._items = clickableItems;
+
+    // Position — keep inside viewport
+    menu.style.left = '0px';
+    menu.style.top  = '0px';
+    menu.style.transformOrigin = 'top left';
+    menu.classList.add('open');
+    isOpen = true;
+
+    const mw = menu.offsetWidth  || 220;
+    const mh = menu.offsetHeight || 300;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let cx = x;
+    let cy = y;
+    if (cx + mw > vw - 8) { cx = vw - mw - 8; menu.style.transformOrigin = 'top right'; }
+    if (cy + mh > vh - 8) { cy = vh - mh - 8; menu.style.transformOrigin = cy === y ? 'bottom left' : 'bottom right'; }
+    if (cx < 8) cx = 8;
+    if (cy < 8) cy = 8;
+
+    menu.style.left = cx + 'px';
+    menu.style.top  = cy + 'px';
+  }
+
+  function closeMenu() {
+    if (!isOpen) return;
+    menu.classList.remove('open');
+    isOpen = false;
+    focusedIndex = -1;
+  }
+
+  function setFocus(idx) {
+    const items = menu._items || [];
+    items.forEach(el => el.classList.remove('focused'));
+    focusedIndex = idx;
+    if (idx >= 0 && idx < items.length) {
+      items[idx].classList.add('focused');
+      items[idx].focus();
+    }
+  }
+
+  /* ── Event listeners ── */
+  document.addEventListener('contextmenu', e => {
+    // Skip on admin page or input elements
+    if (e.target.closest('input,textarea,select,a')) return;
+    e.preventDefault();
+    openAt(e.clientX, e.clientY);
+  });
+
+  document.addEventListener('click', e => {
+    if (isOpen && !menu.contains(e.target)) closeMenu();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (!isOpen) return;
+
+    const items = menu._items || [];
+    switch (e.key) {
+      case 'Escape':
+        e.preventDefault();
+        closeMenu();
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocus(Math.min(focusedIndex + 1, items.length - 1));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocus(Math.max(focusedIndex - 1, 0));
+        break;
+      case 'Home':
+        e.preventDefault();
+        setFocus(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setFocus(items.length - 1);
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        if (focusedIndex >= 0 && focusedIndex < items.length) {
+          items[focusedIndex].click();
+        }
+        break;
+    }
+  });
+
+  // Close on scroll (menu would be displaced)
+  window.addEventListener('scroll', () => { if (isOpen) closeMenu(); }, true);
+
+  // Close on resize
+  window.addEventListener('resize', () => { if (isOpen) closeMenu(); });
 }
