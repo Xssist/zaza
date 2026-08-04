@@ -216,37 +216,47 @@ html, html * { cursor: none !important; }
 
 /* ── Left column — always glassy ── */
 .profile-left {
-  flex:1; max-width:700px; margin-left:-1vw;
-  animation:fadeUp .8s .1s var(--ease) both;
-  background:rgba(8,8,14,0.28);
-  backdrop-filter:blur(32px) saturate(1.4);
-  -webkit-backdrop-filter:blur(32px) saturate(1.4);
-  border:1px solid rgba(255,255,255,0.06);
-  border-top:1px solid rgba(255,255,255,0.1);
-  border-radius:24px;
-  padding:32px 36px 30px;
-  box-shadow:0 12px 48px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.07);
-  position:relative;
-  overflow:hidden;
+  width: 527px;
+  max-width: 527px;
+  min-height: 193px;
+  height: 193px;
+  overflow: hidden;
+  flex: none;
+  margin-left: 0;
+  animation: fadeUp .8s .1s var(--ease) both;
+  background: rgba(8,8,14,0.28);
+  backdrop-filter: blur(32px) saturate(1.4);
+  -webkit-backdrop-filter: blur(32px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-radius: 24px;
+  padding: 22px 28px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.07);
+  position: relative;
+  isolation: isolate;
+  will-change: auto;
+  transform: none;
+  filter: none;
+  transition: none;
+}
+/* No hover effects on card */
+.profile-left:hover {
+  transform: none;
+  filter: none;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.07);
 }
 .profile-left::before {
-  content:''; position:absolute; top:0; left:0; right:0; bottom:0;
-  pointer-events:none;
-  background:linear-gradient(135deg,rgba(168,85,247,0.05) 0%,rgba(236,72,153,0.02) 50%,transparent 100%);
-  border-radius:24px;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg,rgba(168,85,247,0.05) 0%,rgba(236,72,153,0.02) 50%,transparent 100%);
+  border-radius: 24px;
 }
+/* No holographic sheen */
+.profile-left::after { display: none; }
 
-.section-eyebrow {
-  display:flex; align-items:center; gap:10px;
-  font-size:.65rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--text-muted);
-  margin-bottom:20px;
-}
-.section-eyebrow::before {
-  content:''; display:block; width:36px; height:1px;
-  background:linear-gradient(90deg,var(--accent),transparent);
-}
+.section-eyebrow { display: none; }
 
-.name-row { display:flex; align-items:center; gap:18px; margin-bottom:16px; }
+.name-row { display:flex; align-items:center; gap:18px; margin-bottom:10px; }
 .avatar-wrap { position:relative; width:68px; height:68px; flex-shrink:0; }
 .avatar-ring {
   position:absolute; inset:-3px; border-radius:50%;
@@ -273,10 +283,10 @@ html, html * { cursor: none !important; }
   letter-spacing:.06em; margin-bottom:1px;
 }
 .name-main { font-size:clamp(2.6rem,5vw,3.8rem); font-weight:900; letter-spacing:-.05em; line-height:1; color:#fff; }
-.bio-text { font-size:.9rem; color:var(--text-dim); line-height:1.75; max-width:480px; margin-bottom:22px; }
+.bio-text { font-size:.85rem; color:var(--text-dim); line-height:1.65; max-width:480px; margin-bottom:10px; }
 
-/* Bigger glassy badges */
-.badges-row { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:22px; }
+/* Badges row — hidden */
+.badges-row { display: none; }
 .badge {
   display:inline-flex; align-items:center; justify-content:center;
   width:42px; height:42px; border-radius:11px;
@@ -1065,43 +1075,8 @@ body.has-banner .ann-banner ~ #enter-screen { margin-top:42px; }
   initial-value: 50%;
 }
 
-/* ── 2. Holographic / Iridescent card sheen ── */
-.profile-left {
-  --holo-angle: 0deg;
-  transform-style: preserve-3d;
-  transform: perspective(1000px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
-}
-.profile-left::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background: conic-gradient(
-    from var(--holo-angle),
-    rgba(255,0,128,0)     0%,
-    rgba(255,0,128,0.06)  8%,
-    rgba(255,165,0,0.08)  16%,
-    rgba(255,255,0,0.06)  24%,
-    rgba(0,255,128,0.08)  32%,
-    rgba(0,200,255,0.06)  40%,
-    rgba(128,0,255,0.08)  48%,
-    rgba(255,0,200,0.06)  56%,
-    rgba(255,0,128,0)     64%,
-    transparent           100%
-  );
-  pointer-events: none;
-  z-index: 2;
-  mix-blend-mode: screen;
-  animation: holoSweep 6s linear infinite;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-.profile-left:hover::after { opacity: 1; }
-@keyframes holoSweep {
-  0%   { --holo-angle: 0deg; }
-  100% { --holo-angle: 360deg; }
-}
+/* ── 2. Holographic / Iridescent card sheen — DISABLED ── */
+.profile-left::after { display: none; }
 
 /* ── 3. Liquid spinning gradient border ── */
 .profile-left-wrapper {
@@ -1219,19 +1194,8 @@ body::after {
   100% { transform: translate(3%, -3%); }
 }
 
-/* ── 7. 3D Card Tilt — perspective container ── */
-#main-page { perspective: 1200px; }
-.profile-left {
-  will-change: transform;
-  transform: perspective(1200px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(0px);
-  transition: transform 0.08s ease-out, box-shadow 0.15s ease;
-}
-.profile-left:hover {
-  box-shadow:
-    0 20px 80px rgba(0,0,0,0.4),
-    0 0 40px rgba(168,85,247,0.15),
-    inset 0 1px 0 rgba(255,255,255,0.12);
-}
+/* ── 7. 3D Card Tilt — DISABLED ── */
+/* ── 9. Neon border pulse — DISABLED ── */
 
 /* ── 8. Magnetic enter button ── */
 .enter-btn {
@@ -1241,14 +1205,7 @@ body::after {
   transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), border-color .25s, box-shadow .25s;
 }
 
-/* ── 9. Neon border pulse on profile-left (SVG glow) ── */
-.profile-left {
-  filter: drop-shadow(0 0 0px transparent);
-  transition: filter 0.4s ease, transform 0.08s ease-out, box-shadow 0.15s ease;
-}
-.profile-left:hover {
-  filter: drop-shadow(0 0 12px rgba(168,85,247,0.5)) drop-shadow(0 0 28px rgba(168,85,247,0.2));
-}
+/* ── 9. Neon border pulse — DISABLED ── */
 
 /* ── 10. Circuit-board underlines on social rows ── */
 .social-row {
@@ -1784,58 +1741,4 @@ body.trail-none .cursor-trail-dot { display: none; }
 .ctx-item.accent i { color: var(--accent); }
 .ctx-item.accent:hover { background: rgba(168,85,247,0.15); }
 
-/* ═══════════════════════════════════════════════════════════
-   PROFILE CARD OVERRIDES — 527×193, no badges, no hover fx
-═══════════════════════════════════════════════════════════ */
-
-/* Fixed card size */
-.profile-left {
-  width: 527px !important;
-  max-width: 527px !important;
-  min-height: 193px !important;
-  max-height: 193px !important;
-  height: 193px !important;
-  overflow: hidden !important;
-  padding: 22px 28px !important;
-  flex: none !important;
-  margin-left: 0 !important;
-  /* Kill ALL hover effects */
-  transition: none !important;
-  filter: none !important;
-  transform: none !important;
-}
-
-/* Kill tilt, neon glow, shadow lift on hover */
-.profile-left:hover {
-  filter: none !important;
-  transform: none !important;
-  box-shadow: 0 12px 48px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.07) !important;
-}
-
-/* Kill holographic sheen on hover */
-.profile-left::after { display: none !important; }
-
-/* Kill liquid spinning border */
-.profile-left-wrapper::before { display: none !important; }
-
-/* Kill specular highlight */
-.profile-left .specular-highlight { display: none !important; }
-
-/* Hide badges row */
-.badges-row { display: none !important; }
-
-/* Hide "about me" eyebrow */
-.section-eyebrow { display: none !important; }
-
-/* Tighten up spacing since eyebrow is gone */
-.name-row { margin-bottom: 10px !important; }
-.bio-text { margin-bottom: 12px !important; font-size: .85rem !important; }
-
-/* Discord panel fits inside card */
-.discord-panel {
-  margin-top: 8px !important;
-  max-width: 100% !important;
-}
-.discord-card, .discord-activity, .discord-spotify {
-  max-width: 100% !important;
-}
+/* end */
