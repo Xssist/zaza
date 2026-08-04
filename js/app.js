@@ -122,15 +122,17 @@ function initLoading() {
   if (!scr) return;
 
   const lines = [
-    { prompt:'$', text:' initializing zaza.wtf', delay:0, cls:'' },
-    { prompt:'>', text:' loading assets...', delay:320, cls:'' },
-    { prompt:'>', text:' fetching config.json', delay:640, cls:'' },
-    { prompt:'✓', text:' config loaded', delay:960, cls:'ok' },
-    { prompt:'>', text:' mounting particles engine', delay:1180, cls:'' },
-    { prompt:'✓', text:' renderer ready', delay:1420, cls:'ok' },
-    { prompt:'>', text:' starting music player', delay:1600, cls:'' },
-    { prompt:'✓', text:' all systems online', delay:1800, cls:'ok' },
-    { prompt:'$', text:' boot complete — welcome back, master', delay:2050, cls:'ok' },
+    { prompt:'zade@arch', text:' ~ $ uname -a', delay:0,    cls:'' },
+    { prompt:'',          text:' Linux zade 6.6.1-arch1 #1 SMP PREEMPT x86_64 GNU/Linux', delay:200, cls:'ok' },
+    { prompt:'zade@arch', text:' ~ $ cat /etc/motd', delay:420, cls:'' },
+    { prompt:'',          text:' welcome back. loading your space...', delay:620, cls:'ok' },
+    { prompt:'zade@arch', text:' ~ $ systemctl start zaza.service', delay:900, cls:'' },
+    { prompt:'',          text:' [ OK ] Started zaza personal site.', delay:1100, cls:'ok' },
+    { prompt:'zade@arch', text:' ~ $ zaza --init', delay:1320, cls:'' },
+    { prompt:'',          text:' [ OK ] particles engine   ready', delay:1480, cls:'ok' },
+    { prompt:'',          text:' [ OK ] music player       ready', delay:1600, cls:'ok' },
+    { prompt:'',          text:' [ OK ] all systems        online', delay:1720, cls:'ok' },
+    { prompt:'zade@arch', text:' ~ $ _', delay:1950, cls:'' },
   ];
 
   lines.forEach(l => {
@@ -138,7 +140,11 @@ function initLoading() {
       if (!body) return;
       const row = document.createElement('div');
       row.className = 'term-line';
-      row.innerHTML = `<span class="prompt">${l.prompt}</span><span class="term-text ${l.cls}">${l.text}</span>`;
+      if (l.prompt) {
+        row.innerHTML = `<span class="prompt">${l.prompt}</span><span class="term-text ${l.cls}">${l.text}</span>`;
+      } else {
+        row.innerHTML = `<span class="term-text ${l.cls}" style="padding-left:4px;">${l.text}</span>`;
+      }
       body.appendChild(row);
       body.scrollTop = body.scrollHeight;
     }, l.delay);
@@ -149,7 +155,7 @@ function initLoading() {
     if (body) body.insertAdjacentHTML('beforeend', '<span class="term-cursor-blink"></span>');
   }, 50);
 
-  setTimeout(() => scr.classList.add('hidden'), 2600);
+  setTimeout(() => scr.classList.add('hidden'), 2700);
 }
 
 /* ══════════════════════════════════════════
