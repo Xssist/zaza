@@ -108,9 +108,9 @@
     }
   ],
   "stats": {
-    "showVisitorCount": true,
+    "showVisitorCount": false,
     "visitorCount": 1,
-    "showMemberSince": true,
+    "showMemberSince": false,
     "showViews": true
   },
   "discord": {
