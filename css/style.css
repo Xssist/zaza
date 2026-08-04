@@ -1783,3 +1783,59 @@ body.trail-none .cursor-trail-dot { display: none; }
 .ctx-item.accent { color: var(--accent); }
 .ctx-item.accent i { color: var(--accent); }
 .ctx-item.accent:hover { background: rgba(168,85,247,0.15); }
+
+/* ═══════════════════════════════════════════════════════════
+   PROFILE CARD OVERRIDES — 527×193, no badges, no hover fx
+═══════════════════════════════════════════════════════════ */
+
+/* Fixed card size */
+.profile-left {
+  width: 527px !important;
+  max-width: 527px !important;
+  min-height: 193px !important;
+  max-height: 193px !important;
+  height: 193px !important;
+  overflow: hidden !important;
+  padding: 22px 28px !important;
+  flex: none !important;
+  margin-left: 0 !important;
+  /* Kill ALL hover effects */
+  transition: none !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+/* Kill tilt, neon glow, shadow lift on hover */
+.profile-left:hover {
+  filter: none !important;
+  transform: none !important;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.07) !important;
+}
+
+/* Kill holographic sheen on hover */
+.profile-left::after { display: none !important; }
+
+/* Kill liquid spinning border */
+.profile-left-wrapper::before { display: none !important; }
+
+/* Kill specular highlight */
+.profile-left .specular-highlight { display: none !important; }
+
+/* Hide badges row */
+.badges-row { display: none !important; }
+
+/* Hide "about me" eyebrow */
+.section-eyebrow { display: none !important; }
+
+/* Tighten up spacing since eyebrow is gone */
+.name-row { margin-bottom: 10px !important; }
+.bio-text { margin-bottom: 12px !important; font-size: .85rem !important; }
+
+/* Discord panel fits inside card */
+.discord-panel {
+  margin-top: 8px !important;
+  max-width: 100% !important;
+}
+.discord-card, .discord-activity, .discord-spotify {
+  max-width: 100% !important;
+}
