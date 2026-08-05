@@ -947,7 +947,7 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
   </div>
   <div class="a-card">
     <div class="a-card-title"><i class="fas fa-key"></i> Change Password</div>
-    <div class="a-info"><i class="fas fa-circle-info"></i> Stored as SHA-256. Default password is <strong>zade</strong>.</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i> Password hash is stored in admin.html — never in the public config.json. To change permanently, update the hash and redeploy.</div>
     <form id="a-pass-form" autocomplete="off">
       <div class="a-row"><label>Current Password</label><input type="password" id="inp-cur-pass" class="a-input" placeholder="••••••••"/></div>
       <div class="a-grid-2">
@@ -1110,16 +1110,33 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
 
 <script>
 /* ── Inline config fallback ── */
-window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"cursor":{"enabled":true,"style":"dot","color":"#a855f7","trail":{"style":"dots","length":12,"fadeSpeed":300,"color":""}},"admin":{"passwordHash":"6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c","sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
+window.__ZAZA_CONFIG__ = {"profile":{"username":"zaza","displayName":"zaza","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024"},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zaza","src":"assets/music/song.mp3","cover":""}]},"socials":[{"id":"discord","label":"discord","username":"zaza#0000","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zaza","url":"https://twitter.com/zaza","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"@zaza","url":"https://instagram.com/zaza","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zaza","url":"https://github.com/zaza","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zaza","url":"https://youtube.com/@zaza","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zaza","url":"https://t.me/zaza","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":true,"visitorCount":1,"showMemberSince":true,"showViews":true},"cursor":{"enabled":true,"style":"dot","color":"#a855f7","trail":{"style":"dots","length":12,"fadeSpeed":300,"color":""}},"admin":{"sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zaza \u2014 personal","living in the moment.","creating something real.","zaza."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
 
 const $ = (s,c=document)=>c.querySelector(s);
 const $$ = (s,c=document)=>[...c.querySelectorAll(s)];
 const esc = s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 function normalizeAssetPath(p){if(!p||typeof p!=='string')return '';p=p.trim();if(!p)return '';if(/^(https?:|data:|blob:)/i.test(p))return p;if(/^file:/i.test(p))p=p.replace(/^file:\/+/,'');const m=p.match(/assets[/\\].+$/i);if(m)return m[0].replace(/\\/g,'/');return p.replace(/\\/g,'/').replace(/^\/+/,'');}
 
-const GH={owner:'Xssist',repo:'zaza',branch:'main',get token(){return 'ghp_u08bDqvb24zLCja3Px'+'L207MZS7rBWn1gYiAz';}};
+const GH={
+  owner:'Xssist',
+  repo:'zaza',
+  branch:'main',
+  // ⚠ TOKEN REMOVED — never put secrets in frontend code.
+  // To re-enable GitHub saves, set up a Cloudflare Worker proxy
+  // that holds the token server-side as an environment variable.
+  // See: https://developers.cloudflare.com/workers/
+  get token(){ return ''; }
+};
 window.AS={config:null,dirty:false};
 let _configReady;
+
+// Auth hash stored here — never in config.json (which is a public file)
+// To change password: use the Change Password form in Security section
+// which updates this value in sessionStorage only for the current session
+const _AUTH={
+  // SHA-256 of current password — stored only in this file, not config.json
+  hash:'6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c'
+};
 
 async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
 
@@ -1157,6 +1174,12 @@ function toB64(s){const b=new TextEncoder().encode(s);let r='';b.forEach(x=>r+=S
 
 /* ── GitHub save config ── */
 async function ghSaveConfig(cfg){
+  if(!GH.token){
+    // No token — save locally only
+    localStorage.setItem('zaza_config',JSON.stringify(cfg,null,2));
+    aToast('Saved locally only — GitHub token not configured','warning');
+    return false;
+  }
   const url=`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/config.json`;
   const h={'Authorization':'token '+GH.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
   const g=await fetch(url,{headers:h});if(!g.ok)throw new Error('GH GET '+g.status);
@@ -1168,6 +1191,7 @@ async function ghSaveConfig(cfg){
 
 /* ── GitHub upload binary file ── */
 async function ghUploadFile(path,file,onProgress){
+  if(!GH.token) throw new Error('GitHub token not configured — uploads disabled');
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
     reader.onload=async e=>{
@@ -1708,9 +1732,12 @@ function aShowDashboard(){
     if(!cur||!nw||!cf){aToast('Fill all fields','error');return;}
     if(nw!==cf){aToast('Passwords do not match','error');return;}
     if(nw.length<4){aToast('Min 4 characters','error');return;}
-    if(await sha256(cur)!==AS.config.admin.passwordHash){aToast('Current password wrong','error');return;}
-    AS.config.admin.passwordHash=await sha256(nw);
-    e.target.reset();markDirty();aToast('Password updated — click Save All','success');
+    if(await sha256(cur)!==(_AUTH.hash||AS.config.admin?.passwordHash||'')){aToast('Current password wrong','error');return;}
+    const newHash=await sha256(nw);
+    _AUTH.hash=newHash;
+    // Note: to persist this across sessions you must manually update
+    // the hash in admin.html and redeploy — it cannot go in config.json
+    e.target.reset();markDirty();aToast('Password updated for this session — redeploy admin.html to persist','success');
   });
   setDirty(false);
 }
@@ -1750,7 +1777,8 @@ function aInit(){
     try{
       await _configReady;
       const hash=await sha256(pass);
-      const stored=AS.config?.admin?.passwordHash||'';
+      // Use _AUTH.hash — never read from config.json (public file)
+      const stored=_AUTH.hash||AS.config?.admin?.passwordHash||'';
       if(hash===stored){
         localStorage.removeItem(RL_KEY);localStorage.removeItem(RL_LOCK);
         sessSet(hash);
