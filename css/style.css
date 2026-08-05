@@ -273,26 +273,21 @@ body.cursor-click #cursor { transform: translate(-50%,-50%) scale(0.6); }
   height: auto;
   flex: none;
   position: relative;
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(48px) saturate(2) brightness(1.1);
-  -webkit-backdrop-filter: blur(48px) saturate(2) brightness(1.1);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-top: 1px solid rgba(255,255,255,0.18);
-  border-radius: var(--radius);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  border-radius: 0;
   padding: 24px 28px 22px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.10);
-  overflow: hidden;
+  box-shadow: none;
+  overflow: visible;
   isolation: isolate;
   animation: blurIn .9s .1s var(--ease) both;
   transform: none;
   filter: none;
-  transition: box-shadow .4s var(--ease);
+  transition: none;
 }
-.profile-left::before {
-  content: ''; position: absolute; inset: 0; border-radius: var(--radius);
-  background: linear-gradient(135deg, rgba(168,85,247,0.04) 0%, rgba(236,72,153,0.015) 50%, transparent 100%);
-  pointer-events: none; z-index: 0;
-}
+.profile-left::before { display: none; }
 .profile-left > * { position: relative; z-index: 1; }
 
 /* Section eyebrow — hidden by default */
