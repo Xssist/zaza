@@ -161,50 +161,125 @@ function initLoading() {
 }
 
 /* ══════════════════════════════════════════
-   4. BACKGROUND — video + parallax
+   4. BACKGROUND — premium 4K wallpaper system
+   Supports: video + image, GPU-accelerated,
+   blur artifact layer, fade-in, parallax
 ══════════════════════════════════════════ */
 function initBackground() {
-  const vid = $('#bg-video');
-  const imgWrap = $('#bg-image-wrap');
-  const ov  = $('#bg-overlay');
+  const vid      = $('#bg-video');
+  const imgWrap  = $('#bg-image-wrap');
+  const blurLayer= $('#bg-blur-layer');
+  const ov       = $('#bg-overlay');
 
+  // Apply overlay from config
   if (ov) {
     const angle = S.cfg.theme?.gradientAngle ?? 160;
-    const op    = S.cfg.background?.overlayOpacity ?? 0.55;
-    // Much lighter overlay so the background shows through the glass
+    const op    = S.cfg.background?.overlayOpacity ?? 0.35;
     ov.style.background = `linear-gradient(${angle}deg,
-      rgba(8,8,15,${(op * 0.75).toFixed(2)}) 0%,
-      rgba(8,8,15,${(op * 0.55).toFixed(2)}) 35%,
-      rgba(8,8,15,${(op * 0.30).toFixed(2)}) 60%,
-      rgba(8,8,15,${(op * 0.50).toFixed(2)}) 100%)`;
+      rgba(8,8,15,${Math.min(op + 0.30, 0.75)}) 0%,
+      rgba(8,8,15,${Math.min(op + 0.05, 0.45)}) 30%,
+      rgba(8,8,15,${Math.max(op - 0.15, 0.12)}) 55%,
+      rgba(8,8,15,${Math.min(op + 0.08, 0.50)}) 100%)`;
   }
 
   const videoUrl = normalizeAssetPath(S.cfg.background?.videoUrl);
+  const imageUrl = normalizeAssetPath(S.cfg.background?.imageUrl || '');
+
+  /* ── Image background ── */
+  if (imageUrl && imgWrap) {
+    _loadImageBackground(imageUrl, imgWrap, blurLayer);
+  }
+
+  /* ── Video background ── */
   if (vid && videoUrl) {
-    vid.src = videoUrl;
-    vid.muted = true;
-    vid.style.display = 'block';
     const blur = S.cfg.background?.blur || 0;
     if (blur > 0) vid.style.filter = `blur(${blur}px)`;
+
+    // Preload the video metadata first for smoother start
+    vid.style.display = 'block';
+    vid.muted   = true;
+    vid.loop    = true;
+    vid.preload = 'auto';
+    vid.src     = videoUrl;
     vid.load();
+
+    // Fade in only after enough data is buffered
+    const fadeInVideo = () => {
+      vid.classList.add('loaded');
+      // If there's also a static image, hide it once video is playing
+      if (imageUrl && imgWrap) {
+        setTimeout(() => {
+          imgWrap.style.transition = 'opacity 1s ease';
+          imgWrap.style.opacity = '0';
+          if (blurLayer) blurLayer.classList.remove('visible');
+        }, 1200);
+      }
+    };
+
+    vid.addEventListener('canplaythrough', fadeInVideo, { once: true });
+    vid.addEventListener('loadeddata',     fadeInVideo, { once: true });
+
     const tryPlay = () => vid.play().catch(() => {});
     tryPlay();
     document.addEventListener('click', tryPlay, { once: true });
   }
 
-  // Parallax on background — subtle, smooth
+  /* ── Parallax on background ── */
   if (!S.prefersReduced && !window.matchMedia('(hover: none)').matches) {
+    const targets = [vid, imgWrap].filter(Boolean);
     S._mouseMoveHandlers.push(e => {
-      const mx = (e.clientX / window.innerWidth  - 0.5) * 2; // -1 to 1
+      const mx = (e.clientX / window.innerWidth  - 0.5) * 2;
       const my = (e.clientY / window.innerHeight - 0.5) * 2;
-      const px = mx * 12; // max 12px shift
-      const py = my * 8;
-      const scale = 'scale(1.04)';
-      const tx = `translate(${-px}px, ${-py}px) ${scale}`;
-      if (vid && vid.style.display !== 'none') vid.style.transform = tx;
-      if (imgWrap) imgWrap.style.transform = tx;
+      const tx = (mx * 14).toFixed(2);
+      const ty = (my *  9).toFixed(2);
+      const base = 'scale(1.04) translate3d(';
+      const transform = `translate3d(${-tx}px, ${-ty}px, 0) scale(1.04)`;
+      targets.forEach(el => {
+        if (el && el.style.opacity !== '0') el.style.transform = transform;
+      });
     });
   }
+}
+
+/* ── Premium image loader ── */
+function _loadImageBackground(url, wrap, blurLayer) {
+  // Preload via Image() so we know exact dimensions before displaying
+  const img = new Image();
+  img.onload = () => {
+    // Set blur artifact layer first (same image, blurred, slightly ahead of real)
+    if (blurLayer) {
+      blurLayer.style.backgroundImage = `url(${url})`;
+      blurLayer.classList.add('visible');
+    }
+
+    // Short delay so blur layer is "behind" when main image fades in
+    setTimeout(() => {
+      wrap.style.backgroundImage    = `url(${url})`;
+      wrap.style.backgroundSize     = 'cover';
+      wrap.style.backgroundPosition = 'center center';
+      wrap.style.backgroundRepeat   = 'no-repeat';
+      // Force GPU compositing layer
+      wrap.style.willChange         = 'transform, opacity';
+      wrap.style.transform          = 'scale(1.04)';
+      wrap.classList.add('loaded');
+
+      // Once image is crisp, fade out blur layer
+      setTimeout(() => {
+        if (blurLayer) {
+          blurLayer.style.transition = 'opacity .8s ease';
+          blurLayer.style.opacity    = '0';
+        }
+      }, 600);
+    }, 80);
+  };
+
+  img.onerror = () => {
+    // Fallback — still apply without preload
+    wrap.style.backgroundImage = `url(${url})`;
+    wrap.classList.add('loaded');
+  };
+
+  img.src = url;
 }
 
 /* ══════════════════════════════════════════
