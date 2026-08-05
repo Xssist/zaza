@@ -39,11 +39,13 @@
 
 <!-- Background -->
 <div id="bg-layer">
-  <video id="bg-video" autoplay muted loop playsinline style="display:none;"></video>
-  <div id="bg-image-wrap"></div>
-  <div id="bg-overlay"></div>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
+  <video id="bg-video" autoplay muted loop playsinline style="display:none;" aria-hidden="true"></video>
+  <div id="bg-image-wrap" aria-hidden="true"></div>
+  <div id="bg-overlay" aria-hidden="true"></div>
+  <div id="bg-vignette" aria-hidden="true"></div>
+  <div class="blob blob-1" aria-hidden="true"></div>
+  <div class="blob blob-2" aria-hidden="true"></div>
+  <div class="blob blob-3" aria-hidden="true"></div>
 </div>
 <canvas id="particles-canvas"></canvas>
 
