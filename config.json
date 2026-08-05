@@ -6,13 +6,13 @@
     "avatar": "assets/images/a7a8ee1961d881ac5c6478d210629015.jpg",
     "status": "online",
     "statusMessages": [
-      "im goated",
+      "im a goat",
       "dab",
       "credits to y3e.me"
     ],
     "location": "Tokyo,Japan",
     "joinDate": "2001",
-    "availability": "away"
+    "availability": "online"
   },
   "theme": {
     "accentColor": "#ffffff",
@@ -22,7 +22,7 @@
     "particleCount": 80,
     "snowEnabled": true,
     "rainEnabled": false,
-    "glassmorphism": true,
+    "glassmorphism": false,
     "gradientAngle": 155
   },
   "background": {
@@ -151,7 +151,13 @@
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#a855f7"
   },
-  "badges": [],
+  "badges": [
+    {
+      "icon": "dab",
+      "color": "#003366",
+      "label": "im a goat"
+    }
+  ],
   "announcement": {
     "enabled": false,
     "text": "",
