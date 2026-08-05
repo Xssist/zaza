@@ -44,37 +44,98 @@ const S = {
 /* ══════════════════════════════════════════
    1. CONFIG LOADER
    Priority: fetch → localStorage → inline → defaults
+   localStorage treated as untrusted — validated before use
 ══════════════════════════════════════════ */
 async function loadConfig() {
-  // 1. HTTP fetch (works on GitHub Pages)
+  // 1. HTTP fetch (works on GitHub Pages) — most trusted source
   try {
     const r = await fetch('./config.json?t=' + Date.now());
-    if (r.ok) { S.cfg = await r.json(); return; }
+    if (r.ok) {
+      const cfg = await r.json();
+      if (_validateConfig(cfg)) { S.cfg = cfg; return; }
+    }
   } catch (_) {}
 
-  // 2. localStorage (written by admin panel after save)
+  // 2. localStorage — treat as UNTRUSTED user-controlled data
   try {
     const ls = localStorage.getItem('zaza_config');
-    if (ls) { S.cfg = JSON.parse(ls); return; }
-  } catch (_) {}
+    if (ls) {
+      const parsed = JSON.parse(ls);
+      if (_validateConfig(parsed)) {
+        S.cfg = _sanitizeConfig(parsed);
+        return;
+      } else {
+        // Corrupted or tampered — remove it
+        localStorage.removeItem('zaza_config');
+      }
+    }
+  } catch (_) {
+    localStorage.removeItem('zaza_config');
+  }
 
-  // 3. Inline fallback (always present in index.html)
+  // 3. Inline fallback
   if (window.__ZAZA_CONFIG__) {
-    S.cfg = window.__ZAZA_CONFIG__;
+    S.cfg = _sanitizeConfig(window.__ZAZA_CONFIG__);
     return;
   }
 
   // 4. Hard defaults
-  S.cfg = {
-    profile: { username:'zaza', displayName:'zaza', bio:'living in the moment.', avatar:'', status:'online', statusMessages:['just vibing 🎵'], joinDate:'2024' },
-    theme:   { accentColor:'#a855f7', accentColorSecondary:'#ec4899', particleCount:80 },
-    background: { videoUrl:'', overlayOpacity:0.55 },
+  S.cfg = _defaultConfig();
+}
+
+/* ── Config validator — reject obviously poisoned data ── */
+function _validateConfig(cfg) {
+  if (!cfg || typeof cfg !== 'object') return false;
+  // Must have basic expected shape
+  if (cfg.profile && typeof cfg.profile !== 'object') return false;
+  if (cfg.theme  && typeof cfg.theme  !== 'object') return false;
+  if (cfg.socials && !Array.isArray(cfg.socials))   return false;
+  // Reject if any string field is suspiciously long (potential injection)
+  const MAX = 2000;
+  const checkStrings = (obj, depth = 0) => {
+    if (depth > 4) return true;
+    for (const v of Object.values(obj || {})) {
+      if (typeof v === 'string' && v.length > MAX) return false;
+      if (typeof v === 'object' && v !== null && !checkStrings(v, depth + 1)) return false;
+    }
+    return true;
+  };
+  return checkStrings(cfg);
+}
+
+/* ── Config sanitizer — strip script injections from string values ── */
+function _sanitizeConfig(cfg) {
+  const clean = JSON.parse(JSON.stringify(cfg)); // deep clone
+  const sanitizeStr = s => {
+    if (typeof s !== 'string') return s;
+    // Strip script tags and event handlers
+    return s
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/javascript\s*:/gi, '')
+      .replace(/on\w+\s*=/gi, '');
+  };
+  const walk = obj => {
+    if (typeof obj !== 'object' || obj === null) return obj;
+    for (const k of Object.keys(obj)) {
+      if (typeof obj[k] === 'string') obj[k] = sanitizeStr(obj[k]);
+      else if (typeof obj[k] === 'object') walk(obj[k]);
+    }
+    return obj;
+  };
+  // Never let localStorage config override admin auth settings
+  delete clean.admin;
+  return walk(clean);
+}
+
+function _defaultConfig() {
+  return {
+    profile: { username:'zaza', displayName:'zaza', bio:'living in the moment.', avatar:'assets/images/avatar.png', status:'online', availability:'online', statusMessages:['just vibing 🎵'], joinDate:'2024' },
+    theme:   { accentColor:'#a855f7', accentColorSecondary:'#ec4899', particleCount:80, glassmorphism:true, gradientAngle:160 },
+    background: { videoUrl:'assets/images/background.mp4', overlayOpacity:0.35 },
     music:   { enabled:true, defaultVolume:0.5, tracks:[] },
     socials: [],
-    stats:   { showVisitorCount:true, visitorCount:1 },
-    cursor:  { enabled:true },
-    seo:     { title:'zaza', titleCycle:[] },
-    admin:   { passwordHash:'6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c', sessionTimeout:3600 },
+    cursor:  { enabled:true, style:'dot', trail:{ style:'dots', length:12, fadeSpeed:300, color:'' } },
+    seo:     { title:'zaza', titleCycle:['zaza — personal'], description:'' },
   };
 }
 
