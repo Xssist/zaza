@@ -1182,12 +1182,25 @@ function toB64(s){const b=new TextEncoder().encode(s);let r='';b.forEach(x=>r+=S
 /* ── GitHub save config — proxied through Cloudflare Worker ── */
 async function ghSaveConfig(cfg){
   const token = window.AS.sessionToken;
-  if(!token){ aToast('Not authenticated','error'); return false; }
-  const r = await fetch(WORKER_URL+'/save-config', {
-    method:'POST',
-    headers:{'Content-Type':'application/json','X-Session-Token':token},
-    body:JSON.stringify({config:cfg})
-  });
+  if(!token){ aToast('Not authenticated — please log in again','error'); return false; }
+  const doSave = async (t) => {
+    return await fetch(WORKER_URL+'/save-config', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Session-Token':t},
+      body:JSON.stringify({config:cfg})
+    });
+  };
+  let r = await doSave(token);
+  // If 401, Worker may have cold-started and lost session — can't auto re-auth
+  // without password, so show a clear message
+  if(r.status===401){
+    window.AS.sessionToken=null;
+    sessionStorage.removeItem('za_worker_token');
+    sessClear();
+    aToast('Session expired — please log in again','error');
+    setTimeout(()=>location.reload(),1500);
+    return false;
+  }
   const d = await r.json().catch(()=>({ok:false,error:r.statusText}));
   if(!d.ok) throw new Error(d.error||'Worker error');
   return true;
