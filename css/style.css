@@ -69,17 +69,7 @@ body.cursor-hover #cursor-follower { width: 44px; height: 44px; border-color: va
 body.cursor-click #cursor { transform: translate(-50%,-50%) scale(0.6); }
 @media (hover: none) { #cursor, #cursor-follower, #mouse-light { display: none !important; } }
 
-/* ── Mouse ambient glow ── */
-#mouse-light {
-  position: fixed; top: 0; left: 0;
-  width: 600px; height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(168,85,247,0.055) 0%, transparent 65%);
-  pointer-events: none; z-index: 1;
-  transform: translate(-50%,-50%);
-  will-change: left, top;
-  transition: opacity .4s;
-}
+#mouse-light { display: none; }
 
 /* ── Background ── */
 #bg-layer {
