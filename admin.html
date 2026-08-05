@@ -1127,23 +1127,23 @@ const GH={
   // See: https://developers.cloudflare.com/workers/
   get token(){ return ''; }
 };
-window.AS={config:null,dirty:false};
-let _configReady;
 
-// Auth hash stored here — never in config.json (which is a public file)
-// To change password: use the Change Password form in Security section
-// which updates this value in sessionStorage only for the current session
-const _AUTH={
-  // SHA-256 of current password — stored only in this file, not config.json
-  hash:'6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c'
-};
+// Cloudflare Worker proxy — GH token + password hash live server-side as encrypted secrets
+const WORKER_URL = 'https://zaza-admin.adrianbanatean45.workers.dev';
+window.AS.sessionToken = sessionStorage.getItem('za_worker_token') || null;
 
 async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
 
 /* ── Session ── */
-function sessSet(h){const ttl=(AS.config?.admin?.sessionTimeout||3600)*1000;sessionStorage.setItem('za_t',h);sessionStorage.setItem('za_e',String(Date.now()+ttl));}
-function sessOk(){const t=sessionStorage.getItem('za_t'),e=parseInt(sessionStorage.getItem('za_e')||'0');if(!t||Date.now()>e){sessClear();return false;}return true;}
-function sessClear(){sessionStorage.removeItem('za_t');sessionStorage.removeItem('za_e');}
+function sessSet(t){const ttl=(AS.config?.admin?.sessionTimeout||3600)*1000;sessionStorage.setItem('za_t',t);sessionStorage.setItem('za_e',String(Date.now()+ttl));}
+function sessOk(){
+  const t=sessionStorage.getItem('za_t'),e=parseInt(sessionStorage.getItem('za_e')||'0');
+  if(!t||Date.now()>e){sessClear();return false;}
+  // Restore Worker session token
+  window.AS.sessionToken=sessionStorage.getItem('za_worker_token')||t;
+  return true;
+}
+function sessClear(){sessionStorage.removeItem('za_t');sessionStorage.removeItem('za_e');sessionStorage.removeItem('za_worker_token');window.AS.sessionToken=null;}
 
 /* ── Toast ── */
 function aToast(msg,type='info'){
@@ -1172,39 +1172,37 @@ async function aLoadConfig(){
 /* ── toB64 ── */
 function toB64(s){const b=new TextEncoder().encode(s);let r='';b.forEach(x=>r+=String.fromCharCode(x));return btoa(r);}
 
-/* ── GitHub save config ── */
+/* ── GitHub save config — proxied through Cloudflare Worker ── */
 async function ghSaveConfig(cfg){
-  if(!GH.token){
-    // No token — save locally only
-    localStorage.setItem('zaza_config',JSON.stringify(cfg,null,2));
-    aToast('Saved locally only — GitHub token not configured','warning');
-    return false;
-  }
-  const url=`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/config.json`;
-  const h={'Authorization':'token '+GH.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
-  const g=await fetch(url,{headers:h});if(!g.ok)throw new Error('GH GET '+g.status);
-  const {sha}=await g.json();
-  const p=await fetch(url,{method:'PUT',headers:h,body:JSON.stringify({message:'chore: update config via admin',content:toB64(JSON.stringify(cfg,null,2)),sha,branch:GH.branch})});
-  if(!p.ok){const e=await p.json().catch(()=>({message:p.statusText}));throw new Error('GH PUT '+p.status+': '+e.message);}
+  const token = window.AS.sessionToken;
+  if(!token){ aToast('Not authenticated','error'); return false; }
+  const r = await fetch(WORKER_URL+'/save-config', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Session-Token':token},
+    body:JSON.stringify({config:cfg})
+  });
+  const d = await r.json().catch(()=>({ok:false,error:r.statusText}));
+  if(!d.ok) throw new Error(d.error||'Worker error');
   return true;
 }
 
-/* ── GitHub upload binary file ── */
+/* ── GitHub upload binary file — proxied through Cloudflare Worker ── */
 async function ghUploadFile(path,file,onProgress){
-  if(!GH.token) throw new Error('GitHub token not configured — uploads disabled');
+  const token = window.AS.sessionToken;
+  if(!token) throw new Error('Not authenticated');
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
     reader.onload=async e=>{
       try{
         const base64=btoa(e.target.result);
-        const url=`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${path}`;
-        const h={'Authorization':'token '+GH.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
-        let sha=null;
-        try{const g=await fetch(url,{headers:h});if(g.ok){const d=await g.json();sha=d.sha;}}catch(_){}
         if(onProgress)onProgress(50);
-        const body={message:'upload: '+path,content:base64,branch:GH.branch};if(sha)body.sha=sha;
-        const p=await fetch(url,{method:'PUT',headers:h,body:JSON.stringify(body)});
-        if(!p.ok){const er=await p.json().catch(()=>({message:p.statusText}));throw new Error('GH '+p.status+': '+er.message);}
+        const r=await fetch(WORKER_URL+'/upload',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','X-Session-Token':token},
+          body:JSON.stringify({path,content:base64})
+        });
+        const d=await r.json().catch(()=>({ok:false,error:r.statusText}));
+        if(!d.ok)throw new Error(d.error||'Upload failed');
         if(onProgress)onProgress(100);
         resolve(path);
       }catch(err){reject(err);}
@@ -1219,10 +1217,10 @@ async function aSave(){
   try{
     aCollectAll();
     localStorage.setItem('zaza_config',JSON.stringify(AS.config,null,2));
-    await ghSaveConfig(AS.config);
+    const ok=await ghSaveConfig(AS.config);
     setDirty(false);
-    aToast('✓ Saved to GitHub — live in ~30s','success');
-  }catch(e){console.error(e);aToast('✗ GitHub failed: '+e.message+' — saved locally','error');}
+    if(ok)aToast('✓ Saved to GitHub — live in ~30s','success');
+  }catch(e){console.error(e);aToast('✗ Save failed: '+e.message+' — saved locally only','error');}
   finally{if(btn){btn.textContent='Save All';btn.disabled=false;}}
 }
 
@@ -1609,7 +1607,15 @@ function aShowDashboard(){
   bindFileUploads();
   $$('.a-nav-item').forEach(btn=>btn.addEventListener('click',()=>aShowSection(btn.dataset.sec)));
   $('#a-save-btn')?.addEventListener('click',aSave);
-  $('#a-logout-btn')?.addEventListener('click',()=>{sessClear();location.reload();});
+  $('#a-logout-btn')?.addEventListener('click',()=>{
+    // Invalidate session on Worker
+    const t=window.AS.sessionToken;
+    if(t)fetch(WORKER_URL+'/logout',{method:'POST',headers:{'Content-Type':'application/json','X-Session-Token':t}}).catch(()=>{});
+    window.AS.sessionToken=null;
+    sessionStorage.removeItem('za_worker_token');
+    sessClear();
+    location.reload();
+  });
   $('#a-add-badge-btn')?.addEventListener('click',()=>{
     const icon=prompt('FontAwesome class (e.g. fab fa-react):');if(!icon)return;
     const color=prompt('Color (hex):')||'#ffffff';
@@ -1776,12 +1782,18 @@ function aInit(){
     if(errEl)errEl.classList.remove('show');
     try{
       await _configReady;
-      const hash=await sha256(pass);
-      // Use _AUTH.hash — never read from config.json (public file)
-      const stored=_AUTH.hash||AS.config?.admin?.passwordHash||'';
-      if(hash===stored){
+      // Authenticate via Cloudflare Worker — no password hash in browser
+      const resp=await fetch(WORKER_URL+'/login',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({password:pass})
+      });
+      const data=await resp.json().catch(()=>({ok:false,error:'Network error'}));
+      if(data.ok&&data.token){
         localStorage.removeItem(RL_KEY);localStorage.removeItem(RL_LOCK);
-        sessSet(hash);
+        window.AS.sessionToken=data.token;
+        sessionStorage.setItem('za_worker_token',data.token);
+        sessSet(data.token);
         $('#a-login')?.classList.add('fade-out');
         setTimeout(aShowDashboard,320);
       }else{
@@ -1793,7 +1805,7 @@ function aInit(){
           localStorage.removeItem(RL_KEY);
           showLockout();
         }else{
-          if(errEl){errEl.textContent=`Incorrect password. ${remaining} attempt${remaining===1?'':'s'} left.`;errEl.classList.add('show');}
+          if(errEl){errEl.textContent=(data.error||'Incorrect password.')+' '+remaining+' attempt'+(remaining===1?'':'s')+' left.';errEl.classList.add('show');}
           if(input){input.value='';input.focus();}
           const box=$('.a-login-box');if(box){box.classList.add('shake');setTimeout(()=>box.classList.remove('shake'),400);}
         }
