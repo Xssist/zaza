@@ -35,6 +35,10 @@ const S = {
   curX: 0, curY: 0,
   folX: 0, folY: 0,
   playPause: null,
+  spotifyInterval: null,
+  prefersReduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  // Consolidated mousemove handlers
+  _mouseMoveHandlers: [],
 };
 
 /* ══════════════════════════════════════════
@@ -96,12 +100,10 @@ function applyTheme() {
   if (t.glassmorphism) document.body.classList.add('glass-mode');
   else document.body.classList.remove('glass-mode');
 
-  // Gradient angle
-  const angle = t.gradientAngle ?? 115;
-  const ov = $('#bg-overlay');
-  if (ov) {
-    ov.style.background = `linear-gradient(${angle}deg,rgba(0,0,0,0.88) 0%,rgba(0,0,0,0.60) 40%,rgba(0,0,0,0.30) 65%,rgba(0,0,0,0.55) 100%)`;
-  }
+  // Gradient angle — overlay is set by initBackground, just store the value
+  // so initBackground can pick it up after config loads
+  const angle = t.gradientAngle ?? 160;
+  document.documentElement.style.setProperty('--gradient-angle', angle + 'deg');
 }
 
 function hexAlpha(hex, a) {
@@ -159,13 +161,22 @@ function initLoading() {
 }
 
 /* ══════════════════════════════════════════
-   4. BACKGROUND VIDEO
+   4. BACKGROUND — video + parallax
 ══════════════════════════════════════════ */
 function initBackground() {
   const vid = $('#bg-video');
+  const imgWrap = $('#bg-image-wrap');
   const ov  = $('#bg-overlay');
 
-  if (ov) ov.style.opacity = S.cfg.background?.overlayOpacity ?? 0.55;
+  if (ov) {
+    const angle = S.cfg.theme?.gradientAngle ?? 160;
+    const op    = S.cfg.background?.overlayOpacity ?? 0.55;
+    ov.style.background = `linear-gradient(${angle}deg,
+      rgba(8,8,15,${Math.min(op+0.37,0.95)}) 0%,
+      rgba(8,8,15,${Math.min(op+0.10,0.75)}) 35%,
+      rgba(8,8,15,${Math.max(op-0.25,0.22)}) 60%,
+      rgba(8,8,15,${Math.min(op+0.05,0.70)}) 100%)`;
+  }
 
   const videoUrl = normalizeAssetPath(S.cfg.background?.videoUrl);
   if (vid && videoUrl) {
@@ -179,6 +190,20 @@ function initBackground() {
     tryPlay();
     document.addEventListener('click', tryPlay, { once: true });
   }
+
+  // Parallax on background — subtle, smooth
+  if (!S.prefersReduced && !window.matchMedia('(hover: none)').matches) {
+    S._mouseMoveHandlers.push(e => {
+      const mx = (e.clientX / window.innerWidth  - 0.5) * 2; // -1 to 1
+      const my = (e.clientY / window.innerHeight - 0.5) * 2;
+      const px = mx * 12; // max 12px shift
+      const py = my * 8;
+      const scale = 'scale(1.04)';
+      const tx = `translate(${-px}px, ${-py}px) ${scale}`;
+      if (vid && vid.style.display !== 'none') vid.style.transform = tx;
+      if (imgWrap) imgWrap.style.transform = tx;
+    });
+  }
 }
 
 /* ══════════════════════════════════════════
@@ -186,14 +211,16 @@ function initBackground() {
 ══════════════════════════════════════════ */
 function initCursor() {
   if (!S.cfg.cursor?.enabled) return;
+  // Don't run on touch-only devices
+  if (window.matchMedia('(hover: none)').matches) return;
 
   const cur = $('#cursor');
   const fol = $('#cursor-follower');
   const lgt = $('#mouse-light');
   if (!cur) return;
 
-  // Direct position for cursor dot
-  document.addEventListener('mousemove', e => {
+  // Register in consolidated mousemove
+  S._mouseMoveHandlers.push(e => {
     S.curX = e.clientX;
     S.curY = e.clientY;
     cur.style.left = e.clientX + 'px';
@@ -209,8 +236,6 @@ function initCursor() {
     requestAnimationFrame(follow);
   })();
 
-  // Hover state via body classes (avoids per-element cursor issues)
-  // Apply cursor style from config
   const style = S.cfg.cursor?.style || 'dot';
   document.body.classList.remove('cursor-crosshair','cursor-ring','cursor-emoji');
   if (style !== 'dot') document.body.classList.add('cursor-' + style);
@@ -230,6 +255,7 @@ function initCursor() {
    6. PARTICLES
 ══════════════════════════════════════════ */
 function initParticles() {
+  if (S.prefersReduced) return; // respect reduced motion
   const cv = $('#particles-canvas');
   if (!cv) return;
   const ctx = cv.getContext('2d');
@@ -245,6 +271,10 @@ function initParticles() {
   };
   const [r1,g1,b1] = toRGB(ac);
   const [r2,g2,b2] = toRGB(a2);
+
+  // Reduce particle count on small screens to save battery
+  const isMobile = window.matchMedia('(max-width: 480px)').matches;
+  const finalCount = isMobile ? Math.min(count, 40) : count;
 
   let W = 0, H = 0;
   const resize = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
@@ -270,38 +300,44 @@ function initParticles() {
       if (this.life <= 0 || this.y < -5) this.init(false);
     }
     draw() {
-      ctx.save();
       ctx.globalAlpha = this.op * this.life;
       ctx.fillStyle = `rgb(${this.r},${this.g},${this.b})`;
-      ctx.shadowColor = ctx.fillStyle;
-      ctx.shadowBlur = 3;
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.sz, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     }
   }
 
-  const dots = Array.from({ length: count }, () => new Dot());
+  const dots = Array.from({ length: finalCount }, () => new Dot());
+  const DIST_SQ = 90 * 90; // avoid Math.sqrt — compare squared distances
 
   (function loop() {
     ctx.clearRect(0, 0, W, H);
-    // Draw faint connection lines
+
+    // Batch all connection lines into a single path + stroke call
+    ctx.beginPath();
+    ctx.lineWidth = 0.4;
     for (let i = 0; i < dots.length; i++) {
       for (let j = i + 1; j < dots.length; j++) {
         const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y;
-        const d = Math.sqrt(dx*dx + dy*dy);
-        if (d < 90) {
-          ctx.strokeStyle = `rgba(${r1},${g1},${b1},${(1-d/90)*0.06})`;
-          ctx.lineWidth = 0.4;
-          ctx.beginPath();
+        const d2 = dx*dx + dy*dy;
+        if (d2 < DIST_SQ) {
+          const alpha = (1 - Math.sqrt(d2) / 90) * 0.06;
+          ctx.globalAlpha = alpha;
           ctx.moveTo(dots[i].x, dots[i].y);
           ctx.lineTo(dots[j].x, dots[j].y);
-          ctx.stroke();
         }
       }
     }
+    ctx.strokeStyle = `rgb(${r1},${g1},${b1})`;
+    ctx.stroke();
+
+    // Draw dots (no save/restore per dot — manage globalAlpha directly)
+    ctx.shadowColor = '';
+    ctx.shadowBlur = 0;
     dots.forEach(d => { d.tick(); d.draw(); });
+    ctx.globalAlpha = 1;
+
     requestAnimationFrame(loop);
   })();
 }
@@ -326,8 +362,11 @@ function renderProfile() {
   if (wrap && avatarUrl) {
     const img = document.createElement('img');
     img.src = avatarUrl;
-    img.alt = p.displayName || 'avatar';
+    img.alt = `${p.displayName || p.username || 'Profile'} avatar`;
     img.className = 'avatar-img';
+    img.style.opacity = '0';
+    img.style.transition = 'opacity .5s ease';
+    img.onload  = () => { img.style.opacity = '1'; };
     img.onerror = () => img.replaceWith(makeInitial(p));
     const old = wrap.querySelector('.avatar-initial, img.avatar-img');
     if (old) {
@@ -471,9 +510,9 @@ function initSpotify() {
     }
   }
 
-  // Poll immediately then every 15s
+  // Poll immediately then every 15s — store handle to prevent leak
   poll();
-  setInterval(poll, 15000);
+  S.spotifyInterval = setInterval(poll, 15000);
 }
 
 function renderSocials() {
@@ -486,20 +525,42 @@ function renderSocials() {
       const div = document.createElement('div');
       div.className = 'social-row';
       div.style.setProperty('--icon-color', s.color || 'var(--accent)');
-      div.innerHTML = `
-        <div class="sr-left">
-          <i class="${s.icon || 'fas fa-link'} sr-icon"></i>
-          <span class="sr-label">${s.label || ''}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="sr-value">${s.username || ''}</span>
-          <span class="sr-copy-hint">copy</span>
-        </div>`;
-      div.addEventListener('click', () => {
+      // Keyboard + screen reader accessibility
+      div.setAttribute('role', 'button');
+      div.setAttribute('tabindex', '0');
+      div.setAttribute('aria-label', `Copy ${s.label || 'link'}: ${s.username || s.url || ''}`);
+
+      // Build DOM safely (no innerHTML with user data)
+      const srLeft = document.createElement('div');
+      srLeft.className = 'sr-left';
+      const icon = document.createElement('i');
+      icon.className = (s.icon || 'fas fa-link') + ' sr-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      const labelEl = document.createElement('span');
+      labelEl.className = 'sr-label';
+      labelEl.textContent = s.label || '';
+      srLeft.appendChild(icon);
+      srLeft.appendChild(labelEl);
+
+      const srRight = document.createElement('div');
+      srRight.style.cssText = 'display:flex;align-items:center;gap:8px;';
+      const valEl = document.createElement('span');
+      valEl.className = 'sr-value';
+      valEl.textContent = s.username || '';
+      const copyHint = document.createElement('span');
+      copyHint.className = 'sr-copy-hint';
+      copyHint.setAttribute('aria-hidden', 'true');
+      copyHint.textContent = 'copy';
+      srRight.appendChild(valEl);
+      srRight.appendChild(copyHint);
+
+      div.appendChild(srLeft);
+      div.appendChild(srRight);
+
+      const doAction = () => {
         const text = s.username || s.url || '';
         if (!text) return;
         navigator.clipboard?.writeText(text).catch(() => {});
-        // Show copy toast
         const ct = document.getElementById('copy-toast');
         if (ct) {
           ct.textContent = `copied ${s.label}!`;
@@ -507,7 +568,13 @@ function renderSocials() {
           clearTimeout(ct._t);
           ct._t = setTimeout(() => ct.classList.remove('show'), 1800);
         }
+      };
+
+      div.addEventListener('click', doAction);
+      div.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doAction(); }
       });
+
       con.appendChild(div);
     });
 }
@@ -664,10 +731,11 @@ function initMusic() {
     const btn = $('#play-pause-btn');
     if (!btn) return;
     btn.innerHTML = playing
-      ? '<i class="fas fa-pause"></i>'
-      : '<i class="fas fa-play"></i>';
-    // Keep the play-btn class for CSS gradient styling
+      ? '<i class="fas fa-pause" aria-hidden="true"></i>'
+      : '<i class="fas fa-play" aria-hidden="true"></i>';
     btn.className = 'music-btn-mini play-btn';
+    btn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+    btn.setAttribute('aria-pressed', String(playing));
   }
 
   S.audioEl.addEventListener('timeupdate', () => {
@@ -719,7 +787,11 @@ function initMusic() {
     });
   }
 
-  // Buttons
+  // Buttons — with ARIA labels
+  $('#play-pause-btn')?.setAttribute('aria-label', 'Play');
+  $('#play-pause-btn')?.setAttribute('aria-pressed', 'false');
+  $('#prev-btn')?.setAttribute('aria-label', 'Previous track');
+  $('#next-btn')?.setAttribute('aria-label', 'Next track');
   $('#play-pause-btn')?.addEventListener('click', playPause);
   $('#prev-btn')?.addEventListener('click', () => {
     loadTrack((S.trackIdx - 1 + cfg.tracks.length) % cfg.tracks.length);
@@ -746,6 +818,17 @@ function startVisualizer() {
   const ctx = cv.getContext('2d');
   const buf = new Uint8Array(S.analyser.frequencyBinCount);
 
+  // Cache colors — only read getComputedStyle once, update on theme change
+  let _accent  = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()  || '#a855f7';
+  let _accent2 = getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#ec4899';
+
+  // Update cache when theme FAB changes colors
+  const observer = new MutationObserver(() => {
+    _accent  = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()  || '#a855f7';
+    _accent2 = getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#ec4899';
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
+
   (function draw() {
     requestAnimationFrame(draw);
     S.analyser.getByteFrequencyData(buf);
@@ -754,14 +837,12 @@ function startVisualizer() {
     ctx.clearRect(0, 0, W, H);
     const bars = 24;
     const bw = (W / bars) - 1;
-    const accent  = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()  || '#a855f7';
-    const accent2 = getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#ec4899';
     let x = 0;
     for (let i = 0; i < bars; i++) {
       const v  = buf[Math.floor(i / bars * buf.length)];
       const bh = Math.max(2, (v / 255) * H);
       const g  = ctx.createLinearGradient(0, H, 0, H - bh);
-      g.addColorStop(0, accent); g.addColorStop(1, accent2);
+      g.addColorStop(0, _accent); g.addColorStop(1, _accent2);
       ctx.fillStyle = g;
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(x, H - bh, bw, bh, 1);
@@ -781,11 +862,16 @@ function initEnter() {
   const btn = $('#enter-btn');
   if (!es || !btn) return;
 
+  // "tap to enter" on touch devices
+  const enterSub = es.querySelector('.enter-sub');
+  if (enterSub && window.matchMedia('(hover: none)').matches) {
+    enterSub.textContent = 'tap to enter';
+  }
+
   function doEnter() {
     if (S.entered) return;
     S.entered = true;
 
-    // Start music
     if (S.cfg.music?.enabled && S.playPause) {
       try { S.playPause(); } catch (_) {}
     }
@@ -794,14 +880,26 @@ function initEnter() {
 
     setTimeout(() => {
       if (mp) mp.classList.add('visible');
-      // Show theme FAB
       const fab = $('#theme-fab');
       if (fab) fab.classList.add('visible');
-    }, 250);
+
+      // Stagger child elements for cinematic reveal
+      const els = mp.querySelectorAll('.profile-left, .profile-right');
+      els.forEach((el, i) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(18px)';
+        el.style.transition = `opacity .7s ${i * 0.12 + 0.05}s var(--ease), transform .7s ${i * 0.12 + 0.05}s var(--ease), filter .7s ${i * 0.12 + 0.05}s var(--ease)`;
+        el.style.filter = 'blur(6px)';
+        requestAnimationFrame(() => {
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+          el.style.filter = 'blur(0)';
+        });
+      });
+    }, 200);
   }
 
   btn.addEventListener('click', doEnter);
-  // Keyboard: Enter or Space
   document.addEventListener('keydown', e => {
     if (!S.entered && (e.code === 'Enter' || e.code === 'Space')) {
       e.preventDefault();
@@ -1112,6 +1210,15 @@ async function init() {
   initVisualFeatures();
   initDiscord();
   initContextMenu();
+
+  // Single consolidated mousemove dispatcher — replaces N individual listeners
+  if (S._mouseMoveHandlers.length) {
+    document.addEventListener('mousemove', e => {
+      for (let i = 0; i < S._mouseMoveHandlers.length; i++) {
+        S._mouseMoveHandlers[i](e);
+      }
+    }, { passive: true });
+  }
 }
 
 /* ══════════════════════════════════════════
@@ -1121,9 +1228,11 @@ async function init() {
 ══════════════════════════════════════════ */
 function initVisualFeatures() {
   _injectSVGFilters();
-  _initCursorTrail();
-  _initCardTilt();
-  _initMagneticButton();
+  if (!window.matchMedia('(hover: none)').matches) {
+    _initCursorTrail(); // touch guard inside but skip entirely on touch
+    _initMagneticButton();
+  }
+  // _initCardTilt() — disabled, CSS effect is off, no point running the mousemove listener
 }
 
 /* ── SVG filter injection (grain noise) ── */
@@ -1161,25 +1270,24 @@ function _injectSVGFilters() {
 
 /* ── Cursor trail spawner ── */
 function _initCursorTrail() {
-  const trailCfg = S.cfg.cursor?.trail || {};
-  const style    = trailCfg.style || 'dots';
-  const maxLen   = trailCfg.length ?? 12;
-  const fadeSpeed = trailCfg.fadeSpeed ?? 300; // ms
+  if (S.prefersReduced) return;
+  if (window.matchMedia('(hover: none)').matches) return;
 
-  // Apply trail body class (controls CSS appearance)
+  const trailCfg  = S.cfg.cursor?.trail || {};
+  const style     = trailCfg.style || 'dots';
+  const maxLen    = trailCfg.length ?? 12;
+  const fadeSpeed = trailCfg.fadeSpeed ?? 300;
+
   document.body.classList.remove('trail-dots','trail-sparkle','trail-comet','trail-rings','trail-none');
   document.body.classList.add('trail-' + style);
   if (style === 'none') return;
 
-  // Override trail color via CSS var if specified
   if (trailCfg.color) {
     document.documentElement.style.setProperty('--trail-color', trailCfg.color);
-    // Re-bind --accent for trail elements that use var(--accent)
-    // CSS already uses var(--accent) so this is additive only
   }
 
-  const pool = [];    // reusable DOM nodes
-  const active = [];  // { el, x, y, born }
+  const pool   = [];
+  const active = [];
 
   function getNode() {
     const el = pool.pop() || document.createElement('div');
@@ -1196,11 +1304,12 @@ function _initCursorTrail() {
   }
 
   let lastX = -999, lastY = -999;
-  const MIN_DIST = 8; // px minimum movement before spawning new dot
+  const MIN_DIST_SQ = 8 * 8;
 
-  document.addEventListener('mousemove', e => {
+  // Register in consolidated mousemove handler
+  S._mouseMoveHandlers.push(e => {
     const dx = e.clientX - lastX, dy = e.clientY - lastY;
-    if (dx*dx + dy*dy < MIN_DIST * MIN_DIST) return;
+    if (dx*dx + dy*dy < MIN_DIST_SQ) return;
     lastX = e.clientX; lastY = e.clientY;
 
     const el = getNode();
@@ -1208,26 +1317,19 @@ function _initCursorTrail() {
     el.style.top  = e.clientY + 'px';
     active.push({ el, born: performance.now() });
 
-    // Enforce max trail length
     while (active.length > maxLen) {
-      const old = active.shift();
-      recycleNode(old.el);
+      recycleNode(active.shift().el);
     }
   });
 
-  // Fade loop
   (function fade() {
     const now = performance.now();
     for (let i = active.length - 1; i >= 0; i--) {
       const item = active[i];
-      const age  = now - item.born;
-      const t    = Math.min(age / fadeSpeed, 1);
-      item.el.style.opacity = String((1 - t).toFixed(3));
+      const t    = Math.min((now - item.born) / fadeSpeed, 1);
+      item.el.style.opacity = (1 - t).toFixed(3);
       item.el.style.transform = `translate(-50%, -50%) scale(${1 - t * 0.5})`;
-      if (t >= 1) {
-        recycleNode(item.el);
-        active.splice(i, 1);
-      }
+      if (t >= 1) { recycleNode(item.el); active.splice(i, 1); }
     }
     requestAnimationFrame(fade);
   })();
@@ -1288,13 +1390,12 @@ function _initMagneticButton() {
   const btn = document.querySelector('.enter-btn');
   if (!btn) return;
 
-  const STRENGTH = 0.35; // 0 = no pull, 1 = full cursor-to-center
+  const STRENGTH = 0.35;
 
-  function onMove(e) {
+  S._mouseMoveHandlers.push(e => {
     const rect = btn.getBoundingClientRect();
     const cx   = rect.left + rect.width  / 2;
     const cy   = rect.top  + rect.height / 2;
-    // Distance from cursor to button center
     const dx   = e.clientX - cx;
     const dy   = e.clientY - cy;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1308,15 +1409,12 @@ function _initMagneticButton() {
       btn.style.setProperty('--mx', '0px');
       btn.style.setProperty('--my', '0px');
     }
-  }
+  });
 
-  function onLeave() {
+  btn.addEventListener('mouseleave', () => {
     btn.style.setProperty('--mx', '0px');
     btn.style.setProperty('--my', '0px');
-  }
-
-  document.addEventListener('mousemove', onMove);
-  btn.addEventListener('mouseleave', onLeave);
+  });
 }
 
 if (document.readyState === 'loading') {
