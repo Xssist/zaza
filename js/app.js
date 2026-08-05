@@ -171,11 +171,12 @@ function initBackground() {
   if (ov) {
     const angle = S.cfg.theme?.gradientAngle ?? 160;
     const op    = S.cfg.background?.overlayOpacity ?? 0.55;
+    // Much lighter overlay so the background shows through the glass
     ov.style.background = `linear-gradient(${angle}deg,
-      rgba(8,8,15,${Math.min(op+0.37,0.95)}) 0%,
-      rgba(8,8,15,${Math.min(op+0.10,0.75)}) 35%,
-      rgba(8,8,15,${Math.max(op-0.25,0.22)}) 60%,
-      rgba(8,8,15,${Math.min(op+0.05,0.70)}) 100%)`;
+      rgba(8,8,15,${(op * 0.75).toFixed(2)}) 0%,
+      rgba(8,8,15,${(op * 0.55).toFixed(2)}) 35%,
+      rgba(8,8,15,${(op * 0.30).toFixed(2)}) 60%,
+      rgba(8,8,15,${(op * 0.50).toFixed(2)}) 100%)`;
   }
 
   const videoUrl = normalizeAssetPath(S.cfg.background?.videoUrl);
