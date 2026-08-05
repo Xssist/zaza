@@ -128,13 +128,13 @@ body.cursor-click #cursor { transform: translate(-50%,-50%) scale(0.6); }
 /* Ambient blobs */
 .blob {
   position: absolute; border-radius: 50%;
-  filter: blur(110px); opacity: 0.10;
+  filter: blur(90px); opacity: 0.22;
   animation: blobFloat 18s ease-in-out infinite alternate;
   pointer-events: none;
 }
 .blob-1 { width: 700px; height: 700px; background: radial-gradient(circle,#a855f7,transparent 70%); top: -200px; left: -200px; }
 .blob-2 { width: 500px; height: 500px; background: radial-gradient(circle,#ec4899,transparent 70%); bottom: -150px; right: -150px; animation-delay: -9s; }
-.blob-3 { width: 400px; height: 400px; background: radial-gradient(circle,#3b82f6,transparent 70%); top: 40%; left: 60%; animation-delay: -4s; opacity: 0.06; }
+.blob-3 { width: 400px; height: 400px; background: radial-gradient(circle,#3b82f6,transparent 70%); top: 40%; left: 60%; animation-delay: -4s; opacity: 0.14; }
 @keyframes blobFloat {
   0%   { transform: translate(0,0) scale(1); }
   50%  { transform: translate(40px,-30px) scale(1.05); }
@@ -273,17 +273,17 @@ body.cursor-click #cursor { transform: translate(-50%,-50%) scale(0.6); }
   height: auto;
   flex: none;
   position: relative;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(48px) saturate(2) brightness(1.1);
+  -webkit-backdrop-filter: blur(48px) saturate(2) brightness(1.1);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-top: 1px solid rgba(255,255,255,0.18);
   border-radius: var(--radius);
   padding: 24px 28px 22px;
-  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.06);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.10);
   overflow: hidden;
   isolation: isolate;
   animation: blurIn .9s .1s var(--ease) both;
-  /* No hover transforms — card is static, background moves */
   transform: none;
   filter: none;
   transition: box-shadow .4s var(--ease);
