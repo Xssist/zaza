@@ -651,11 +651,7 @@ function initMusic() {
   const cfg = S.cfg.music;
   const bar = $('#music-bar');
 
-  if (!cfg?.enabled || !cfg.tracks?.length) {
-    if (bar) bar.style.display = 'none';
-    return;
-  }
-  if (bar) bar.style.display = 'flex';
+  if (bar) bar.style.display = 'none'; // always hidden — music plays in background
 
   S.audioEl = new Audio();
   S.audioEl.volume = cfg.defaultVolume ?? 0.5;
