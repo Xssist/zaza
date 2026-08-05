@@ -1130,6 +1130,7 @@ const GH={
 
 // Cloudflare Worker proxy — GH token + password hash live server-side as encrypted secrets
 const WORKER_URL = 'https://zaza-admin.adrianbanatean45.workers.dev';
+window.AS = window.AS || { config: null, dirty: false, sessionToken: null };
 window.AS.sessionToken = sessionStorage.getItem('za_worker_token') || null;
 
 async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
@@ -1738,12 +1739,9 @@ function aShowDashboard(){
     if(!cur||!nw||!cf){aToast('Fill all fields','error');return;}
     if(nw!==cf){aToast('Passwords do not match','error');return;}
     if(nw.length<4){aToast('Min 4 characters','error');return;}
-    if(await sha256(cur)!==(_AUTH.hash||AS.config.admin?.passwordHash||'')){aToast('Current password wrong','error');return;}
-    const newHash=await sha256(nw);
-    _AUTH.hash=newHash;
-    // Note: to persist this across sessions you must manually update
-    // the hash in admin.html and redeploy — it cannot go in config.json
-    e.target.reset();markDirty();aToast('Password updated for this session — redeploy admin.html to persist','success');
+    // Password change not supported with Worker auth — contact admin to update PASS_HASH secret
+    aToast('To change password, update the PASS_HASH secret in Cloudflare Workers dashboard','warning');
+    e.target.reset();
   });
   setDirty(false);
 }
