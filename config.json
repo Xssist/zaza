@@ -26,7 +26,7 @@
     "gradientAngle": 155
   },
   "background": {
-    "videoUrl": "assets/images/mixkit-black-and-white-ink-underwater-487-full-hd.mp4",
+    "videoUrl": "assets/images/background.mp4",
     "overlayOpacity": 0.55,
     "blur": 0
   },
@@ -129,9 +129,9 @@
     "enabled": true,
     "trailEnabled": true,
     "color": "#a855f7",
-    "style": "ring",
+    "style": "dot",
     "trail": {
-      "style": "rings",
+      "style": "dots",
       "length": 12,
       "fadeSpeed": 300,
       "color": ""
@@ -149,13 +149,7 @@
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#a855f7"
   },
-  "badges": [
-    {
-      "icon": "dab",
-      "color": "#003366",
-      "label": "im a goat"
-    }
-  ],
+  "badges": [],
   "announcement": {
     "enabled": false,
     "text": "",
