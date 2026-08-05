@@ -1800,7 +1800,8 @@ function aInit(){
         sessSet(data.token);
         $('#a-login')?.classList.add('fade-out');
         setTimeout(aShowDashboard,320);
-      }else{
+      } else if(resp.status===401){
+        // Wrong password — count towards rate limit
         let fails=parseInt(localStorage.getItem(RL_KEY)||'0')+1;
         localStorage.setItem(RL_KEY,String(fails));
         const remaining=3-fails;
@@ -1809,10 +1810,14 @@ function aInit(){
           localStorage.removeItem(RL_KEY);
           showLockout();
         }else{
-          if(errEl){errEl.textContent=(data.error||'Incorrect password.')+' '+remaining+' attempt'+(remaining===1?'':'s')+' left.';errEl.classList.add('show');}
+          if(errEl){errEl.textContent='Wrong password. '+remaining+' attempt'+(remaining===1?'':'s')+' left.';errEl.classList.add('show');}
           if(input){input.value='';input.focus();}
           const box=$('.a-login-box');if(box){box.classList.add('shake');setTimeout(()=>box.classList.remove('shake'),400);}
         }
+      } else if(resp.status===429){
+        showLockout();
+      } else {
+        if(errEl){errEl.textContent='Error: '+(data.error||'Could not connect to auth server.');errEl.classList.add('show');}
       }
     }catch(err){
       if(errEl){errEl.textContent='Auth error — try again.';errEl.classList.add('show');}
