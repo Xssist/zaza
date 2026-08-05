@@ -1467,11 +1467,11 @@ function bindFileUploads(){
     const prog=$('#a-avatar-prog'),bar=$('#a-avatar-bar'),prev=$('#a-avatar-preview'),urlInp=$('#inp-avatar-url');
     if(prog)prog.style.display='block';
     try{
-      const path='assets/images/'+f.name;
+      const path='assets/images/avatar.png'; // always overwrite avatar.png
       await ghUploadFile(path,f,p=>{if(bar)bar.style.width=p+'%';});
       AS.config.profile.avatar=path;
       if(urlInp)urlInp.value=path;
-      if(prev){prev.src=path;prev.style.display='block';}
+      if(prev){prev.src=path+'?t='+Date.now();prev.style.display='block';}
       aToast('Avatar uploaded!','success');markDirty();
     }catch(err){aToast('Upload failed: '+err.message,'error');}
     finally{if(prog)prog.style.display='none';}
@@ -1498,11 +1498,12 @@ function bindFileUploads(){
     const ti=$('#a-music-pending-title'),ar=$('#a-music-pending-artist');
     if(prog)prog.style.display='block';mub.disabled=true;mub.textContent='Uploading...';
     try{
-      const path='assets/music/'+_pendingMusic.name;
+      const path='assets/music/song.mp3'; // always overwrite song.mp3
       await ghUploadFile(path,_pendingMusic,p=>{if(bar)bar.style.width=p+'%';});
       if(!AS.config.music)AS.config.music={tracks:[]};
       if(!AS.config.music.tracks)AS.config.music.tracks=[];
-      AS.config.music.tracks.push({id:Date.now(),title:ti?.value||_pendingMusic.name,artist:ar?.value||'zaza',src:path,cover:''});
+      const track={id:1,title:ti?.value||_pendingMusic.name.replace(/\.[^.]+$/,''),artist:ar?.value||'zaza',src:path,cover:''};
+      AS.config.music.tracks=[track]; // replace, not append
       aRenderTracks(AS.config.music.tracks);markDirty();
       aToast('Track uploaded and added!','success');
       const pend=$('#a-music-pending');if(pend)pend.style.display='none';
@@ -1529,7 +1530,7 @@ function bindFileUploads(){
     const prog=$('#a-bg-prog'),bar=$('#a-bg-bar'),urlInp=$('#inp-bg-url');
     if(prog)prog.style.display='block';bgub.disabled=true;bgub.textContent='Uploading...';
     try{
-      const path='assets/images/'+_pendingBg.name;
+      const path='assets/images/background.mp4'; // always overwrite background.mp4
       await ghUploadFile(path,_pendingBg,p=>{if(bar)bar.style.width=p+'%';});
       if(!AS.config.background)AS.config.background={};
       AS.config.background.videoUrl=path;
