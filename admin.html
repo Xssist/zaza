@@ -1130,8 +1130,14 @@ const GH={
 
 // Cloudflare Worker proxy — GH token + password hash live server-side as encrypted secrets
 const WORKER_URL = 'https://zaza-admin.adrianbanatean45.workers.dev';
-window.AS = window.AS || { config: null, dirty: false, sessionToken: null };
-window.AS.sessionToken = sessionStorage.getItem('za_worker_token') || null;
+window.AS = { config: null, dirty: false, sessionToken: sessionStorage.getItem('za_worker_token') || null };
+
+// Global error handler — shows JS errors visibly on the login screen
+window.addEventListener('error', function(e) {
+  const el = document.getElementById('a-login-err');
+  if (el) { el.textContent = 'JS Error: ' + e.message + ' (line ' + e.lineno + ')'; el.classList.add('show'); el.style.display = 'block'; }
+  console.error('Admin JS error:', e.message, e.filename, e.lineno);
+});
 
 async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
 
