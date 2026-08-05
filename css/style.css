@@ -325,12 +325,7 @@ body.cursor-click #cursor { transform: translate(-50%,-50%) scale(0.6); }
 /* ── Avatar ── */
 .name-row { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
 .avatar-wrap { position: relative; width: 62px; height: 62px; flex-shrink: 0; }
-.avatar-ring {
-  position: absolute; inset: -2.5px; border-radius: 50%;
-  background: conic-gradient(from 0deg, var(--accent), var(--accent2), #6366f1, var(--accent));
-  animation: ringRotate 6s linear infinite;
-  opacity: 0.85;
-}
+.avatar-ring { display: none; }
 @keyframes ringRotate { to { transform: rotate(360deg); } }
 .avatar-img, .avatar-initial {
   position: relative; width: 62px; height: 62px; border-radius: 50%;
