@@ -128,7 +128,94 @@ input[type="range"]{cursor:pointer!important;}
 .a-topbar-logout:hover{border-color:rgba(248,113,113,.4);color:#f87171;background:rgba(248,113,113,.05);}
 
 /* Layout */
-.a-layout{display:grid;grid-template-columns:220px 1fr;flex:1;min-height:calc(100vh - 58px);}
+.a-layout{display:grid;grid-template-columns:220px 1fr;flex:1;min-height:calc(100vh - 58px);transition:grid-template-columns .35s cubic-bezier(0.4,0,0.2,1);}
+.a-layout.preview-open{grid-template-columns:220px 1fr 420px;}
+
+/* Preview panel */
+.a-preview-panel{
+  display:none;
+  border-left:1px solid rgba(168,85,247,.12);
+  background:rgba(4,4,10,.95);
+  position:sticky;top:58px;height:calc(100vh - 58px);
+  flex-direction:column;overflow:hidden;
+}
+.a-layout.preview-open .a-preview-panel{display:flex;}
+.a-preview-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid rgba(168,85,247,.1);
+  background:rgba(6,6,11,.8);flex-shrink:0;
+}
+.a-preview-title{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:rgba(168,85,247,.7);display:flex;align-items:center;gap:7px;}
+.a-preview-title::before{content:'';width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;flex-shrink:0;}
+.a-preview-actions{display:flex;align-items:center;gap:6px;}
+.a-preview-btn{
+  padding:4px 10px;border-radius:7px;font-size:.62rem;font-weight:600;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  color:rgba(240,240,245,.5);cursor:pointer!important;font-family:'Inter',sans-serif;
+  transition:background .2s,color .2s,border-color .2s;display:inline-flex;align-items:center;gap:5px;
+}
+.a-preview-btn:hover{background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.3);color:#a855f7;}
+.a-preview-device-bar{
+  display:flex;align-items:center;gap:4px;
+  padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.04);
+  background:rgba(6,6,11,.5);flex-shrink:0;
+}
+.a-preview-device-btn{
+  padding:4px 10px;border-radius:6px;font-size:.6rem;font-weight:600;
+  background:transparent;border:1px solid transparent;
+  color:rgba(240,240,245,.35);cursor:pointer!important;font-family:'Inter',sans-serif;
+  transition:all .15s;display:inline-flex;align-items:center;gap:4px;
+}
+.a-preview-device-btn.active{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.25);color:#a855f7;}
+.a-preview-device-btn:hover:not(.active){background:rgba(255,255,255,.04);color:rgba(240,240,245,.6);}
+.a-preview-frame-wrap{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;background:#000;position:relative;padding:0;
+  transition:padding .3s ease;
+}
+.a-preview-frame-wrap.device-mobile{padding:16px;}
+.a-preview-frame-wrap.device-tablet{padding:12px;}
+#a-preview-iframe{
+  width:100%;height:100%;border:none;
+  background:#08080f;
+  transition:width .3s ease,height .3s ease,border-radius .3s ease;
+}
+.a-preview-frame-wrap.device-mobile #a-preview-iframe{
+  width:375px;height:calc(100% - 32px);max-height:667px;
+  border-radius:16px;box-shadow:0 0 40px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.08);
+}
+.a-preview-frame-wrap.device-tablet #a-preview-iframe{
+  width:768px;height:calc(100% - 24px);
+  border-radius:12px;box-shadow:0 0 30px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
+}
+.a-preview-overlay{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;background:rgba(4,4,10,.7);backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.a-preview-overlay.show{opacity:1;pointer-events:auto;}
+.a-preview-overlay-icon{font-size:1.6rem;color:rgba(168,85,247,.6);}
+.a-preview-overlay-text{font-size:.75rem;color:rgba(240,240,245,.5);text-align:center;}
+.a-preview-updating{
+  position:absolute;bottom:10px;right:10px;
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:8px;
+  background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.2);
+  font-size:.6rem;color:#a855f7;font-weight:600;
+  opacity:0;transition:opacity .2s;pointer-events:none;
+}
+.a-preview-updating.show{opacity:1;}
+.a-preview-updating::before{content:'';width:5px;height:5px;border-radius:50%;background:#a855f7;animation:pulse2 .8s ease infinite;flex-shrink:0;}
+
+/* Preview toggle button in topbar */
+.a-preview-toggle{
+  display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
+  color:rgba(240,240,245,.5);font-family:'Inter',sans-serif;font-size:.74rem;font-weight:600;
+  cursor:pointer!important;transition:all .2s;
+}
+.a-preview-toggle:hover{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.3);color:#a855f7;}
+.a-preview-toggle.active{background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.35);color:#a855f7;box-shadow:0 0 14px rgba(168,85,247,.2);}
 
 /* Sidebar */
 .a-sidebar{
@@ -438,6 +525,9 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
       <span class="a-topbar-brand-name">zaza / admin</span>
     </div>
     <div class="a-topbar-right">
+    <button class="a-preview-toggle" id="a-preview-toggle" title="Toggle live preview">
+      <i class="fas fa-eye"></i> Preview
+    </button>
       <span id="a-save-badge" class="a-badge-saved"><span>Saved</span></span>
       <a href="index.html" target="_blank" class="a-topbar-preview"><i class="fas fa-arrow-up-right-from-square"></i> Preview</a>
       <button class="a-topbar-save" id="a-save-btn"><i class="fas fa-floppy-disk"></i> Save All</button>
@@ -993,6 +1083,27 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
 </section>
 
     </main>
+
+    <!-- ══ LIVE PREVIEW PANEL ══ -->
+    <aside class="a-preview-panel" id="a-preview-panel" aria-label="Live preview">
+      <div class="a-preview-topbar">
+        <div class="a-preview-title">Live Preview</div>
+        <div class="a-preview-actions">
+          <button class="a-preview-btn" id="a-preview-refresh"><i class="fas fa-rotate-right"></i> Refresh</button>
+          <button class="a-preview-btn" id="a-preview-open"><i class="fas fa-arrow-up-right-from-square"></i> Open</button>
+        </div>
+      </div>
+      <div class="a-preview-device-bar">
+        <button class="a-preview-device-btn active" data-device="desktop"><i class="fas fa-desktop"></i> Desktop</button>
+        <button class="a-preview-device-btn" data-device="tablet"><i class="fas fa-tablet-screen-button"></i> Tablet</button>
+        <button class="a-preview-device-btn" data-device="mobile"><i class="fas fa-mobile-screen"></i> Mobile</button>
+      </div>
+      <div class="a-preview-frame-wrap" id="a-preview-frame-wrap">
+        <iframe id="a-preview-iframe" src="about:blank" title="Site preview" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+        <div class="a-preview-updating" id="a-preview-updating">Updating…</div>
+      </div>
+    </aside>
+
   </div>
 </div><!-- end dashboard -->
 <div id="a-toast"></div>
@@ -1672,5 +1783,135 @@ function aInit(){
 }
 
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',aInit);}else{aInit();}
+</script>
+
+<script>
+/* ══════════════════════════════════════════
+   LIVE PREVIEW PANEL
+══════════════════════════════════════════ */
+(function initPreview() {
+  const toggleBtn  = document.getElementById('a-preview-toggle');
+  const layout     = document.querySelector('.a-layout');
+  const panel      = document.getElementById('a-preview-panel');
+  const iframe     = document.getElementById('a-preview-iframe');
+  const frameWrap  = document.getElementById('a-preview-frame-wrap');
+  const updating   = document.getElementById('a-preview-updating');
+  const refreshBtn = document.getElementById('a-preview-refresh');
+  const openBtn    = document.getElementById('a-preview-open');
+  const deviceBtns = document.querySelectorAll('.a-preview-device-btn');
+
+  if (!toggleBtn || !layout || !iframe) return;
+
+  let isOpen     = false;
+  let isLoaded   = false;
+  let updateTimer = null;
+
+  /* ── Toggle open/close ── */
+  toggleBtn.addEventListener('click', () => {
+    isOpen = !isOpen;
+    layout.classList.toggle('preview-open', isOpen);
+    toggleBtn.classList.toggle('active', isOpen);
+    toggleBtn.innerHTML = isOpen
+      ? '<i class="fas fa-eye-slash"></i> Hide Preview'
+      : '<i class="fas fa-eye"></i> Preview';
+
+    if (isOpen && !isLoaded) {
+      loadPreview();
+    }
+  });
+
+  /* ── Load iframe ── */
+  function loadPreview() {
+    isLoaded = true;
+    // Inject current config before loading
+    iframe.src = 'index.html';
+    iframe.addEventListener('load', onIframeLoad, { once: true });
+  }
+
+  function onIframeLoad() {
+    try {
+      injectConfig();
+    } catch(e) {
+      // Cross-origin fallback — just show the page as-is
+    }
+    showUpdating(false);
+  }
+
+  /* ── Inject config into iframe ── */
+  function injectConfig() {
+    if (!iframe.contentWindow) return;
+    const cfg = window.AS?.config;
+    if (!cfg) return;
+    try {
+      iframe.contentWindow.__ZAZA_CONFIG__ = JSON.parse(JSON.stringify(cfg));
+      // If the site has already booted, trigger a soft re-render
+      if (typeof iframe.contentWindow.applyTheme === 'function') {
+        iframe.contentWindow.applyTheme();
+      }
+      if (typeof iframe.contentWindow.renderProfile === 'function') {
+        iframe.contentWindow.renderProfile();
+      }
+    } catch(e) {
+      // Cross-origin — can't inject, reload instead
+      iframe.src = 'index.html';
+    }
+  }
+
+  /* ── Show "Updating…" indicator ── */
+  function showUpdating(show) {
+    if (!updating) return;
+    updating.classList.toggle('show', show);
+  }
+
+  /* ── Watch for config changes and update preview ── */
+  const originalMarkDirty = window.markDirty;
+  window.markDirty = function() {
+    if (typeof originalMarkDirty === 'function') originalMarkDirty();
+    if (!isOpen || !isLoaded) return;
+
+    showUpdating(true);
+    clearTimeout(updateTimer);
+    // Debounce — wait 600ms after last change before updating
+    updateTimer = setTimeout(() => {
+      try {
+        injectConfig();
+      } catch(e) {}
+      // Always refresh after 800ms to ensure changes are visible
+      setTimeout(() => showUpdating(false), 800);
+    }, 600);
+  };
+
+  /* ── Refresh button ── */
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      showUpdating(true);
+      iframe.src = 'index.html';
+      iframe.addEventListener('load', () => {
+        setTimeout(() => { try { injectConfig(); } catch(e){} showUpdating(false); }, 300);
+      }, { once: true });
+    });
+  }
+
+  /* ── Open in new tab ── */
+  if (openBtn) {
+    openBtn.addEventListener('click', () => {
+      window.open('index.html', '_blank');
+    });
+  }
+
+  /* ── Device switcher ── */
+  deviceBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      deviceBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const device = btn.dataset.device;
+      frameWrap.className = 'a-preview-frame-wrap';
+      if (device !== 'desktop') {
+        frameWrap.classList.add('device-' + device);
+      }
+    });
+  });
+
+})();
 </script>
 </body></html>
