@@ -484,6 +484,27 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
 .a-pass-strength.fair{background:linear-gradient(90deg,#fbbf24 65%,rgba(255,255,255,.1) 65%);}
 .a-pass-strength.strong{background:linear-gradient(90deg,#22c55e 100%,rgba(255,255,255,.1) 100%);}
 
+/* ── Version history items ── */
+.a-history-item {
+  display:flex;align-items:center;gap:12px;padding:11px 14px;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .2s;
+}
+.a-history-item:hover{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.25);}
+.a-history-item.active{background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.4);}
+.a-history-num{width:28px;height:28px;border-radius:50%;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#a855f7;flex-shrink:0;}
+.a-history-meta{flex:1;min-width:0;}
+.a-history-time{font-size:.76rem;font-weight:600;color:#f0f0f5;}
+.a-history-changes{font-size:.65rem;color:rgba(240,240,245,.4);margin-top:1px;}
+.a-history-actions{display:flex;gap:6px;}
+
+/* ── Diff line colors ── */
+.diff-added{color:#22c55e;}
+.diff-removed{color:#f87171;}
+.diff-changed{color:#fbbf24;}
+.diff-key{color:#a855f7;font-weight:600;}
+.diff-val{color:rgba(240,240,245,.7);}
+
 /* Responsive */
 @media(max-width:768px){
   .a-layout{grid-template-columns:1fr;}
@@ -528,6 +549,9 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
     <button class="a-preview-toggle" id="a-preview-toggle" title="Toggle live preview">
       <i class="fas fa-eye"></i> Preview
     </button>
+    <button class="a-preview-toggle" id="a-diff-toggle" title="View unsaved changes" style="display:none;">
+      <i class="fas fa-code-compare"></i> <span id="a-diff-count">0</span> Changes
+    </button>
       <span id="a-save-badge" class="a-badge-saved"><span>Saved</span></span>
       <a href="index.html" target="_blank" class="a-topbar-preview"><i class="fas fa-arrow-up-right-from-square"></i> Preview</a>
       <button class="a-topbar-save" id="a-save-btn"><i class="fas fa-floppy-disk"></i> Save All</button>
@@ -557,6 +581,7 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
       <button class="a-nav-item" data-sec="github"><i class="fab fa-github"></i> GitHub</button>
       <button class="a-nav-item" data-sec="security"><i class="fas fa-shield-halved"></i> Security</button>
       <button class="a-nav-item" data-sec="tools"><i class="fas fa-screwdriver-wrench"></i> Tools</button>
+      <button class="a-nav-item" data-sec="history"><i class="fas fa-clock-rotate-left"></i> History</button>
     </nav>
 
     <!-- Main -->
@@ -1080,9 +1105,39 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
     <div class="a-card-title"><i class="fas fa-image"></i> Avatar Sync</div>
     <div class="a-info success"><i class="fas fa-circle-check"></i> When the Discord widget is enabled, your Discord profile picture automatically replaces the site avatar in real time — no manual upload needed.</div>
   </div>
+<!-- ═══ HISTORY ═══ -->
+<section class="a-section" id="sec-history">
+  <div class="a-section-head">
+    <div class="a-section-title">Version History</div>
+    <div class="a-section-desc">Last 10 saved snapshots. Click any to preview or restore.</div>
+  </div>
+  <div class="a-card">
+    <div class="a-card-title"><i class="fas fa-clock-rotate-left"></i> Snapshots</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i> A snapshot is saved automatically every time you click Save All. Restoring overwrites your current config — the original is not deleted from history.</div>
+    <div id="a-history-list"><p style="color:rgba(240,240,245,.3);font-size:.76rem;text-align:center;padding:16px 0;">No snapshots yet — save your config to create one.</p></div>
+  </div>
+  <div class="a-card" id="a-history-diff-card" style="display:none;">
+    <div class="a-card-title"><i class="fas fa-code-compare"></i> Snapshot Preview</div>
+    <div id="a-history-diff-content" style="font-family:monospace;font-size:.72rem;line-height:1.8;max-height:360px;overflow-y:auto;"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="a-btn-sm" id="a-history-restore-btn"><i class="fas fa-rotate-left"></i> Restore This Version</button>
+      <button class="a-btn-sm secondary" id="a-history-diff-close"><i class="fas fa-xmark"></i> Close</button>
+    </div>
+  </div>
+</section>
+
 </section>
 
     </main>
+
+<!-- ══ DIFF OVERLAY (Feature 33) ══ -->
+<div id="a-diff-overlay" style="display:none;position:fixed;bottom:80px;right:24px;z-index:500;width:320px;max-height:420px;background:rgba(6,6,11,0.96);border:1px solid rgba(168,85,247,0.3);border-radius:16px;box-shadow:0 0 40px rgba(168,85,247,0.15);overflow:hidden;animation:fadeUp .2s ease both;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(168,85,247,0.12);background:rgba(168,85,247,0.06);">
+    <div style="font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#a855f7;display:flex;align-items:center;gap:7px;"><i class="fas fa-code-compare"></i> Unsaved Changes</div>
+    <button onclick="document.getElementById('a-diff-overlay').style.display='none'" style="background:none;border:none;color:rgba(240,240,245,.4);cursor:pointer;font-size:.8rem;padding:2px 6px;">✕</button>
+  </div>
+  <div id="a-diff-list" style="padding:12px 16px;max-height:340px;overflow-y:auto;font-size:.72rem;line-height:1.8;font-family:monospace;"></div>
+</div>
 
     <!-- ══ LIVE PREVIEW PANEL ══ -->
     <aside class="a-preview-panel" id="a-preview-panel" aria-label="Live preview">
@@ -1846,6 +1901,208 @@ function aInit(){
 }
 
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',aInit);}else{aInit();}
+</script>
+
+<script>
+/* ══════════════════════════════════════════
+   FEATURE 32 — CONFIG VERSION HISTORY
+   Stores up to 10 snapshots in localStorage.
+   Each snapshot: { ts, label, config }
+   Admin can preview diff + restore any version.
+══════════════════════════════════════════ */
+const HISTORY_KEY = 'zaza_history';
+const HISTORY_MAX = 10;
+
+function hLoad() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+function hSave(arr) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+}
+
+/* Save a snapshot — called automatically on every Save All */
+function hSnapshot(cfg, label) {
+  const arr = hLoad();
+  arr.unshift({ ts: Date.now(), label: label || 'Manual save', config: JSON.parse(JSON.stringify(cfg)) });
+  if (arr.length > HISTORY_MAX) arr.length = HISTORY_MAX;
+  hSave(arr);
+  hRender();
+}
+
+/* Render the history list */
+function hRender() {
+  const con = document.getElementById('a-history-list');
+  if (!con) return;
+  const arr = hLoad();
+  if (!arr.length) {
+    con.innerHTML = '<p style="color:rgba(240,240,245,.3);font-size:.76rem;text-align:center;padding:16px 0;">No snapshots yet.</p>';
+    return;
+  }
+  con.innerHTML = '';
+  arr.forEach((snap, i) => {
+    const d = document.createElement('div');
+    d.className = 'a-history-item';
+    const ago = hAgo(snap.ts);
+    const changes = snap.changes || '—';
+    d.innerHTML = `
+      <div class="a-history-num">${i + 1}</div>
+      <div class="a-history-meta">
+        <div class="a-history-time">${new Date(snap.ts).toLocaleString()}</div>
+        <div class="a-history-changes">${ago} · ${esc(snap.label || 'Save')}</div>
+      </div>
+      <div class="a-history-actions">
+        <button class="a-btn-sm secondary" style="padding:4px 10px;font-size:.65rem;" onclick="hPreview(${i})"><i class="fas fa-eye"></i> View</button>
+        <button class="a-btn-sm" style="padding:4px 10px;font-size:.65rem;" onclick="hRestore(${i})"><i class="fas fa-rotate-left"></i></button>
+      </div>`;
+    con.appendChild(d);
+  });
+}
+
+function hAgo(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60)  return s + 's ago';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+let _previewIdx = -1;
+window.hPreview = function(i) {
+  const arr = hLoad();
+  const snap = arr[i];
+  if (!snap) return;
+  _previewIdx = i;
+
+  const card = document.getElementById('a-history-diff-card');
+  const content = document.getElementById('a-history-diff-content');
+  if (!card || !content) return;
+
+  // Compare snapshot to current config
+  const current = AS.config || {};
+  const lines = diffConfigs(snap.config, current);
+  content.innerHTML = lines.length
+    ? lines.map(l => `<div>${l}</div>`).join('')
+    : '<div style="color:rgba(240,240,245,.4);">No differences from current config.</div>';
+
+  card.style.display = 'block';
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Highlight active item
+  document.querySelectorAll('.a-history-item').forEach((el, idx) => {
+    el.classList.toggle('active', idx === i);
+  });
+};
+
+window.hRestore = function(i) {
+  const arr = hLoad();
+  const snap = arr[i];
+  if (!snap) return;
+  if (!confirm(`Restore snapshot from ${new Date(snap.ts).toLocaleString()}? Your current unsaved changes will be lost.`)) return;
+
+  AS.config = JSON.parse(JSON.stringify(snap.config));
+  localStorage.setItem('zaza_config', JSON.stringify(AS.config, null, 2));
+  aPopulate(AS.config);
+  markDirty();
+  aToast('✓ Restored snapshot from ' + new Date(snap.ts).toLocaleString(), 'success');
+
+  const card = document.getElementById('a-history-diff-card');
+  if (card) card.style.display = 'none';
+};
+
+document.getElementById('a-history-diff-close')?.addEventListener('click', () => {
+  document.getElementById('a-history-diff-card').style.display = 'none';
+  document.querySelectorAll('.a-history-item').forEach(el => el.classList.remove('active'));
+});
+
+document.getElementById('a-history-restore-btn')?.addEventListener('click', () => {
+  if (_previewIdx >= 0) hRestore(_previewIdx);
+});
+
+/* ══════════════════════════════════════════
+   FEATURE 33 — LIVE CONFIG DIFF
+   Compares current form state to last saved
+   snapshot. Shows floating diff panel with
+   colored added/removed/changed values.
+══════════════════════════════════════════ */
+let _lastSaved = null; // config at last save
+
+function diffConfigs(oldCfg, newCfg, prefix) {
+  const lines = [];
+  prefix = prefix || '';
+  const allKeys = new Set([...Object.keys(oldCfg || {}), ...Object.keys(newCfg || {})]);
+
+  for (const key of allKeys) {
+    const fullKey = prefix ? prefix + '.' + key : key;
+    const ov = (oldCfg || {})[key];
+    const nv = (newCfg || {})[key];
+
+    if (JSON.stringify(ov) === JSON.stringify(nv)) continue;
+
+    if (ov === undefined) {
+      lines.push(`<span class="diff-added">+ <span class="diff-key">${esc(fullKey)}</span>: <span class="diff-val">${esc(JSON.stringify(nv))}</span></span>`);
+    } else if (nv === undefined) {
+      lines.push(`<span class="diff-removed">- <span class="diff-key">${esc(fullKey)}</span>: <span class="diff-val">${esc(JSON.stringify(ov))}</span></span>`);
+    } else if (typeof ov === 'object' && typeof nv === 'object' && ov !== null && nv !== null && !Array.isArray(ov) && !Array.isArray(nv)) {
+      lines.push(...diffConfigs(ov, nv, fullKey));
+    } else {
+      lines.push(`<span class="diff-changed">~ <span class="diff-key">${esc(fullKey)}</span>: <span class="diff-val">${esc(JSON.stringify(ov))}</span> → <span class="diff-val">${esc(JSON.stringify(nv))}</span></span>`);
+    }
+  }
+  return lines;
+}
+
+function diffUpdate() {
+  if (!_lastSaved || !AS.config) return;
+  aCollectAll();
+  const lines = diffConfigs(_lastSaved, AS.config);
+  const toggle = document.getElementById('a-diff-toggle');
+  const count  = document.getElementById('a-diff-count');
+  const list   = document.getElementById('a-diff-list');
+
+  if (toggle) toggle.style.display = lines.length ? 'flex' : 'none';
+  if (count)  count.textContent = lines.length;
+  if (list)   list.innerHTML = lines.length
+    ? lines.map(l => `<div style="margin-bottom:3px;">${l}</div>`).join('')
+    : '<div style="color:rgba(240,240,245,.3);">No changes.</div>';
+}
+
+document.getElementById('a-diff-toggle')?.addEventListener('click', () => {
+  const ov = document.getElementById('a-diff-overlay');
+  if (ov) ov.style.display = ov.style.display === 'none' ? 'block' : 'none';
+});
+
+// Patch markDirty to also trigger diff update
+const _origMarkDirty = window.markDirty;
+window.markDirty = function() {
+  if (typeof _origMarkDirty === 'function') _origMarkDirty();
+  // Debounce diff computation
+  clearTimeout(window._diffTimer);
+  window._diffTimer = setTimeout(diffUpdate, 800);
+};
+
+// Patch aSave to snapshot before saving
+const _origASave = window.aSave;
+window.aSave = async function() {
+  if (AS.config) hSnapshot(AS.config, 'Save All');
+  if (typeof _origASave === 'function') await _origASave();
+  _lastSaved = AS.config ? JSON.parse(JSON.stringify(AS.config)) : null;
+  // Hide diff overlay and button after save
+  const ov = document.getElementById('a-diff-overlay');
+  if (ov) ov.style.display = 'none';
+  const toggle = document.getElementById('a-diff-toggle');
+  if (toggle) toggle.style.display = 'none';
+};
+
+// Init: set _lastSaved when dashboard loads
+const _origShowDash = window.aShowDashboard;
+window.aShowDashboard = function() {
+  if (typeof _origShowDash === 'function') _origShowDash();
+  // Set baseline after config loads
+  setTimeout(() => {
+    _lastSaved = AS.config ? JSON.parse(JSON.stringify(AS.config)) : null;
+    hRender();
+  }, 400);
+};
 </script>
 
 <script>
