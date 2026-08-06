@@ -1343,6 +1343,8 @@ async function init() {
   initVisualFeatures();
   initDiscord();
   initContextMenu();
+  initEasterEggTerminal();
+  initLiquidCursor();
 
   // Single consolidated mousemove dispatcher — replaces N individual listeners
   if (S._mouseMoveHandlers.length) {
@@ -2067,4 +2069,350 @@ function initContextMenu() {
 
   // Close on resize
   window.addEventListener('resize', () => { if (isOpen) closeMenu(); });
+}
+
+/* ══════════════════════════════════════════
+   19. EASTER EGG TERMINAL (Feature 15)
+   Type any key sequence at 8+ chars/sec on
+   the main page — a secret terminal appears.
+   Commands: help, whoami, ls, sudo, hack,
+   matrix, theme, clear, exit
+══════════════════════════════════════════ */
+function initEasterEggTerminal() {
+  // Only active after entering the site
+  const SPEED_THRESHOLD = 120; // ms between keystrokes to count as "fast"
+  const MIN_KEYS = 5; // minimum fast keystrokes to trigger
+  let keyTimes = [];
+  let terminalOpen = false;
+  let termHistory = [];
+  let histIdx = -1;
+
+  const RESPONSES = {
+    help:    ['available commands:', '  whoami   — who are you really', '  ls       — list everything', '  sudo     — try your luck', '  hack     — attempt intrusion', '  matrix   — toggle matrix mode', '  theme    — cycle accent color', '  clear    — clear terminal', '  exit     — close this terminal'],
+    whoami:  ['zade. developer. human (probably).'],
+    ls:      ['drwxr-xr-x  music/', 'drwxr-xr-x  assets/', '-rw-r--r--  config.json', '-rw-r--r--  soul.exe  [CORRUPTED]', '-rw-r--r--  secrets.txt  [ENCRYPTED]', '-rwxr-xr-x  vibe.sh'],
+    sudo:    ['[sudo] password for zade: ', '...', 'sudo: you are not in the sudoers file.', 'this incident will be reported.'],
+    hack:    ['initializing...', 'connecting to mainframe...', '████████░░ 80%', 'access denied.', 'nice try though.'],
+    matrix:  ['__MATRIX_MODE__'],
+    theme:   ['__CYCLE_THEME__'],
+    clear:   ['__CLEAR__'],
+    exit:    ['__EXIT__'],
+  };
+
+  /* ── Build terminal DOM ── */
+  function buildTerminal() {
+    if (document.getElementById('egg-terminal')) return;
+
+    const el = document.createElement('div');
+    el.id = 'egg-terminal';
+    el.style.cssText = `
+      position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+      width:min(600px,92vw);max-height:360px;
+      background:rgba(4,4,10,0.97);
+      border:1px solid rgba(168,85,247,0.35);
+      border-radius:14px;overflow:hidden;
+      box-shadow:0 0 60px rgba(168,85,247,0.2),0 24px 60px rgba(0,0,0,0.8);
+      z-index:99995;
+      opacity:0;transition:opacity .3s ease,transform .3s ease;
+      font-family:'JetBrains Mono','Courier New',monospace;
+    `;
+
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:7px;padding:10px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(168,85,247,.15);">
+        <span style="width:11px;height:11px;border-radius:50%;background:#ff5f57;"></span>
+        <span style="width:11px;height:11px;border-radius:50%;background:#febc2e;"></span>
+        <span style="width:11px;height:11px;border-radius:50%;background:#28c840;"></span>
+        <span style="flex:1;text-align:center;font-size:.65rem;color:rgba(240,240,245,.25);margin-left:-60px;">zade@arch: ~ [secret terminal]</span>
+      </div>
+      <div id="egg-output" style="padding:14px 16px;max-height:260px;overflow-y:auto;font-size:.72rem;line-height:1.85;color:#22c55e;"></div>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;border-top:1px solid rgba(168,85,247,.1);">
+        <span style="color:#a855f7;font-size:.72rem;font-weight:700;">zade@arch ~ $</span>
+        <input id="egg-input" type="text" autocomplete="off" spellcheck="false"
+          style="flex:1;background:none;border:none;outline:none;color:#f0f0f5;font-family:inherit;font-size:.72rem;caret-color:#a855f7;"
+          placeholder="type a command..."/>
+      </div>
+    `;
+
+    document.body.appendChild(el);
+
+    requestAnimationFrame(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    const input = el.querySelector('#egg-input');
+    const output = el.querySelector('#egg-output');
+
+    // Welcome message
+    appendOutput(output, ['you found the secret terminal.', 'type <span style="color:#a855f7">help</span> for commands.', '']);
+
+    input.focus();
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const cmd = input.value.trim().toLowerCase();
+        input.value = '';
+        if (cmd) { termHistory.unshift(cmd); histIdx = -1; }
+        handleCommand(cmd, output);
+      }
+      if (e.key === 'ArrowUp') {
+        histIdx = Math.min(histIdx + 1, termHistory.length - 1);
+        if (termHistory[histIdx]) input.value = termHistory[histIdx];
+      }
+      if (e.key === 'ArrowDown') {
+        histIdx = Math.max(histIdx - 1, -1);
+        input.value = histIdx >= 0 ? termHistory[histIdx] : '';
+      }
+      if (e.key === 'Escape') closeTerminal();
+      e.stopPropagation();
+    });
+
+    terminalOpen = true;
+  }
+
+  function appendOutput(output, lines) {
+    lines.forEach((line, i) => {
+      setTimeout(() => {
+        const d = document.createElement('div');
+        d.innerHTML = line;
+        output.appendChild(d);
+        output.scrollTop = output.scrollHeight;
+      }, i * 60);
+    });
+  }
+
+  function handleCommand(cmd, output) {
+    // Echo command
+    const echo = document.createElement('div');
+    echo.innerHTML = `<span style="color:#a855f7">zade@arch ~ $</span> <span style="color:#f0f0f5">${esc(cmd)}</span>`;
+    output.appendChild(echo);
+
+    const resp = RESPONSES[cmd] || [`command not found: ${esc(cmd)}`, 'try <span style="color:#a855f7">help</span>'];
+
+    if (resp[0] === '__CLEAR__') { output.innerHTML = ''; return; }
+    if (resp[0] === '__EXIT__')  { closeTerminal(); return; }
+    if (resp[0] === '__MATRIX_MODE__') {
+      document.body.classList.toggle('matrix-mode');
+      appendOutput(output, [document.body.classList.contains('matrix-mode') ? 'matrix mode activated.' : 'matrix mode deactivated.']);
+      return;
+    }
+    if (resp[0] === '__CYCLE_THEME__') {
+      document.getElementById('theme-fab')?.click();
+      appendOutput(output, ['theme cycled.']);
+      return;
+    }
+
+    appendOutput(output, resp);
+  }
+
+  function closeTerminal() {
+    const el = document.getElementById('egg-terminal');
+    if (!el) return;
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(20px)';
+    setTimeout(() => { el.remove(); terminalOpen = false; }, 300);
+  }
+
+  /* ── Key speed detector ── */
+  document.addEventListener('keydown', e => {
+    if (!S.entered) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (terminalOpen) return;
+    // Ignore modifier-only keys
+    if (['Shift','Control','Alt','Meta','CapsLock','Tab','Escape'].includes(e.key)) return;
+
+    const now = performance.now();
+    keyTimes.push(now);
+
+    // Keep only last 8 keystrokes
+    if (keyTimes.length > 8) keyTimes.shift();
+
+    // Check if all gaps are below threshold
+    if (keyTimes.length >= MIN_KEYS) {
+      let allFast = true;
+      for (let i = 1; i < keyTimes.length; i++) {
+        if (keyTimes[i] - keyTimes[i-1] > SPEED_THRESHOLD) { allFast = false; break; }
+      }
+      if (allFast) {
+        keyTimes = [];
+        buildTerminal();
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   20. LIQUID METAL CURSOR (Feature 7)
+   WebGL metaball shader renders a mercury-like
+   blob that stretches toward cursor velocity.
+   Falls back gracefully if WebGL unavailable.
+══════════════════════════════════════════ */
+function initLiquidCursor() {
+  if (S.prefersReduced) return;
+  if (window.matchMedia('(hover: none)').matches) return;
+  if (!S.cfg.cursor?.enabled) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'liquid-cursor-canvas';
+  canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:99996;';
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+
+  const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+  if (!gl) { canvas.remove(); return; } // graceful fallback
+
+  // Hide the default CSS cursor dot when liquid cursor is active
+  const cursorEl = document.getElementById('cursor');
+  if (cursorEl) cursorEl.style.display = 'none';
+
+  window.addEventListener('resize', () => {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    uRes && gl.uniform2f(uRes, canvas.width, canvas.height);
+  });
+
+  /* ── Shaders ── */
+  const VERT = `
+    attribute vec2 a_pos;
+    void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+  `;
+
+  const FRAG = `
+    precision mediump float;
+    uniform vec2  u_res;
+    uniform vec2  u_mouse;
+    uniform vec2  u_vel;
+    uniform float u_time;
+    uniform vec3  u_color;
+
+    float metaball(vec2 p, vec2 c, float r) {
+      vec2 d = p - c;
+      return r * r / dot(d, d);
+    }
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy;
+      float aspect = u_res.x / u_res.y;
+
+      // Stretch blob in direction of velocity
+      float speed = length(u_vel);
+      vec2 normVel = speed > 0.01 ? normalize(u_vel) : vec2(0.0);
+      vec2 stretch = vec2(1.0) + normVel * min(speed * 0.012, 0.7);
+
+      // Main metaball at cursor
+      vec2 p = uv - u_mouse;
+      p /= stretch;
+      float r = 18.0 + min(speed * 0.3, 14.0);
+      float v = metaball(p + u_mouse, u_mouse, r);
+
+      // Trailing blob (slightly behind cursor)
+      vec2 trail = u_mouse - normVel * r * 0.8;
+      float vt = metaball(uv, trail, r * 0.7);
+
+      float total = v + vt;
+      float threshold = 1.0;
+
+      // Smooth iso-surface
+      float alpha = smoothstep(threshold - 0.15, threshold + 0.15, total);
+
+      // Iridescent sheen
+      float sheen = sin(u_time * 2.0 + uv.x * 0.01) * 0.15 + 0.85;
+      vec3 col = u_color * sheen + vec3(0.2, 0.1, 0.3) * (1.0 - sheen);
+
+      // Specular highlight
+      vec2 highlightPos = u_mouse + vec2(-r * 0.3, -r * 0.3);
+      float spec = smoothstep(8.0, 0.0, length(uv - highlightPos));
+      col += vec3(1.0) * spec * 0.4;
+
+      gl_FragColor = vec4(col, alpha * 0.92);
+    }
+  `;
+
+  function compileShader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn(gl.getShaderInfoLog(s)); return null; }
+    return s;
+  }
+
+  const vs = compileShader(gl.VERTEX_SHADER, VERT);
+  const fs = compileShader(gl.FRAGMENT_SHADER, FRAG);
+  if (!vs || !fs) { canvas.remove(); return; }
+
+  const prog = gl.createProgram();
+  gl.attachShader(prog, vs); gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { canvas.remove(); return; }
+  gl.useProgram(prog);
+
+  // Full-screen quad
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  const uRes   = gl.getUniformLocation(prog, 'u_res');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+  const uVel   = gl.getUniformLocation(prog, 'u_vel');
+  const uTime  = gl.getUniformLocation(prog, 'u_time');
+  const uColor = gl.getUniformLocation(prog, 'u_color');
+
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.uniform2f(uRes, canvas.width, canvas.height);
+
+  let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+  let smx = mx, smy = my;
+  let vx = 0, vy = 0;
+  let pvx = 0, pvy = 0;
+
+  // Use consolidated mousemove
+  S._mouseMoveHandlers.push(e => {
+    vx = e.clientX - mx;
+    vy = e.clientY - my;
+    mx = e.clientX;
+    my = e.clientY;
+  });
+
+  function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    return [
+      parseInt(hex.slice(0,2),16)/255,
+      parseInt(hex.slice(2,4),16)/255,
+      parseInt(hex.slice(4,6),16)/255,
+    ];
+  }
+
+  const startTime = performance.now();
+
+  (function render() {
+    requestAnimationFrame(render);
+
+    // Smooth cursor position
+    smx += (mx - smx) * 0.18;
+    smy += (my - smy) * 0.18;
+
+    // Smooth velocity with decay
+    pvx += (vx - pvx) * 0.25; pvx *= 0.88;
+    pvy += (vy - pvy) * 0.25; pvy *= 0.88;
+    vx = 0; vy = 0;
+
+    const t = (performance.now() - startTime) / 1000;
+
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(uMouse, smx, canvas.height - smy); // flip Y for GL
+    gl.uniform2f(uVel, pvx, -pvy);
+    gl.uniform1f(uTime, t);
+
+    // Read current accent color
+    const accentHex = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#a855f7';
+    const [r, g, b] = hexToRgb(accentHex);
+    gl.uniform3f(uColor, r, g, b);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  })();
 }
