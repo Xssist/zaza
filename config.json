@@ -114,7 +114,7 @@
     "showViews": true
   },
   "discord": {
-    "enabled": false,
+    "enabled": true,
     "userId": "1246068508039708672",
     "showWidget": true
   },
