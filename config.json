@@ -5,11 +5,7 @@
     "bio": "beginner html dev,ahk scripter",
     "avatar": "assets/images/avatar.png",
     "status": "online",
-    "statusMessages": [
-      "im a goat",
-      "dab",
-      "credits to y3e.me"
-    ],
+    "statusMessages": [],
     "location": "Tokyo,Japan",
     "joinDate": "2001",
     "availability": "online"
