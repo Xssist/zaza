@@ -79,10 +79,10 @@
       "id": "github",
       "label": "github",
       "username": "Xssist",
-      "url": "https://github.com/zaza",
+      "url": "https://github.com/Xssist",
       "icon": "fab fa-github",
       "color": "#ffffff",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "youtube",
