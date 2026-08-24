@@ -2070,12 +2070,6 @@ function initContextMenu() {
         cls: 'accent',
         action: () => { window.location.href = 'admin.html'; }
       },
-      { sep: true },
-      {
-        label: 'View Source',
-        icon: 'fa-code',
-        action: () => { window.open('https://github.com/Xssist/zaza', '_blank'); }
-      },
     ];
   }
 
