@@ -1752,9 +1752,10 @@ function aShowDashboard(){
   $('#a-test-gh-btn')?.addEventListener('click',async()=>{
     const btn=$('#a-test-gh-btn');if(btn){btn.textContent='Testing...';btn.disabled=true;}
     try{
-      const r=await fetch('https://api.github.com/repos/'+GH.owner+'/'+GH.repo,{headers:{'Authorization':'token '+GH.token,'Accept':'application/vnd.github.v3+json'}});
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      const d=await r.json();aToast('Connected to '+d.full_name,'success');
+      const r=await fetch(WORKER_URL+'/test',{method:'POST',headers:{'Content-Type':'application/json','X-Session-Token':window.AS.sessionToken||''}});
+      const d=await r.json().catch(()=>({ok:false,error:'Network error'}));
+      if(!d.ok)throw new Error(d.error||'HTTP '+r.status);
+      aToast('Connected to '+d.repo+' — GitHub token valid','success');
     }catch(e){aToast(e.message,'error');}
     finally{if(btn){btn.textContent='Test Connection';btn.disabled=false;}}
   });

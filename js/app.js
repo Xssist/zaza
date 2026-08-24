@@ -228,13 +228,15 @@ const SoundSystem = {
   },
   
   init() {
-    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // AudioContext created lazily in play() — avoids autoplay-policy warnings at page load
     this.enabled = localStorage.getItem('zaza_sounds') !== 'false';
   },
   
   play(name) {
     if (!this.enabled || !this.sounds[name]) return;
     try {
+      if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
       const sound = this.sounds[name];
       const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
@@ -390,11 +392,6 @@ function initBackground() {
     });
   }
 }
-
-/* ── Register consolidated mousemove handlers ── */
-document.addEventListener('mousemove', e => {
-  S._mouseMoveHandlers.forEach(h => h(e));
-});
 
 /* ── Premium image loader ── */
 function _loadImageBackground(url, wrap, blurLayer) {
@@ -1433,7 +1430,7 @@ function initBgPattern() {
 }
 
 /* ══════════════════════════════════════════
-   SECURITY — Block right-click + DevTools
+   SECURITY — Block right-click
 ══════════════════════════════════════════ */
 function blockRightClick() {
   // Disable right-click context menu
@@ -1454,35 +1451,12 @@ function blockRightClick() {
   });
 }
 
-function blockDevTools() {
-  // Detect DevTools opening (F12, Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J)
-  document.addEventListener('keydown', e => {
-    if (e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-        (e.ctrlKey && e.shiftKey && e.key === 'C') ||
-        (e.ctrlKey && e.shiftKey && e.key === 'J') ||
-        (e.metaKey && e.altKey && e.key === 'i')) {
-      e.preventDefault();
-      e.stopPropagation();
-      toast('🔒 Developer tools disabled', 2000);
-    }
-  }, true);
-  
-  // Detect DevTools window open via size check (crude but effective)
-  let lastCheckTime = 0;
-  setInterval(() => {
-    const now = Date.now();
-    if (now - lastCheckTime < 500) return;
-    lastCheckTime = now;
-    
-    if (window.outerHeight - window.innerHeight > 100 || 
-        window.outerWidth - window.innerWidth > 100) {
-      // DevTools likely open
-      document.body.style.display = 'none';
-      setTimeout(() => { document.body.style.display = 'block'; }, 200);
-    }
-  }, 2000);
-}
+// NOTE: DevTools "blocking" heuristics were removed intentionally.
+// The old size-check interval hid <body> (display:none) whenever
+// outerHeight - innerHeight > 100px — which is TRUE on most normal browsers
+// (tab strip + address bar ≈ 85–110px, more with bookmarks bar or 125% DPI).
+// Result: the page flashed white and all CSS animations restarted every ~2s.
+// It never actually prevented anyone from opening DevTools anyway.
 
 /* ══════════════════════════════════════════
    MAIN INIT
@@ -1515,9 +1489,8 @@ async function init() {
   initContextMenu();
   initEasterEggTerminal();
   
-  // Block right-click and view source
+  // Block right-click / native context menu (custom ctx menu takes over)
   blockRightClick();
-  blockDevTools();
   
   // Track page visit
   trackEvent('page_visit', { referrer: document.referrer, timestamp: new Date().toISOString() });

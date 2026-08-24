@@ -150,6 +150,30 @@ function handleLogout(req) {
   return res({ ok:true }, 200);
 }
 
+// Health check for admin panel "Test Connection" button
+async function handleTest(req, env) {
+  const sToken = req.headers.get('X-Session-Token');
+  if (!validSession(sToken)) return res({ ok:false, error:'Unauthorized' }, 401);
+
+  const ghToken = env.GH_TOKEN;
+  if (!ghToken) return res({ ok:false, error:'GH_TOKEN secret not set in Worker env' }, 500);
+
+  try {
+    const r = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}`,
+      { headers: { 'Authorization':'token '+ghToken, 'Accept':'application/vnd.github.v3+json', 'User-Agent':'zaza-admin-worker' } }
+    );
+    if (!r.ok) {
+      const t = await r.text();
+      return res({ ok:false, error:`GitHub ${r.status}: ${t.slice(0,160)}` }, 502);
+    }
+    const d = await r.json();
+    return res({ ok:true, repo:d.full_name }, 200);
+  } catch (e) {
+    return res({ ok:false, error:'Network error: '+e.message }, 502);
+  }
+}
+
 export default {
   async fetch(request, env) {
     const ip   = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
@@ -164,6 +188,7 @@ export default {
         case '/login':       return await handleLogin(request, ip, env);
         case '/save-config': return await handleSaveConfig(request, env);
         case '/upload':      return await handleUpload(request, env);
+        case '/test':        return await handleTest(request, env);
         case '/logout':      return handleLogout(request);
         default:             return new Response('Not found', { status:404, headers:corsH });
       }
