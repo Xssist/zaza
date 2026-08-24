@@ -190,7 +190,6 @@ function initDarkMode() {
     isDark = dark;
     if (dark) {
       document.documentElement.setAttribute('data-theme', 'dark');
-      document.body.style.filter = 'invert(0)';
     } else {
       document.documentElement.removeAttribute('data-theme');
       // Light mode: invert background but not text

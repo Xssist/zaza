@@ -26,7 +26,7 @@
 
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
+html { background: #08080f; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 
 /* ── Focus ── */
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
@@ -691,10 +691,10 @@ body::after {
   mix-blend-mode: multiply;
 }
 #grain-overlay {
-  position: fixed; inset: 0; z-index: 99989;
-  pointer-events: none; opacity: 0.018;
-  filter: url(#grain); background: rgba(255,255,255,1);
-  animation: grainShift .15s steps(1) infinite;
+  /* Disabled: the full-screen animated feTurbulence filter re-rasterizes the whole
+     viewport ~6-7x/second and flickers on some Windows GPU drivers.
+     The grain was at 1.8% opacity (nearly invisible) so the loss is negligible. */
+  display: none;
 }
 @keyframes grainShift {
   0%  { transform:translate(0,0); }    10% { transform:translate(-2%,-3%); }
