@@ -147,13 +147,7 @@
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#a855f7"
   },
-  "badges": [
-    {
-      "icon": "dab",
-      "color": "#003366",
-      "label": "im a goat"
-    }
-  ],
+  "badges": [],
   "announcement": {
     "enabled": false,
     "text": "",
