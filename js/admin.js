@@ -20,11 +20,12 @@ function normalizeAssetPath(path) {
   return path.replace(/\\/g, '/').replace(/^\/+/, '');
 }
 
+// GitHub config — token is now handled securely via Cloudflare Worker
 const GH = {
   owner : 'Xssist',
   repo  : 'zaza',
   branch: 'main',
-  get token() { return 'ghp_u08bDqvb24zLCja3Px' + 'L207MZS7rBWn1gYiAz'; },
+  workerUrl: 'https://zaza-admin.xssist.workers.dev', // Secure backend endpoint
 };
 
 window.AdminState = { config: null, dirty: false };
@@ -90,28 +91,22 @@ function toB64(str) {
   return btoa(bin);
 }
 
-/* ── GitHub save ── */
+/* ── GitHub save via Cloudflare Worker (secure) ── */
 async function githubSave(cfg) {
-  const url = `https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/config.json`;
-  const hdrs = {
-    'Authorization': `token ${GH.token}`,
-    'Accept':        'application/vnd.github.v3+json',
-    'Content-Type':  'application/json',
-  };
-  const getRes = await fetch(url, { headers: hdrs });
-  if (!getRes.ok) throw new Error(`GitHub GET ${getRes.status}: ${await getRes.text()}`);
-  const { sha } = await getRes.json();
-  const body = JSON.stringify({
-    message: 'chore: update config via admin panel',
-    content: toB64(JSON.stringify(cfg, null, 2)),
-    sha,
-    branch: GH.branch,
+  const sToken = sessionStorage.getItem('za_tok');
+  if (!sToken) throw new Error('Session expired');
+  
+  const res = await fetch(`${GH.workerUrl}/save-config`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Session-Token': sToken,
+    },
+    body: JSON.stringify({ config: cfg }),
   });
-  const putRes = await fetch(url, { method:'PUT', headers:hdrs, body });
-  if (!putRes.ok) {
-    const err = await putRes.json().catch(() => ({ message: putRes.statusText }));
-    throw new Error(`GitHub PUT ${putRes.status}: ${err.message}`);
-  }
+  
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'GitHub save failed');
   return true;
 }
 
@@ -185,12 +180,14 @@ function showDashboard() {
     const btn = $('#test-gh-btn');
     if (btn) { btn.textContent = 'Testing…'; btn.disabled = true; }
     try {
-      const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}`, {
-        headers: { Authorization: `token ${GH.token}`, Accept: 'application/vnd.github.v3+json' },
+      const sToken = sessionStorage.getItem('za_tok');
+      const r = await fetch(`${GH.workerUrl}/test-connection`, {
+        method: 'POST',
+        headers: { 'X-Session-Token': sToken, 'Content-Type': 'application/json' },
       });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
-      adminToast(`✓ Connected to ${d.full_name}`, 'success');
+      if (!d.ok) throw new Error(d.error || 'Connection failed');
+      adminToast(`✓ Connected to ${GH.owner}/${GH.repo}`, 'success');
     } catch (e) { adminToast('✗ ' + e.message, 'error'); }
     finally { if (btn) { btn.textContent = 'Test Connection'; btn.disabled = false; } }
   });
@@ -656,6 +653,55 @@ window.addCustomSocial = () => {
     url: url.trim(), username: user.trim(), enabled: true,
   });
   renderSocialList(AdminState.config.socials); markDirty();
+};
+
+/* ══════════════════════════════════════════
+   ANALYTICS — View visitor events
+══════════════════════════════════════════ */
+window.showAnalytics = () => {
+  const analytics = JSON.parse(localStorage.getItem('zaza_analytics') || '{}');
+  const events = analytics.events || [];
+  
+  if (events.length === 0) {
+    adminToast('No visitor events yet', 'info');
+    return;
+  }
+  
+  let html = `
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#06060b;border:1px solid rgba(168,85,247,.3);border-radius:16px;padding:24px;max-width:600px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 style="color:#a855f7;font-size:1.2rem;margin:0;">Analytics</h3>
+          <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#f0f0f5;font-size:1.4rem;cursor:pointer;">✕</button>
+        </div>
+        <p style="color:rgba(240,240,245,.6);font-size:0.9rem;margin-bottom:12px;">${events.length} event${events.length > 1 ? 's' : ''}</p>
+        <div style="display:grid;gap:8px;">`;
+  
+  events.slice(-20).reverse().forEach(e => {
+    const date = new Date(e.timestamp).toLocaleString();
+    const data = e.data ? JSON.stringify(e.data).slice(0, 100) : '';
+    html += `<div style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.2);border-radius:8px;padding:12px;font-size:0.8rem;font-family:monospace;">
+      <div style="color:#a855f7;font-weight:600;">${e.event}</div>
+      <div style="color:rgba(240,240,245,.5);margin-top:4px;">${date}</div>
+      ${data ? `<div style="color:rgba(240,240,245,.4);margin-top:4px;">${data}</div>` : ''}
+    </div>`;
+  });
+  
+  html += `</div></div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  adminToast('✓ Analytics loaded (last 20 events)', 'success');
+};
+
+window.clearAnalytics = () => {
+  if (!confirm('Clear all analytics data?')) return;
+  localStorage.removeItem('zaza_analytics');
+  adminToast('✓ Analytics cleared', 'success');
+};
+
+window.toggleSounds = () => {
+  const enabled = localStorage.getItem('zaza_sounds') !== 'false';
+  localStorage.setItem('zaza_sounds', enabled ? 'false' : 'true');
+  adminToast(enabled ? '🔇 Sounds disabled' : '🔊 Sounds enabled', 'success');
 };
 
 /* ══════════════════════════════════════════

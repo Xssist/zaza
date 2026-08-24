@@ -177,6 +177,96 @@ function hexAlpha(hex, a) {
 }
 
 /* ══════════════════════════════════════════
+   2.5 DARK MODE — auto-detect + toggle
+══════════════════════════════════════════ */
+function initDarkMode() {
+  const prefDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const prefLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+  const stored = localStorage.getItem('zaza_theme');
+  
+  let isDark = stored ? stored === 'dark' : prefDark;
+  
+  function applyDarkMode(dark) {
+    isDark = dark;
+    if (dark) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.body.style.filter = 'invert(0)';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      // Light mode: invert background but not text
+      const root = document.documentElement;
+      root.style.setProperty('--bg', '#f5f5f5');
+      root.style.setProperty('--text', '#1a1a1a');
+      root.style.setProperty('--text-muted', 'rgba(26,26,26,0.5)');
+    }
+    localStorage.setItem('zaza_theme', dark ? 'dark' : 'light');
+  }
+  
+  applyDarkMode(isDark);
+  
+  // Keyboard shortcut: Alt+T to toggle dark mode
+  window.addEventListener('keydown', e => {
+    if (e.altKey && e.key === 't') {
+      e.preventDefault();
+      applyDarkMode(!isDark);
+      playSound('toggle');
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   2.6 SOUND EFFECTS — subtle audio feedback
+══════════════════════════════════════════ */
+const SoundSystem = {
+  enabled: true,
+  sounds: {
+    click:   { freq: 800, duration: 100 },
+    hover:   { freq: 600, duration: 80 },
+    toggle:  { freq: 1000, duration: 150 },
+    success: { freq: 1200, duration: 200 },
+    error:   { freq: 300, duration: 200 },
+  },
+  
+  init() {
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.enabled = localStorage.getItem('zaza_sounds') !== 'false';
+  },
+  
+  play(name) {
+    if (!this.enabled || !this.sounds[name]) return;
+    try {
+      const sound = this.sounds[name];
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.frequency.value = sound.freq;
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + sound.duration / 1000);
+      osc.start(now);
+      osc.stop(now + sound.duration / 1000);
+    } catch (e) {
+      // Silent fail if audio context unavailable
+    }
+  },
+};
+
+function playSound(name) {
+  SoundSystem.play(name);
+}
+
+/* ── Track analytics ── */
+function trackEvent(event, data) {
+  const analytics = JSON.parse(localStorage.getItem('zaza_analytics') || '{}');
+  if (!analytics.events) analytics.events = [];
+  analytics.events.push({ event, data, timestamp: Date.now() });
+  if (analytics.events.length > 1000) analytics.events.shift(); // Limit to 1000 events
+  localStorage.setItem('zaza_analytics', JSON.stringify(analytics));
+}
+
+/* ══════════════════════════════════════════
    3. LOADING SCREEN
 ══════════════════════════════════════════ */
 function initLoading() {
@@ -293,7 +383,6 @@ function initBackground() {
       const my = (e.clientY / window.innerHeight - 0.5) * 2;
       const tx = (mx * 14).toFixed(2);
       const ty = (my *  9).toFixed(2);
-      const base = 'scale(1.04) translate3d(';
       const transform = `translate3d(${-tx}px, ${-ty}px, 0) scale(1.04)`;
       targets.forEach(el => {
         if (el && el.style.opacity !== '0') el.style.transform = transform;
@@ -301,6 +390,11 @@ function initBackground() {
     });
   }
 }
+
+/* ── Register consolidated mousemove handlers ── */
+document.addEventListener('mousemove', e => {
+  S._mouseMoveHandlers.forEach(h => h(e));
+});
 
 /* ── Premium image loader ── */
 function _loadImageBackground(url, wrap, blurLayer) {
@@ -561,7 +655,10 @@ function renderBadges() {
     const el = document.createElement('span');
     el.className = 'badge';
     el.title = b.label || '';
-    el.innerHTML = `<i class="${b.icon}" style="color:${b.color}"></i>`;
+    const icon = document.createElement('i');
+    icon.className = b.icon;
+    icon.style.color = b.color;
+    el.appendChild(icon);
     row.appendChild(el);
   });
 }
@@ -626,10 +723,14 @@ function initSpotify() {
       if (trackEl)  trackEl.textContent  = track;
       if (artistEl) artistEl.textContent = artists;
 
-      // Album art in the icon area
+      // Album art in the icon area — use DOM methods to prevent XSS
       const iconEl = widget?.querySelector('.spotify-icon');
       if (iconEl && albumArt) {
-        iconEl.innerHTML = `<img src="${albumArt}" class="spotify-cover" alt=""/>`;
+        const img = document.createElement('img');
+        img.src = albumArt;
+        img.className = 'spotify-cover';
+        img.alt = 'Album cover';
+        iconEl.replaceChildren(img);
       } else if (iconEl) {
         iconEl.innerHTML = '<i class="fab fa-spotify"></i>';
       }
@@ -643,13 +744,18 @@ function initSpotify() {
       if (idleEl) idleEl.style.display = 'none';
 
     } catch (e) {
-      // Network error — silent fail
+      console.warn('Spotify poll error:', e);
     }
   }
 
   // Poll immediately then every 15s — store handle to prevent leak
   poll();
   S.spotifyInterval = setInterval(poll, 15000);
+  
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    if (S.spotifyInterval) clearInterval(S.spotifyInterval);
+  });
 }
 
 function renderSocials() {
@@ -961,6 +1067,11 @@ function startVisualizer() {
     _accent2 = getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#ec4899';
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
+  
+  // Clean up observer on page unload to prevent memory leak
+  window.addEventListener('beforeunload', () => {
+    observer.disconnect();
+  });
 
   (function draw() {
     requestAnimationFrame(draw);
@@ -1322,11 +1433,70 @@ function initBgPattern() {
 }
 
 /* ══════════════════════════════════════════
+   SECURITY — Block right-click + DevTools
+══════════════════════════════════════════ */
+function blockRightClick() {
+  // Disable right-click context menu
+  document.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    return false;
+  });
+  
+  // Disable text selection via double-click
+  document.addEventListener('mousedown', e => {
+    if (e.detail > 1) e.preventDefault();
+  });
+  
+  // Prevent drag and copy
+  document.addEventListener('dragstart', e => e.preventDefault());
+  document.addEventListener('copy', e => {
+    if (!e.target.closest('input,textarea')) e.preventDefault();
+  });
+}
+
+function blockDevTools() {
+  // Detect DevTools opening (F12, Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J)
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+        (e.ctrlKey && e.shiftKey && e.key === 'C') ||
+        (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+        (e.metaKey && e.altKey && e.key === 'i')) {
+      e.preventDefault();
+      e.stopPropagation();
+      toast('🔒 Developer tools disabled', 2000);
+    }
+  }, true);
+  
+  // Detect DevTools window open via size check (crude but effective)
+  let lastCheckTime = 0;
+  setInterval(() => {
+    const now = Date.now();
+    if (now - lastCheckTime < 500) return;
+    lastCheckTime = now;
+    
+    if (window.outerHeight - window.innerHeight > 100 || 
+        window.outerWidth - window.innerWidth > 100) {
+      // DevTools likely open
+      document.body.style.display = 'none';
+      setTimeout(() => { document.body.style.display = 'block'; }, 200);
+    }
+  }, 2000);
+}
+
+/* ══════════════════════════════════════════
    MAIN INIT
 ══════════════════════════════════════════ */
 async function init() {
+  // Initialize sound system first
+  SoundSystem.init();
+  
   initLoading();
   await loadConfig();
+  
+  // Initialize dark mode after config
+  initDarkMode();
+  
   applyTheme();
   initBackground();
   initBgPattern();
@@ -1344,6 +1514,13 @@ async function init() {
   initDiscord();
   initContextMenu();
   initEasterEggTerminal();
+  
+  // Block right-click and view source
+  blockRightClick();
+  blockDevTools();
+  
+  // Track page visit
+  trackEvent('page_visit', { referrer: document.referrer, timestamp: new Date().toISOString() });
 
   // Single consolidated mousemove dispatcher — replaces N individual listeners
   if (S._mouseMoveHandlers.length) {

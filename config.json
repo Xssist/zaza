@@ -1,45 +1,40 @@
 {
   "profile": {
-    "username": "zade",
-    "displayName": "zade",
-    "bio": "beginner html dev,ahk scripter",
+    "username": "zaza",
+    "displayName": "zaza",
+    "bio": "living in the moment. creating something real.",
     "avatar": "assets/images/avatar.png",
     "status": "online",
-    "statusMessages": [],
-    "location": "Tokyo,Japan",
-    "joinDate": "2001",
-    "availability": "online"
+    "statusMessages": [
+      "vibing to music rn 🎵",
+      "cooking something up...",
+      "living rent free in your head",
+      "making moves quietly 🤫",
+      "just existing, doing my thing"
+    ],
+    "location": "somewhere cool",
+    "joinDate": "2024"
   },
   "theme": {
-    "accentColor": "#ffffff",
-    "accentColorSecondary": "#000000",
+    "accentColor": "#a855f7",
+    "accentColorSecondary": "#ec4899",
     "backgroundColor": "#0a0a0f",
-    "fontFamily": "Space Grotesk",
+    "fontFamily": "Inter",
     "particleCount": 80,
-    "snowEnabled": true,
-    "rainEnabled": false,
-    "glassmorphism": false,
-    "gradientAngle": 155
+    "snowEnabled": false,
+    "rainEnabled": false
   },
   "background": {
     "videoUrl": "assets/images/background.mp4",
-    "overlayOpacity": 0.55,
-    "blur": 0
+    "overlayOpacity": 0.55
   },
   "music": {
     "enabled": true,
     "autoPlay": false,
-    "defaultVolume": 0.66,
+    "defaultVolume": 0.5,
     "tracks": [
       {
-        "id": 1785355383455,
-        "title": "song",
-        "artist": "zaza",
-        "src": "assets/music/song.mp3",
-        "cover": ""
-      },
-      {
-        "id": 1785355630848,
+        "id": 1,
         "title": "song",
         "artist": "zaza",
         "src": "assets/music/song.mp3",
@@ -51,7 +46,7 @@
     {
       "id": "discord",
       "label": "discord",
-      "username": "@heavenlygifted",
+      "username": "zaza#0000",
       "url": "https://discord.com/users/",
       "icon": "fab fa-discord",
       "color": "#5865F2",
@@ -64,12 +59,12 @@
       "url": "https://twitter.com/zaza",
       "icon": "fab fa-twitter",
       "color": "#1DA1F2",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "instagram",
       "label": "instagram",
-      "username": "@z4de.1",
+      "username": "@zaza",
       "url": "https://instagram.com/zaza",
       "icon": "fab fa-instagram",
       "color": "#E1306C",
@@ -78,8 +73,8 @@
     {
       "id": "github",
       "label": "github",
-      "username": "Xssist",
-      "url": "https://github.com/Xssist",
+      "username": "zaza",
+      "url": "https://github.com/zaza",
       "icon": "fab fa-github",
       "color": "#ffffff",
       "enabled": true
@@ -104,9 +99,9 @@
     }
   ],
   "stats": {
-    "showVisitorCount": false,
+    "showVisitorCount": true,
     "visitorCount": 1,
-    "showMemberSince": false,
+    "showMemberSince": true,
     "showViews": true
   },
   "discord": {
@@ -115,19 +110,16 @@
     "showWidget": true
   },
   "spotify": {
-    "enabled": true,
+    "enabled": false,
     "showCurrentlyPlaying": true,
-    "fallbackText": "not playing",
-    "accessToken": "2ac8d9cacd8b4d9489db8b7c2c7635c1",
-    "showWidget": true
+    "fallbackText": ""
   },
   "cursor": {
     "enabled": true,
-    "trailEnabled": true,
+    "style": "dot",
     "color": "#a855f7",
-    "style": "ring",
     "trail": {
-      "style": "rings",
+      "style": "dots",
       "length": 12,
       "fadeSpeed": 300,
       "color": ""
@@ -139,17 +131,13 @@
   "seo": {
     "title": "zade",
     "titleCycle": [
-      "zade"
+      "zaza — personal",
+      "living in the moment.",
+      "creating something real.",
+      "zaza."
     ],
-    "description": "part time retard",
+    "description": "living in the moment. creating something real.",
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#a855f7"
-  },
-  "badges": [],
-  "announcement": {
-    "enabled": false,
-    "text": "",
-    "emoji": "📢",
-    "color": "#a855f7"
   }
 }
