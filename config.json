@@ -3,7 +3,7 @@
     "username": "zade",
     "displayName": "zade",
     "bio": "beginner html dev,ahk scripter",
-    "avatar": "assets/images/a7a8ee1961d881ac5c6478d210629015.jpg",
+    "avatar": "assets/images/avatar.png",
     "status": "online",
     "statusMessages": [
       "k"
@@ -24,7 +24,7 @@
     "gradientAngle": 155
   },
   "background": {
-    "videoUrl": "assets/images/mixkit-black-and-white-ink-underwater-487-full-hd.mp4",
+    "videoUrl": "assets/images/background.mp4",
     "overlayOpacity": 0.55,
     "blur": 0
   },
@@ -34,15 +34,8 @@
     "defaultVolume": 0.66,
     "tracks": [
       {
-        "id": 1785355383455,
-        "title": "song",
-        "artist": "zaza",
-        "src": "assets/music/song.mp3",
-        "cover": ""
-      },
-      {
-        "id": 1785355630848,
-        "title": "song",
+        "id": 1,
+        "title": "Escape   Nemzzz (Remix by AJ)   AJ (youtube)",
         "artist": "zaza",
         "src": "assets/music/song.mp3",
         "cover": ""
