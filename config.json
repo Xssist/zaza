@@ -3,16 +3,14 @@
     "username": "zade",
     "displayName": "zade",
     "bio": "beginner html dev,ahk scripter",
-    "aboutExtra": "When I'm not coding, I'm usually working on something new or learning something I haven't touched before.",
-    "focus": "Web development",
     "avatar": "assets/images/avatar.png",
     "status": "online",
-    "statusMessages": [
-      "just vibing 🎵"
-    ],
+    "statusMessages": [],
     "location": "Romania",
     "joinDate": "2001",
-    "availability": "away"
+    "availability": "away",
+    "aboutExtra": "Hey im zade\n\n14, from romania\n\nim always gaming,coding for fun or listening to music",
+    "focus": "Coding, Learning new things"
   },
   "theme": {
     "accentColor": "#ffffff",
@@ -74,7 +72,7 @@
       "id": "instagram",
       "label": "instagram",
       "username": "@z4de.1",
-      "url": "https://instagram.com/z4de.1",
+      "url": "https://instagram.com/zaza",
       "icon": "fab fa-instagram",
       "color": "#E1306C",
       "enabled": true
@@ -119,7 +117,7 @@
     "showWidget": true
   },
   "spotify": {
-    "enabled": false,
+    "enabled": true,
     "showCurrentlyPlaying": true,
     "fallbackText": "not playing",
     "showWidget": true,
