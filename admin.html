@@ -801,7 +801,7 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
   </div>
   <div class="a-card">
     <div class="a-card-title"><i class="fas fa-cloud-arrow-up"></i> Upload Background Video</div>
-    <div class="a-info"><i class="fas fa-circle-info"></i> Uploads directly to <strong>assets/images/</strong> on GitHub. MP4 recommended, keep under 20MB.</div>
+    <div class="a-info"><i class="fas fa-circle-info"></i> Uploads directly to <strong>assets/images/</strong> on GitHub. MP4 recommended, keep under 100MB.</div>
     <label class="a-upload-zone" for="a-bg-file" id="a-bg-zone">
       <input type="file" id="a-bg-file" accept="video/mp4,video/webm,video/ogg"/>
       <span class="a-upload-icon"><i class="fas fa-film"></i></span>
@@ -1195,7 +1195,7 @@ window.addEventListener('error', function(e) {
 async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
 
 /* ── Session ── */
-function sessSet(t){const ttl=(AS.config?.admin?.sessionTimeout||3600)*1000;sessionStorage.setItem('za_t',t);sessionStorage.setItem('za_e',String(Date.now()+ttl));}
+function sessSet(t){const ttl=Math.max(60,Number(AS.config?.admin?.sessionTimeout)||3600)*1000;sessionStorage.setItem('za_t',t);sessionStorage.setItem('za_e',String(Date.now()+ttl));}
 function sessOk(){
   const t=sessionStorage.getItem('za_t'),e=parseInt(sessionStorage.getItem('za_e')||'0');
   if(!t||Date.now()>e){sessClear();return false;}
@@ -1222,9 +1222,9 @@ function markDirty(){setDirty(true);}
 function aPassStrength(v){const el=$('#a-pass-strength');if(!el)return;if(!v){el.className='a-pass-strength';return;}let cls='weak';if(v.length>=8&&/[A-Z]/.test(v)&&/[0-9]/.test(v))cls='strong';else if(v.length>=6)cls='fair';el.className='a-pass-strength '+cls;}
 
 /* ── Config load ── */
-async function aLoadConfig(){
-  try{const r=await fetch('./config.json?t='+Date.now());if(r.ok)return await r.json();}catch(_){}
-  try{const ls=localStorage.getItem('zaza_config');if(ls)return JSON.parse(ls);}catch(_){}
+async async function aLoadConfig(){
+  try{const r=await fetch('./config.json?t='+Date.now(),{cache:'no-store'});if(r.ok)return await r.json();}catch(_){}
+  try{const ls=localStorage.getItem('zaza_config');if(ls){const cfg=JSON.parse(ls);if(cfg.spotify){delete cfg.spotify.accessToken;delete cfg.spotify.refreshToken;delete cfg.spotify.clientId;delete cfg.spotify.clientSecret;}return cfg;}}catch(_){}
   if(window.__ZAZA_CONFIG__)return JSON.parse(JSON.stringify(window.__ZAZA_CONFIG__));
   return {profile:{username:'zaza',displayName:'zaza',bio:'',avatar:'',status:'online',availability:'online',statusMessages:[],location:'',joinDate:'2024'},badges:[],theme:{accentColor:'#a855f7',accentColorSecondary:'#ec4899',particleCount:80,snowEnabled:false,rainEnabled:false,glassmorphism:true,gradientAngle:115,fontFamily:'Inter'},background:{videoUrl:'',overlayOpacity:0.55,blur:0},music:{enabled:true,defaultVolume:0.5,tracks:[]},socials:[],stats:{showVisitorCount:true,visitorCount:1,showMemberSince:true},cursor:{enabled:true,style:'dot'},seo:{title:'zaza',titleCycle:[],description:'',ogImage:''},admin:{passwordHash:'6af9676d48eff5f4fea6dd39ffd582ea1d7b5ac0da858923afb16310ecc0d04c',sessionTimeout:3600}};
 }
@@ -1263,11 +1263,16 @@ async function ghSaveConfig(cfg){
 async function ghUploadFile(path,file,onProgress){
   const token = window.AS.sessionToken;
   if(!token) throw new Error('Not authenticated');
+  const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+  if(file.size > MAX_SIZE){
+    throw new Error(`File is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). Maximum allowed size is 100 MB.`);
+  }
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
     reader.onload=async e=>{
       try{
-        const base64=btoa(e.target.result);
+        const dataUrl = e.target.result;
+        const base64 = typeof dataUrl === 'string' && dataUrl.includes(',') ? dataUrl.split(',')[1] : btoa(dataUrl);
         if(onProgress)onProgress(50);
         const r=await fetch(WORKER_URL+'/upload',{
           method:'POST',
@@ -1280,7 +1285,9 @@ async function ghUploadFile(path,file,onProgress){
         resolve(path);
       }catch(err){reject(err);}
     };
-    reader.readAsBinaryString(file);
+    reader.onerror=()=>reject(new Error('Could not read the selected file'));
+    reader.onabort=()=>reject(new Error('File reading was cancelled'));
+    reader.readAsDataURL(file);
   });
 }
 
@@ -1289,17 +1296,19 @@ async function aSave(){
   const btn=$('#a-save-btn');if(btn){btn.textContent='Saving…';btn.disabled=true;}
   try{
     aCollectAll();
-    localStorage.setItem('zaza_config',JSON.stringify(AS.config,null,2));
+    let localSaved=true;
+    try{localStorage.setItem('zaza_config',JSON.stringify(AS.config,null,2));}
+    catch(e){localSaved=false;console.warn('Could not cache config locally:',e);}
     const ok=await ghSaveConfig(AS.config);
-    setDirty(false);
-    if(ok)aToast('✓ Saved to GitHub — live in ~30s','success');
-  }catch(e){console.error(e);aToast('✗ Save failed: '+e.message+' — saved locally only','error');}
+    if(ok){setDirty(false);aToast('✓ Saved to GitHub — live in ~30s','success');}
+    else if(!localSaved)aToast('✗ Save failed locally and remotely','error');
+  }catch(e){console.error(e);aToast('✗ Save failed: '+e.message,'error');}
   finally{if(btn){btn.textContent='Save All';btn.disabled=false;}}
 }
 
 /* ── Download / Import config ── */
 function aDownloadConfig(){if(!AS.config)return;const b=new Blob([JSON.stringify(AS.config,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='config.json';a.click();URL.revokeObjectURL(u);}
-function aImportConfig(input){const f=input.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const cfg=JSON.parse(ev.target.result);AS.config=cfg;localStorage.setItem('zaza_config',JSON.stringify(cfg,null,2));alert('Imported! Reloading...');location.reload();}catch(e){alert('Invalid JSON: '+e.message);}};r.readAsText(f);}
+function aImportConfig(input){const f=input.files?.[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const cfg=JSON.parse(ev.target.result);if(!cfg||typeof cfg!=='object'||Array.isArray(cfg))throw new Error('Config must be a JSON object');AS.config=cfg;try{localStorage.setItem('zaza_config',JSON.stringify(cfg,null,2));}catch(e){console.warn('Could not cache imported config:',e);}alert('Imported! Reloading...');location.reload();}catch(e){alert('Invalid config: '+e.message);}finally{input.value='';}};r.onerror=()=>{input.value='';alert('Could not read the selected file.');};r.readAsText(f);}
 </script>
 
 <script>
@@ -1387,7 +1396,7 @@ function aPopulate(cfg){
 
   // Spotify
   const chkSp=$(''+'#tog-spotify');if(chkSp)chkSp.checked=!!(cfg.spotify?.enabled);
-  set('#inp-spotify-token',cfg.spotify?.accessToken||'');
+  set('#inp-spotify-token','');
   set('#inp-spotify-fallback',cfg.spotify?.fallbackText||'not playing');
 
   // Discord
@@ -1410,6 +1419,15 @@ function aPopulate(cfg){
 /* ── Collect all ── */
 function aCollectAll(){
   const cfg=AS.config;
+  if(!cfg)throw new Error('Configuration is not loaded');
+  cfg.profile ||= {};
+  cfg.theme ||= {};
+  cfg.background ||= {};
+  cfg.cursor ||= {};
+  cfg.music ||= {tracks:[]};
+  cfg.stats ||= {};
+  cfg.seo ||= {};
+  cfg.admin ||= {};
   const g=id=>$(id)?.value?.trim()||'';
   const gc=id=>$(id)?.checked||false;
 
@@ -1461,8 +1479,13 @@ function aCollectAll(){
 
   if(!cfg.spotify)cfg.spotify={};
   cfg.spotify.enabled=gc('#tog-spotify');
-  cfg.spotify.accessToken=g('#inp-spotify-token');
+  // Spotify credentials must never be stored in public config or localStorage.
+  delete cfg.spotify.accessToken;
+  delete cfg.spotify.refreshToken;
+  delete cfg.spotify.clientId;
+  delete cfg.spotify.clientSecret;
   cfg.spotify.fallbackText=g('#inp-spotify-fallback')||'not playing';
+  cfg.spotify.serverProxy=false;
   cfg.spotify.showWidget=true;
 
   if(!cfg.discord)cfg.discord={};
@@ -1701,6 +1724,7 @@ function aShowDashboard(){
     const title=prompt('Track title:');if(!title)return;
     const artist=prompt('Artist name:')||'';
     const src=prompt('File path / URL:')||'';
+    if(!AS.config.music)AS.config.music={tracks:[]};
     if(!AS.config.music.tracks)AS.config.music.tracks=[];
     AS.config.music.tracks.push({id:Date.now(),title,artist,src:normalizeAssetPath(src),cover:''});
     aRenderTracks(AS.config.music.tracks);markDirty();
@@ -1711,6 +1735,7 @@ function aShowDashboard(){
     const color=prompt('Icon color (hex):')||'#ffffff';
     const url=prompt('Profile URL:')||'#';
     const user=prompt('@username or handle:')||'';
+    if(!Array.isArray(AS.config.socials))AS.config.socials=[];
     AS.config.socials.push({id:label.toLowerCase().replace(/\s+/g,'_')+'_'+Date.now(),label:label.trim(),icon:icon.trim(),color:color.trim(),url:url.trim(),username:user.trim(),enabled:true});
     aRenderSocials(AS.config.socials);markDirty();
   });
@@ -1916,7 +1941,8 @@ function hLoad() {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
 }
 function hSave(arr) {
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr)); }
+  catch (e) { console.warn('Could not save config history:', e); }
 }
 
 /* Save a snapshot — called automatically on every Save All */

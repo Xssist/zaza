@@ -120,7 +120,7 @@
     "enabled": true,
     "showCurrentlyPlaying": true,
     "fallbackText": "not playing",
-    "accessToken": "2ac8d9cacd8b4d9489db8b7c2c7635c1",
+    "accessToken": "",
     "showWidget": true
   },
   "cursor": {

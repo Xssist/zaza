@@ -15,6 +15,9 @@ desktop.ini
 # Local overrides (never commit real tokens)
 *.env
 .env.local
+.wrangler/
+__pycache__/
+*.pyc
 
 # Large media (upload separately or use CDN)
 assets/*.mp4

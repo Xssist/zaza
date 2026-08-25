@@ -14,9 +14,10 @@ function normalizeAssetPath(path) {
   if (!path || typeof path !== 'string') return '';
   path = path.trim();
   if (!path) return '';
-  if (/^(https?:|data:|blob:)/i.test(path)) return path;
-  if (/^file:/i.test(path)) path = path.replace(/^file:\/+/, '');
-  const m = path.match(/assets[/\\].+$/i);
+  // Public assets may be local paths only. Do not permit user-controlled URLs,
+  // data: or blob: values to become browser requests.
+  if (/^(https?:|data:|blob:|javascript:|file:)/i.test(path)) return '';
+  const m = path.match(/assets[/\\][^?#]+$/i);
   if (m) return m[0].replace(/\\/g, '/');
   return path.replace(/\\/g, '/').replace(/^\/+/, '');
 }
@@ -46,13 +47,25 @@ const S = {
    Priority: fetch → localStorage → inline → defaults
    localStorage treated as untrusted — validated before use
 ══════════════════════════════════════════ */
+function _ensureConfig(cfg) {
+  const defaults = _defaultConfig();
+  const result = { ...defaults, ...(cfg || {}) };
+  for (const key of ['profile', 'theme', 'background', 'music', 'cursor', 'seo']) {
+    result[key] = { ...defaults[key], ...(cfg?.[key] || {}) };
+  }
+  result.cursor.trail = { ...defaults.cursor.trail, ...(cfg?.cursor?.trail || {}) };
+  result.music.tracks = Array.isArray(cfg?.music?.tracks) ? cfg.music.tracks : [];
+  result.socials = Array.isArray(cfg?.socials) ? cfg.socials : [];
+  return result;
+}
+
 async function loadConfig() {
   // 1. HTTP fetch (works on GitHub Pages) — most trusted source
   try {
     const r = await fetch('./config.json?t=' + Date.now());
     if (r.ok) {
       const cfg = await r.json();
-      if (_validateConfig(cfg)) { S.cfg = cfg; return; }
+      if (_validateConfig(cfg)) { S.cfg = _ensureConfig(cfg); return; }
     }
   } catch (_) {}
 
@@ -62,7 +75,7 @@ async function loadConfig() {
     if (ls) {
       const parsed = JSON.parse(ls);
       if (_validateConfig(parsed)) {
-        S.cfg = _sanitizeConfig(parsed);
+        S.cfg = _ensureConfig(_sanitizeConfig(parsed));
         return;
       } else {
         // Corrupted or tampered — remove it
@@ -75,12 +88,12 @@ async function loadConfig() {
 
   // 3. Inline fallback
   if (window.__ZAZA_CONFIG__) {
-    S.cfg = _sanitizeConfig(window.__ZAZA_CONFIG__);
+    S.cfg = _ensureConfig(_sanitizeConfig(window.__ZAZA_CONFIG__));
     return;
   }
 
   // 4. Hard defaults
-  S.cfg = _defaultConfig();
+  S.cfg = _ensureConfig(_defaultConfig());
 }
 
 /* ── Config validator — reject obviously poisoned data ── */
@@ -143,7 +156,7 @@ function _defaultConfig() {
    2. THEME  — apply CSS variables
 ══════════════════════════════════════════ */
 function applyTheme() {
-  const t = S.cfg.theme;
+  const t = S.cfg.theme || {};
   const root = document.documentElement;
   root.style.setProperty('--accent',  t.accentColor || '#a855f7');
   root.style.setProperty('--accent2', t.accentColorSecondary || '#ec4899');
@@ -168,6 +181,7 @@ function applyTheme() {
 }
 
 function hexAlpha(hex, a) {
+  if (typeof hex !== 'string' || !/^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex.trim())) return `rgba(168,85,247,${a})`;
   hex = hex.replace('#', '');
   if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
   const r = parseInt(hex.slice(0,2),16);
@@ -183,9 +197,9 @@ function initDarkMode() {
   const prefDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const prefLight = window.matchMedia('(prefers-color-scheme: light)').matches;
   const stored = localStorage.getItem('zaza_theme');
-  
+
   let isDark = stored ? stored === 'dark' : prefDark;
-  
+
   function applyDarkMode(dark) {
     isDark = dark;
     if (dark) {
@@ -200,9 +214,9 @@ function initDarkMode() {
     }
     localStorage.setItem('zaza_theme', dark ? 'dark' : 'light');
   }
-  
+
   applyDarkMode(isDark);
-  
+
   // Keyboard shortcut: Alt+T to toggle dark mode
   window.addEventListener('keydown', e => {
     if (e.altKey && e.key === 't') {
@@ -225,12 +239,12 @@ const SoundSystem = {
     success: { freq: 1200, duration: 200 },
     error:   { freq: 300, duration: 200 },
   },
-  
+
   init() {
     // AudioContext created lazily in play() — avoids autoplay-policy warnings at page load
     this.enabled = localStorage.getItem('zaza_sounds') !== 'false';
   },
-  
+
   play(name) {
     if (!this.enabled || !this.sounds[name]) return;
     try {
@@ -240,7 +254,7 @@ const SoundSystem = {
       const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      
+
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.frequency.value = sound.freq;
@@ -260,11 +274,18 @@ function playSound(name) {
 
 /* ── Track analytics ── */
 function trackEvent(event, data) {
-  const analytics = JSON.parse(localStorage.getItem('zaza_analytics') || '{}');
-  if (!analytics.events) analytics.events = [];
+  let analytics = {};
+  try {
+    analytics = JSON.parse(localStorage.getItem('zaza_analytics') || '{}') || {};
+  } catch (_) {
+    analytics = {};
+  }
+  if (!Array.isArray(analytics.events)) analytics.events = [];
   analytics.events.push({ event, data, timestamp: Date.now() });
   if (analytics.events.length > 1000) analytics.events.shift(); // Limit to 1000 events
-  localStorage.setItem('zaza_analytics', JSON.stringify(analytics));
+  try {
+    localStorage.setItem('zaza_analytics', JSON.stringify(analytics));
+  } catch (_) {}
 }
 
 /* ══════════════════════════════════════════
@@ -295,9 +316,15 @@ function initLoading() {
       const row = document.createElement('div');
       row.className = 'term-line';
       if (l.prompt) {
-        row.innerHTML = `<span class="prompt">${l.prompt}</span><span class="term-text ${l.cls}">${l.text}</span>`;
+        const prompt = document.createElement('span');
+      prompt.className = 'prompt'; prompt.textContent = l.prompt;
+      const text = document.createElement('span');
+      text.className = `term-text ${l.cls}`; text.textContent = l.text;
+      row.append(prompt, text);
       } else {
-        row.innerHTML = `<span class="term-text ${l.cls}" style="padding-left:4px;">${l.text}</span>`;
+        const text = document.createElement('span');
+      text.className = `term-text ${l.cls}`; text.style.paddingLeft = '4px'; text.textContent = l.text;
+      row.appendChild(text);
       }
       body.appendChild(row);
       body.scrollTop = body.scrollHeight;
@@ -496,8 +523,9 @@ function initParticles() {
     if (h.length===3) h=h.split('').map(c=>c+c).join('');
     return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
   };
-  const [r1,g1,b1] = toRGB(ac);
-  const [r2,g2,b2] = toRGB(a2);
+  const safeHex = h => /^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(h || '').trim()) ? String(h).trim() : '#a855f7';
+  const [r1,g1,b1] = toRGB(safeHex(ac));
+  const [r2,g2,b2] = toRGB(safeHex(a2));
 
   // Reduce particle count on small screens to save battery
   const isMobile = window.matchMedia('(max-width: 480px)').matches;
@@ -573,7 +601,7 @@ function initParticles() {
    7. PROFILE RENDER
 ══════════════════════════════════════════ */
 function renderProfile() {
-  const p = S.cfg.profile;
+  const p = S.cfg.profile || {};
 
   // Display name
   const unEl = $('#profile-username');
@@ -667,7 +695,9 @@ function renderBadges() {
 ══════════════════════════════════════════ */
 function initSpotify() {
   const sp = S.cfg.spotify;
-  if (!sp?.enabled) return;
+  // Never read or send credentials from public config. Spotify calls must be
+  // made by a server-side integration that keeps its token in a secret.
+  if (!sp?.enabled || !sp.serverProxy) return;
 
   const widget    = $('#spotify-widget');
   const idleEl    = $('#spotify-idle');
@@ -747,7 +777,7 @@ function initSpotify() {
   // Poll immediately then every 15s — store handle to prevent leak
   poll();
   S.spotifyInterval = setInterval(poll, 15000);
-  
+
   // Clean up on page unload
   window.addEventListener('beforeunload', () => {
     if (S.spotifyInterval) clearInterval(S.spotifyInterval);
@@ -822,7 +852,12 @@ function renderSocials() {
    8. TYPEWRITER
 ══════════════════════════════════════════ */
 function typewriter(el, msgs) {
-  if (!el || !msgs.length) return;
+  if (!el) return;
+  if (el._typewriterTimer) {
+    clearTimeout(el._typewriterTimer);
+    el._typewriterTimer = null;
+  }
+  if (!msgs || !msgs.length) return;
   let mi = 0, ci = 0, deleting = false, paused = false;
 
   function tick() {
@@ -833,7 +868,7 @@ function typewriter(el, msgs) {
       el.textContent = msg.slice(0, ci);
       if (ci === msg.length) {
         paused = true;
-        setTimeout(() => { deleting = true; paused = false; step(); }, 2200);
+        el._typewriterTimer = setTimeout(() => { deleting = true; paused = false; step(); }, 2200);
         return;
       }
     } else {
@@ -846,14 +881,19 @@ function typewriter(el, msgs) {
     }
     step();
   }
-  function step() { setTimeout(tick, deleting ? 38 : rand(55, 95)); }
+  function step() { el._typewriterTimer = setTimeout(tick, deleting ? 38 : rand(55, 95)); }
   step();
 }
 
 /* ══════════════════════════════════════════
    9. PAGE TITLE CYCLE
 ══════════════════════════════════════════ */
+let _titleCycleTimer = null;
 function titleCycle(titles) {
+  if (_titleCycleTimer) {
+    clearTimeout(_titleCycleTimer);
+    _titleCycleTimer = null;
+  }
   if (!titles || !titles.length) return;
   let ti = 0, ci = 0, deleting = false, paused = false;
 
@@ -868,7 +908,7 @@ function titleCycle(titles) {
       document.title = t.slice(0, ci);
       if (ci === t.length) {
         paused = true;
-        setTimeout(() => { deleting = true; paused = false; step(); }, 2800);
+        _titleCycleTimer = setTimeout(() => { deleting = true; paused = false; step(); }, 2800);
         return;
       }
     } else {
@@ -878,15 +918,16 @@ function titleCycle(titles) {
     }
     step();
   }
-  function step() { setTimeout(tick, deleting ? 34 : rand(60, 100)); }
-  setTimeout(step, 800);
+  function step() { _titleCycleTimer = setTimeout(tick, deleting ? 34 : rand(60, 100)); }
+  _titleCycleTimer = setTimeout(step, 800);
 }
 
 /* ══════════════════════════════════════════
    10. MUSIC PLAYER
 ══════════════════════════════════════════ */
 function initMusic() {
-  const cfg = S.cfg.music;
+  const cfg = S.cfg.music || { enabled: false, defaultVolume: 0.5, tracks: [] };
+  cfg.tracks = Array.isArray(cfg.tracks) ? cfg.tracks : [];
   const bar = $('#music-bar');
 
   if (bar) bar.style.display = 'none'; // always hidden — music plays in background
@@ -1063,7 +1104,7 @@ function startVisualizer() {
     _accent2 = getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#ec4899';
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
-  
+
   // Clean up observer on page unload to prevent memory leak
   window.addEventListener('beforeunload', () => {
     observer.disconnect();
@@ -1437,12 +1478,12 @@ function blockRightClick() {
     e.preventDefault();
     return false;
   });
-  
+
   // Disable text selection via double-click
   document.addEventListener('mousedown', e => {
     if (e.detail > 1) e.preventDefault();
   });
-  
+
   // Prevent drag and copy
   document.addEventListener('dragstart', e => e.preventDefault());
   document.addEventListener('copy', e => {
@@ -1463,13 +1504,13 @@ function blockRightClick() {
 async function init() {
   // Initialize sound system first
   SoundSystem.init();
-  
+
   initLoading();
   await loadConfig();
-  
+
   // Initialize dark mode after config
   initDarkMode();
-  
+
   applyTheme();
   initBackground();
   initBgPattern();
@@ -1487,10 +1528,10 @@ async function init() {
   initDiscord();
   initContextMenu();
   initEasterEggTerminal();
-  
+
   // Block right-click / native context menu (custom ctx menu takes over)
   blockRightClick();
-  
+
   // Track page visit
   trackEvent('page_visit', { referrer: document.referrer, timestamp: new Date().toISOString() });
 
