@@ -2,23 +2,19 @@
   "profile": {
     "username": "zade",
     "displayName": "zade",
-    "bio": "beginner html dev,ahk scripter",
+    "bio": "",
+    "aboutExtra": "Hey im zAde\n\n15, From somewhere in Romania \n\nWhen im not coding, i make things in AutoHotKey, Listen to music and Play games",
     "avatar": "assets/images/avatar.png",
     "status": "online",
-    "statusMessages": [],
+    "statusMessages": [
+      "just vibing 🎵"
+    ],
     "location": "Romania",
     "joinDate": "2001",
-<<<<<<< Updated upstream
-    "availability": "online",
-    "aboutExtra": "Hey im zade\n\n15, from romania\n\nim always gaming,coding for fun or listening to music",
-    "focus": "Coding, Learning new things"
-=======
     "availability": "away",
-    "aboutExtra": "Hey im zade\n\n14, from romania\n\nim always gaming,coding for fun or listening to music",
-    "focus": "Coding, Learning new things",
+    "focus": "Coding",
     "subtitle": "Developer · Creator",
     "aboutHeading": "A little about me."
->>>>>>> Stashed changes
   },
   "theme": {
     "accentColor": "#ffffff",
@@ -80,7 +76,7 @@
       "id": "instagram",
       "label": "instagram",
       "username": "@z4de.1",
-      "url": "https://instagram.com/zaza",
+      "url": "https://instagram.com/z4de.1",
       "icon": "fab fa-instagram",
       "color": "#E1306C",
       "enabled": true
@@ -125,7 +121,7 @@
     "showWidget": true
   },
   "spotify": {
-    "enabled": true,
+    "enabled": false,
     "showCurrentlyPlaying": true,
     "fallbackText": "not playing",
     "showWidget": true,
