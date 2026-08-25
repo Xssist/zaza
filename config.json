@@ -5,12 +5,10 @@
     "bio": "beginner html dev,ahk scripter",
     "avatar": "assets/images/avatar.png",
     "status": "online",
-    "statusMessages": [
-      "k"
-    ],
+    "statusMessages": [],
     "location": "Tokyo,Japan",
     "joinDate": "2001",
-    "availability": "online"
+    "availability": "away"
   },
   "theme": {
     "accentColor": "#ffffff",
@@ -34,8 +32,15 @@
     "defaultVolume": 0.66,
     "tracks": [
       {
-        "id": 1,
-        "title": "Escape   Nemzzz (Remix by AJ)   AJ (youtube)",
+        "id": 1785355383455,
+        "title": "song",
+        "artist": "zaza",
+        "src": "assets/music/song.mp3",
+        "cover": ""
+      },
+      {
+        "id": 1785355630848,
+        "title": "song",
         "artist": "zaza",
         "src": "assets/music/song.mp3",
         "cover": ""
@@ -105,7 +110,7 @@
     "showViews": true
   },
   "discord": {
-    "enabled": false,
+    "enabled": true,
     "userId": "1246068508039708672",
     "showWidget": true
   },
@@ -120,9 +125,9 @@
     "enabled": true,
     "trailEnabled": true,
     "color": "#a855f7",
-    "style": "dot",
+    "style": "ring",
     "trail": {
-      "style": "dots",
+      "style": "rings",
       "length": 12,
       "fadeSpeed": 300,
       "color": ""
