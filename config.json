@@ -8,9 +8,17 @@
     "statusMessages": [],
     "location": "Romania",
     "joinDate": "2001",
+<<<<<<< Updated upstream
     "availability": "online",
     "aboutExtra": "Hey im zade\n\n15, from romania\n\nim always gaming,coding for fun or listening to music",
     "focus": "Coding, Learning new things"
+=======
+    "availability": "away",
+    "aboutExtra": "Hey im zade\n\n14, from romania\n\nim always gaming,coding for fun or listening to music",
+    "focus": "Coding, Learning new things",
+    "subtitle": "Developer · Creator",
+    "aboutHeading": "A little about me."
+>>>>>>> Stashed changes
   },
   "theme": {
     "accentColor": "#ffffff",

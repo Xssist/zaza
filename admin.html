@@ -10,7 +10,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous"/>
 <link rel="stylesheet" href="css/style.css"/>
-<style>
+  <style>
+/* Strict monochrome admin palette */
+.a-admin, .a-admin * { --admin-accent:#fff; }
+.a-admin .a-card-title, .a-admin .a-nav-lbl, .a-admin .a-nav-item.active, .a-admin .a-section-title { color:#fff; }
+.a-admin .a-nav-item.active { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.24); box-shadow:none; }
+.a-admin .a-btn, .a-admin .a-btn-sm:not(.secondary):not(.danger) { background:#fff; color:#080808; box-shadow:none; }
+.a-admin .a-btn:hover, .a-admin .a-btn-sm:not(.secondary):not(.danger):hover { box-shadow:0 0 20px rgba(255,255,255,.18); }
+.a-admin .a-card-title::after, .a-admin .a-nav-lbl::after { background:linear-gradient(90deg,rgba(255,255,255,.25),transparent); }
+.a-admin .a-input:focus,.a-admin .a-textarea:focus,.a-admin .a-select:focus { border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.12); }
+.a-admin .a-toggle input:checked+.a-toggle-slider { background:#fff; box-shadow:none; }
+.a-admin .a-toggle input:checked+.a-toggle-slider::before { background:#080808; }
+.a-admin input[type=range]::-webkit-slider-thumb { border-color:#fff; box-shadow:none; }
+.a-admin .a-cursor-opt.active { background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.4); color:#fff; }
+.a-admin .a-info { background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.14); }
+.a-admin .a-info i, .a-admin .a-upload-icon { color:#fff; }
+.a-admin .a-upload-zone { border-color:rgba(255,255,255,.24); background:rgba(255,255,255,.02); }
+.a-admin .a-upload-zone:hover,.a-admin .a-upload-zone.drag { border-color:#fff; background:rgba(255,255,255,.06); }
 /* ── Admin page overrides ── */
 html,html *{cursor:auto!important;}
 body{cursor:auto!important;overflow:auto;}
@@ -514,10 +530,32 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
   .a-main{padding:16px;}
   .a-grid-2,.a-grid-3{grid-template-columns:1fr;}
 }
+  </style>
+  <style>
+    /* Final strict black-and-white admin palette */
+    .a-admin, .a-admin * { accent-color:#fff; }
+    .a-admin .a-login-logo, .a-admin .a-topbar-brand-name, .a-admin .a-section-title { background:#fff!important; color:#fff!important; -webkit-text-fill-color:#fff!important; }
+    .a-admin [style*="#a855f7"], .a-admin [style*="#ec4899"], .a-admin [style*="168,85,247"], .a-admin [style*="168, 85, 247"], .a-admin [style*="236,72,153"], .a-admin [style*="236, 72, 153"] { color:#fff!important; background-color:#fff!important; border-color:rgba(255,255,255,.3)!important; box-shadow:none!important; }
+    .a-admin .a-btn, .a-admin .a-topbar-save, .a-admin .a-btn-sm:not(.secondary):not(.danger) { background:#fff!important; color:#000!important; box-shadow:none!important; }
+    .a-admin .a-card-title, .a-admin .a-nav-lbl, .a-admin .a-nav-item.active, .a-admin .a-info i, .a-admin .a-upload-icon, .a-admin .a-file-icon, .a-admin .a-cursor-opt.active, .a-admin .a-history-num, .a-admin .diff-key { color:#fff!important; }
+    .a-admin .a-nav-item.active, .a-admin .a-cursor-opt.active, .a-admin .a-history-item.active { background:rgba(255,255,255,.1)!important; border-color:rgba(255,255,255,.35)!important; box-shadow:none!important; }
+    .a-admin .a-card-title::after, .a-admin .a-nav-lbl::after { background:linear-gradient(90deg,rgba(255,255,255,.3),transparent)!important; }
+    .a-admin .a-toggle input:checked+.a-toggle-slider { background:#fff!important; box-shadow:none!important; }
+    .a-admin .a-toggle input:checked+.a-toggle-slider::before { background:#000!important; }
+    .a-admin input[type=range]::-webkit-slider-thumb { border-color:#fff!important; box-shadow:none!important; }
+    .a-admin .a-info, .a-admin .a-preview-updating { background:rgba(255,255,255,.05)!important; border-color:rgba(255,255,255,.16)!important; color:rgba(255,255,255,.7)!important; }
+    .a-admin .a-upload-zone:hover, .a-admin .a-upload-zone.drag { border-color:#fff!important; background:rgba(255,255,255,.06)!important; }
+    .a-admin .a-badge-saved, .a-admin .a-badge-unsaved, .a-admin .a-avail-opt, .a-admin .a-avail-dot, .a-admin .a-pass-strength, .a-admin .diff-added, .a-admin .diff-removed, .a-admin .diff-changed { filter:grayscale(1)!important; }
+    .a-admin a { color:rgba(255,255,255,.7)!important; }
+    .a-admin a:hover { color:#fff!important; }
+  </style>
+<style>
+.a-admin .a-login-logo { background:none!important; -webkit-text-fill-color:#fff!important; }
+.a-admin [style*="#a855f7"],.a-admin [style*="#ec4899"] { background-color:transparent!important; }
 </style>
 </head>
 
-<body>
+<body class="a-admin">
 
 <!-- ═══ LOGIN ═══ -->
 <div id="a-login" class="a-login">
@@ -622,7 +660,11 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
     </div>
     <div class="a-row"><label>Bio</label><textarea id="inp-bio" class="a-textarea"></textarea></div>
     <div class="a-row"><label for="inp-about-extra">About section — second paragraph</label><textarea id="inp-about-extra" class="a-textarea" placeholder="When I'm not coding..."></textarea></div>
-    <div class="a-row"><label for="inp-focus">Focus</label><input type="text" id="inp-focus" class="a-input" placeholder="Web development" /></div>
+    <div class="a-grid-2">
+      <div class="a-row"><label for="inp-focus">Focus</label><input type="text" id="inp-focus" class="a-input" placeholder="Web development" /></div>
+      <div class="a-row"><label for="inp-subtitle">Hero subtitle</label><input type="text" id="inp-subtitle" class="a-input" placeholder="Developer · Creator" /></div>
+    </div>
+    <div class="a-row"><label for="inp-about-heading">About heading</label><input type="text" id="inp-about-heading" class="a-input" placeholder="A little about me." /></div>
   </div>
 
   <div class="a-card">
@@ -641,12 +683,6 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
     <div class="a-row"><textarea id="inp-status-msgs" class="a-textarea" style="min-height:110px;"></textarea></div>
   </div>
 
-  <div class="a-card">
-    <div class="a-card-title"><i class="fas fa-icons"></i> Tech Badges</div>
-    <div class="a-info"><i class="fas fa-circle-info"></i> Uses <a href="https://fontawesome.com/icons" target="_blank" style="color:#a855f7;">FontAwesome</a> class names. Icons spin on hover.</div>
-    <div id="a-badges-list" style="margin-bottom:12px;"></div>
-    <button class="a-btn-sm" id="a-add-badge-btn"><i class="fas fa-plus"></i> Add Badge</button>
-  </div>
 </section>
 
 <!-- ═══ SOCIALS ═══ -->
@@ -1341,6 +1377,8 @@ function aPopulate(cfg){
   set('#inp-bio',cfg.profile?.bio||'');
   set('#inp-about-extra',cfg.profile?.aboutExtra||'');
   set('#inp-focus',cfg.profile?.focus||'Web development');
+  set('#inp-subtitle',cfg.profile?.subtitle||'Developer · Creator');
+  set('#inp-about-heading',cfg.profile?.aboutHeading||'A little about me.');
   set('#inp-location',cfg.profile?.location||'');
   set('#inp-joindate',cfg.profile?.joinDate||'');
   set('#inp-status-msgs',(cfg.profile?.statusMessages||[]).join('\n'));
@@ -1457,6 +1495,8 @@ function aCollectAll(){
   cfg.profile.bio=g('#inp-bio');
   cfg.profile.aboutExtra=g('#inp-about-extra');
   cfg.profile.focus=g('#inp-focus')||'Web development';
+  cfg.profile.subtitle=g('#inp-subtitle')||'Developer · Creator';
+  cfg.profile.aboutHeading=g('#inp-about-heading')||'A little about me.';
   cfg.profile.location=g('#inp-location');
   cfg.profile.joinDate=g('#inp-joindate');
   cfg.profile.avatar=normalizeAssetPath(g('#inp-avatar-url'));

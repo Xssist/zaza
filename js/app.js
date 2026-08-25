@@ -629,6 +629,10 @@ function renderProfile() {
   if (aboutExtraEl) aboutExtraEl.textContent = p.aboutExtra || "When I'm not coding, I'm usually working on something new or learning something I haven't touched before.";
   const focusEl = $('#profile-focus');
   if (focusEl) focusEl.textContent = p.focus || 'Web development';
+  const subtitleEl = $('#profile-subtitle');
+  if (subtitleEl) subtitleEl.textContent = p.subtitle || 'Developer · Creator';
+  const aboutHeadingEl = $('#about-heading');
+  if (aboutHeadingEl) aboutHeadingEl.textContent = p.aboutHeading || 'A little about me.';
 
   // Avatar
   const wrap = $('#avatar-wrap');
@@ -1539,7 +1543,7 @@ async function init() {
 function initVisualFeatures() {
   _injectSVGFilters();
   if (!window.matchMedia('(hover: none)').matches) {
-    _initCursorTrail(); // touch guard inside but skip entirely on touch
+    _initCursorTrail();
     _initMagneticButton();
   }
   // _initCardTilt() — disabled, CSS effect is off, no point running the mousemove listener
@@ -2414,7 +2418,13 @@ function renderProjects() {
   if (!con) return;
   const projects = Array.isArray(S.cfg.projects) ? S.cfg.projects : [];
   con.innerHTML = '';
-  if (!projects.length) { con.innerHTML = '<p class="empty-work">More work is taking shape.</p>'; return; }
+  if (!projects.length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-work';
+    empty.textContent = 'Nothing to show here yet. I’m working on it.';
+    con.appendChild(empty);
+    return;
+  }
   projects.forEach((project, index) => {
     const article = document.createElement('article'); article.className = 'project' + (index % 2 ? ' reverse' : '');
     const copy = document.createElement('div'); copy.className = 'project-copy';
