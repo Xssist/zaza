@@ -6,8 +6,10 @@
     "aboutExtra": "When I'm not coding, I'm usually working on something new or learning something I haven't touched before.",
     "avatar": "assets/images/avatar.png",
     "status": "online",
-    "statusMessages": ["just vibing 🎵"],
-    "location": "Tokyo,Japan",
+    "statusMessages": [
+      "just vibing 🎵"
+    ],
+    "location": "Romania",
     "joinDate": "2001",
     "availability": "away"
   },
@@ -119,7 +121,8 @@
     "enabled": true,
     "showCurrentlyPlaying": true,
     "fallbackText": "not playing",
-    "showWidget": true
+    "showWidget": true,
+    "serverProxy": false
   },
   "cursor": {
     "enabled": true,
