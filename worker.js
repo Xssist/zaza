@@ -18,7 +18,9 @@ function makeToken() {
 }
 
 function corsHeaders(origin, env) {
-  const allowed = env?.ADMIN_ORIGIN || '';
+  // Keep the production site working even if ADMIN_ORIGIN was not configured;
+  // deployments should still set ADMIN_ORIGIN explicitly for custom domains.
+  const allowed = env?.ADMIN_ORIGIN || 'https://zad3.online';
   const headers = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
@@ -137,7 +139,7 @@ async function handleSaveConfig(req, env, origin) {
   );
   if (!getR.ok) {
     const errText = await getR.text();
-    return res({ ok:false, error:`GitHub GET ${getR.status}: ${errText.slice(0,200)}` }, 502);
+    return res({ ok:false, error:`GitHub GET ${getR.status}: ${errText.slice(0,200)}` }, 502, origin, env);
   }
 
   const { sha } = await getR.json();
@@ -150,9 +152,9 @@ async function handleSaveConfig(req, env, origin) {
   );
   if (!putR.ok) {
     const e = await putR.json().catch(() => ({ message: putR.statusText }));
-    return res({ ok:false, error:e.message }, 502);
+    return res({ ok:false, error:e.message }, 502, origin, env);
   }
-  return res({ ok:true }, 200);
+  return res({ ok:true }, 200, origin, env);
 }
 
 async function handleUpload(req, env, origin) {
@@ -165,11 +167,11 @@ async function handleUpload(req, env, origin) {
 
   // Enforce 100MB decoded file limit (~133.4MB base64)
   if (typeof body.content !== 'string' || !body.content) {
-    return res({ ok:false, error:'Missing file content' }, 400);
+    return res({ ok:false, error:'Missing file content' }, 400, origin, env);
   }
   const maxBase64Length = Math.ceil(100 * 1024 * 1024 * 4 / 3);
   if (body.content.length % 4 !== 0 || body.content.length > maxBase64Length || !/^[A-Za-z0-9+/]*={0,2}$/.test(body.content)) {
-    return res({ ok:false, error:'File exceeds 100MB limit or has invalid encoding' }, 413);
+    return res({ ok:false, error:'File exceeds 100MB limit or has invalid encoding' }, 413, origin, env);
   }
 
   const ghToken = env.GH_TOKEN;
@@ -196,15 +198,15 @@ async function handleUpload(req, env, origin) {
   });
   if (!r.ok) {
     const e = await r.json().catch(() => ({ message:r.statusText }));
-    return res({ ok:false, error:e.message }, 502);
+    return res({ ok:false, error:e.message }, 502, origin, env);
   }
-  return res({ ok:true }, 200);
+  return res({ ok:true }, 200, origin, env);
 }
 
 function handleLogout(req, env, origin) {
   const t = req.headers.get('X-Session-Token');
   if (t) SESSIONS.delete(t);
-  return res({ ok:true }, 200);
+  return res({ ok:true }, 200, origin, env);
 }
 
 // Health check for admin panel "Test Connection" button
