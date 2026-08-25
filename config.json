@@ -3,14 +3,12 @@
     "username": "zade",
     "displayName": "zade",
     "bio": "beginner html dev,ahk scripter",
-    "avatar": "assets/images/a7a8ee1961d881ac5c6478d210629015.jpg",
+    "avatar": "assets/images/avatar.png",
     "status": "online",
-    "statusMessages": [
-      "k"
-    ],
+    "statusMessages": [],
     "location": "Tokyo,Japan",
     "joinDate": "2001",
-    "availability": "online"
+    "availability": "away"
   },
   "theme": {
     "accentColor": "#ffffff",
@@ -24,7 +22,7 @@
     "gradientAngle": 155
   },
   "background": {
-    "videoUrl": "assets/images/mixkit-black-and-white-ink-underwater-487-full-hd.mp4",
+    "videoUrl": "assets/images/background.mp4",
     "overlayOpacity": 0.55,
     "blur": 0
   },
@@ -112,7 +110,7 @@
     "showViews": true
   },
   "discord": {
-    "enabled": false,
+    "enabled": true,
     "userId": "1246068508039708672",
     "showWidget": true
   },
@@ -127,9 +125,9 @@
     "enabled": true,
     "trailEnabled": true,
     "color": "#a855f7",
-    "style": "ring",
+    "style": "dot",
     "trail": {
-      "style": "rings",
+      "style": "dots",
       "length": 12,
       "fadeSpeed": 300,
       "color": ""
@@ -147,13 +145,7 @@
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#a855f7"
   },
-  "badges": [
-    {
-      "icon": "dab",
-      "color": "#003366",
-      "label": "im a goat"
-    }
-  ],
+  "badges": [],
   "announcement": {
     "enabled": false,
     "text": "",
