@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="living in the moment. creating something real." />
-  <meta name="theme-color" content="#a855f7" />
+  <meta name="theme-color" content="#090909" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="zaza — personal" />
   <meta property="og:description" content="living in the moment. creating something real." />
@@ -13,7 +13,7 @@
   <title>zaza — personal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Nunito:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -50,13 +50,6 @@
 </div>
 <canvas id="particles-canvas"></canvas>
 
-<!-- Enter Screen -->
-<div id="enter-screen">
-  <h1 class="enter-title">zaza</h1>
-  <p class="enter-sub">click to enter</p>
-  <button id="enter-btn" class="enter-btn"><span>enter</span></button>
-</div>
-
 <!-- Announcement Banner -->
 <div class="ann-banner hidden" id="ann-banner">
   <div class="ann-inner">
@@ -66,63 +59,21 @@
   <button class="ann-close" id="ann-close" aria-label="Close banner"><i class="fas fa-xmark"></i></button>
 </div>
 
-<!-- Main Page -->
-<main id="main-page">
-  <div class="layout">
-
-    <!-- LEFT -->
-    <div class="profile-left">
-      <div class="section-eyebrow">about me</div>
-
-      <div class="name-row">
-        <div class="avatar-wrap" id="avatar-wrap">
-          <div class="avatar-ring"></div>
-          <div class="avatar-initial" id="avatar-el">Z</div>
-          <span class="online-dot" id="online-dot"></span>
-        </div>
-        <div class="name-text-wrap">
-          <div class="name-greeting">hi, my name is</div>
-          <div class="name-main" id="profile-username">zaza</div>
-        </div>
-      </div>
-
-      <p class="bio-text" id="profile-bio">living in the moment. creating something real.</p>
-
-      <div class="badges-row" id="badges-row"></div>
-
-      <!-- Spotify Now Playing -->
-      <div class="spotify-widget" id="spotify-widget" style="display:none;">
-        <div class="spotify-icon"><i class="fab fa-spotify"></i></div>
-        <div class="spotify-info">
-          <div class="spotify-label">now playing</div>
-          <div class="spotify-track" id="spotify-track">—</div>
-          <div class="spotify-artist" id="spotify-artist">—</div>
-        </div>
-        <div class="spotify-bars" id="spotify-bars">
-          <span></span><span></span><span></span><span></span>
-        </div>
-      </div>
-      <!-- Spotify not playing fallback -->
-      <div class="spotify-widget spotify-idle" id="spotify-idle" style="display:none;">
-        <div class="spotify-icon"><i class="fab fa-spotify"></i></div>
-        <div class="spotify-info">
-          <div class="spotify-label">spotify</div>
-          <div class="spotify-track" id="spotify-idle-text">not playing</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT -->
-    <div class="profile-right">
-      <div class="right-eyebrow">find me at</div>
-      <div class="status-pill">
-        <span class="status-dot online" id="status-dot"></span>
-        <span id="status-typewriter"></span><span class="tw-cursor"></span>
-      </div>
-      <div class="social-list" id="socials-container"></div>
-    </div>
-
-  </div>
+<!-- Continuous editorial page -->
+<main id="main-page" class="editorial-page">
+  <section class="hero editorial-section" id="top">
+    <div class="hero-time" id="hero-time">00:00</div>
+    <div class="hero-copy reveal"><p id="hero-greeting">Good evening, visitor.</p><p>Thanks for stopping by.</p></div>
+    <div class="hero-name reveal"><h1 id="profile-username">zade</h1><p>Developer · Creator</p></div>
+    <a class="scroll-cue" href="#about" aria-label="Scroll to about">↓</a>
+  </section>
+  <section class="editorial-section about-section" id="about">
+    <div class="section-label">ABOUT</div><div class="about-content reveal"><h2>A little about me.</h2><p id="profile-bio">I'm zade, a developer who enjoys building websites, experimenting with new technologies, and creating things for the internet.</p><p>When I'm not coding, I'm usually working on something new or learning something I haven't touched before.</p><dl class="metadata"><div><dt>BASED IN</dt><dd id="profile-location">—</dd></div><div><dt>FOCUS</dt><dd>Web development</dd></div></dl></div>
+  </section>
+  <section class="editorial-section work-section" id="work"><div class="section-label">WORK</div><div class="work-intro reveal"><h2>Things I've built.</h2><p class="work-note" id="work-note">A selection of experiments and personal projects.</p></div><div id="projects-container"></div></section>
+  <section class="editorial-section contact-section" id="contact"><div class="section-label">CONTACT</div><div class="contact-content reveal"><h2>Let's talk.</h2><p>If you want to build something, work together, or just say hello, feel free to reach out.</p><div class="contact-links" id="socials-container"></div></div></section>
+  <section class="final-message reveal"><p>Thanks for visiting.</p><p>See you around.</p></section>
+  <footer><span>© 2026 <span id="footer-name">zade</span></span><span>Built with curiosity.</span></footer>
 </main>
 
 <!-- Music Bar -->

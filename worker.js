@@ -21,8 +21,8 @@ async function makeToken(env) {
 function corsHeaders(origin, env) {
   // Keep the production site working even if ADMIN_ORIGIN was not configured;
   // deployments should still set ADMIN_ORIGIN explicitly for custom domains.
-  const allowed = env?.ADMIN_ORIGIN || 'https://zad3.online';
-  const allowedOrigins = new Set([allowed, 'https://zad3.online', 'https://www.zad3.online']);
+  const allowed = env?.ADMIN_ORIGIN;
+  const allowedOrigins = new Set([allowed].filter(Boolean));
   const headers = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
@@ -30,7 +30,7 @@ function corsHeaders(origin, env) {
     'Vary': 'Origin',
   };
   if (origin && allowedOrigins.has(origin)) headers['Access-Control-Allow-Origin'] = origin;
-  else if (!origin) headers['Access-Control-Allow-Origin'] = allowed;
+  else if (!origin && allowed) headers['Access-Control-Allow-Origin'] = allowed;
   return headers;
 }
 
@@ -62,14 +62,16 @@ function checkRate(ip) {
 }
 
 async function validSession(token, env) {
-  if (!token || typeof token !== 'string') return false;
+  if (typeof token !== 'string' || token.length > 160) return false;
   const separator = token.indexOf('.');
-  if (separator < 1) return false;
+  if (separator < 1 || separator !== token.lastIndexOf('.')) return false;
   const exp = Number(token.slice(0, separator));
   const signature = token.slice(separator + 1);
   if (!Number.isSafeInteger(exp) || exp <= Date.now() || !/^[a-f0-9]{64}$/.test(signature) || !env?.PASS_HASH) return false;
   const expected = await sha256hex(`${env.PASS_HASH}:${exp}`);
-  return signature === expected;
+  let mismatch = signature.length ^ expected.length;
+  for (let i = 0; i < expected.length; i++) mismatch |= signature.charCodeAt(i) ^ expected.charCodeAt(i);
+  return mismatch === 0;
 }
 
 // The project currently has no SQL database. Keep incoming JSON strictly data-only
@@ -214,10 +216,10 @@ async function handleTest(req, env, origin) {
     );
     if (!r.ok) {
       const t = await r.text();
-      return res({ ok:false, error:`GitHub ${r.status}: ${t.slice(0,160)}` }, 502);
+      return res({ ok:false, error:`GitHub ${r.status}: ${t.slice(0,160)}` }, 502, origin, env);
     }
     const d = await r.json();
-    return res({ ok:true, repo:d.full_name }, 200);
+    return res({ ok:true, repo:d.full_name }, 200, origin, env);
   } catch (e) {
     return res({ ok:false, error:'Network error: '+e.message }, 502);
   }
@@ -228,9 +230,10 @@ export default {
     const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
     const origin = request.headers.get('Origin') || '';
     const corsH = corsHeaders(origin, env);
-    const allowedRequestOrigins = new Set([env.ADMIN_ORIGIN || 'https://zad3.online', 'https://zad3.online', 'https://www.zad3.online']);
+    const allowedRequestOrigins = new Set([env.ADMIN_ORIGIN].filter(Boolean));
     if (origin && !allowedRequestOrigins.has(origin)) return new Response('Forbidden', { status:403, headers:corsH });
     if (request.method === 'OPTIONS') return new Response(null, { status:204, headers:corsH });
+    if (request.headers.get('Content-Type')?.split(';', 1)[0].trim().toLowerCase() !== 'application/json') return new Response('Unsupported media type', { status:415, headers:corsH });
     if (request.method !== 'POST') return new Response('Method not allowed', { status:405, headers:corsH });
     const path = new URL(request.url).pathname;
     try {

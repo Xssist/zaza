@@ -5,7 +5,7 @@
     "bio": "beginner html dev,ahk scripter",
     "avatar": "assets/images/avatar.png",
     "status": "online",
-    "statusMessages": [],
+    "statusMessages": ["just vibing 🎵"],
     "location": "Tokyo,Japan",
     "joinDate": "2001",
     "availability": "away"
@@ -70,7 +70,7 @@
       "id": "instagram",
       "label": "instagram",
       "username": "@z4de.1",
-      "url": "https://instagram.com/zaza",
+      "url": "https://instagram.com/z4de.1",
       "icon": "fab fa-instagram",
       "color": "#E1306C",
       "enabled": true
@@ -118,7 +118,6 @@
     "enabled": true,
     "showCurrentlyPlaying": true,
     "fallbackText": "not playing",
-    "accessToken": "",
     "showWidget": true
   },
   "cursor": {

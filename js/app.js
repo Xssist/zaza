@@ -13,13 +13,17 @@ const lerp = (a, b, t) => a + (b - a) * t;
 function normalizeAssetPath(path) {
   if (!path || typeof path !== 'string') return '';
   path = path.trim();
-  if (!path) return '';
-  // Public assets may be local paths only. Do not permit user-controlled URLs,
-  // data: or blob: values to become browser requests.
-  if (/^(https?:|data:|blob:|javascript:|file:)/i.test(path)) return '';
+  if (!path || /^(?:https?:|data:|blob:|javascript:|file:)/i.test(path)) return '';
   const m = path.match(/assets[/\\][^?#]+$/i);
-  if (m) return m[0].replace(/\\/g, '/');
-  return path.replace(/\\/g, '/').replace(/^\/+/, '');
+  return (m ? m[0] : path.replace(/^\/+/, '')).replace(/\\/g, '/');
+}
+
+function safeExternalUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return '';
+  try {
+    const url = new URL(value.trim(), window.location.href);
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+  } catch (_) { return ''; }
 }
 
 /* ── Global state ── */
@@ -195,8 +199,8 @@ function hexAlpha(hex, a) {
 ══════════════════════════════════════════ */
 function initDarkMode() {
   const prefDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const prefLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-  const stored = localStorage.getItem('zaza_theme');
+  let stored = null;
+  try { stored = localStorage.getItem('zaza_theme'); } catch (_) {}
 
   let isDark = stored ? stored === 'dark' : prefDark;
 
@@ -212,7 +216,7 @@ function initDarkMode() {
       root.style.setProperty('--text', '#1a1a1a');
       root.style.setProperty('--text-muted', 'rgba(26,26,26,0.5)');
     }
-    localStorage.setItem('zaza_theme', dark ? 'dark' : 'light');
+    try { localStorage.setItem('zaza_theme', dark ? 'dark' : 'light'); } catch (_) {}
   }
 
   applyDarkMode(isDark);
@@ -353,7 +357,7 @@ function initBackground() {
   // Apply overlay from config
   if (ov) {
     const angle = S.cfg.theme?.gradientAngle ?? 160;
-    const op    = S.cfg.background?.overlayOpacity ?? 0.35;
+    const op    = Math.max(0, Math.min(1, Number(S.cfg.background?.overlayOpacity) || 0.35));
     ov.style.background = `linear-gradient(${angle}deg,
       rgba(8,8,15,${Math.min(op + 0.30, 0.75)}) 0%,
       rgba(8,8,15,${Math.min(op + 0.05, 0.45)}) 30%,
@@ -513,7 +517,7 @@ function initParticles() {
   const cv = $('#particles-canvas');
   if (!cv) return;
   const ctx = cv.getContext('2d');
-  const count = S.cfg.theme?.particleCount || 80;
+  const count = Math.max(0, Math.min(200, Number(S.cfg.theme?.particleCount) || 80));
 
   const ac = S.cfg.theme?.accentColor || '#a855f7';
   const a2 = S.cfg.theme?.accentColorSecondary || '#ec4899';
@@ -602,6 +606,17 @@ function initParticles() {
 ══════════════════════════════════════════ */
 function renderProfile() {
   const p = S.cfg.profile || {};
+  const name = p.displayName || p.username || 'zade';
+  const location = $('#profile-location');
+  const footer = $('#footer-name');
+  if (location) location.textContent = p.location || '—';
+  if (footer) footer.textContent = name;
+  const greeting = $('#hero-greeting');
+  const hour = new Date().getHours();
+  if (greeting) greeting.textContent = `${hour >= 5 && hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : hour < 23 ? 'Good evening' : "You're up late"}, visitor.`;
+  const updateClock = () => { const now = new Date(); const clock = $('#hero-time'); if (clock) clock.textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false}); };
+  updateClock(); setInterval(updateClock, 30000);
+  renderProjects();
 
   // Display name
   const unEl = $('#profile-username');
@@ -789,60 +804,23 @@ function renderSocials() {
   if (!con) return;
   con.innerHTML = '';
   (S.cfg.socials || [])
-    .filter(s => s.enabled !== false)
+    .filter(s => s.enabled !== false && (s.username || s.url))
     .forEach(s => {
-      const div = document.createElement('div');
-      div.className = 'social-row';
-      div.style.setProperty('--icon-color', s.color || 'var(--accent)');
-      // Keyboard + screen reader accessibility
-      div.setAttribute('role', 'button');
-      div.setAttribute('tabindex', '0');
-      div.setAttribute('aria-label', `Copy ${s.label || 'link'}: ${s.username || s.url || ''}`);
+      const div = document.createElement('a');
+      const href = safeExternalUrl(s.url);
+      if (!href) return;
+      div.href = href;
+      div.target = '_blank';
+      div.rel = 'noopener noreferrer';
+      div.className = 'contact-link';
+      div.setAttribute('aria-label', `Open ${s.label || 'link'}`);
 
-      // Build DOM safely (no innerHTML with user data)
-      const srLeft = document.createElement('div');
+      const srLeft = document.createElement('span');
       srLeft.className = 'sr-left';
-      const icon = document.createElement('i');
-      icon.className = (s.icon || 'fas fa-link') + ' sr-icon';
-      icon.setAttribute('aria-hidden', 'true');
       const labelEl = document.createElement('span');
-      labelEl.className = 'sr-label';
-      labelEl.textContent = s.label || '';
-      srLeft.appendChild(icon);
+      labelEl.textContent = `${s.label || 'Link'} ↗`;
       srLeft.appendChild(labelEl);
-
-      const srRight = document.createElement('div');
-      srRight.style.cssText = 'display:flex;align-items:center;gap:8px;';
-      const valEl = document.createElement('span');
-      valEl.className = 'sr-value';
-      valEl.textContent = s.username || '';
-      const copyHint = document.createElement('span');
-      copyHint.className = 'sr-copy-hint';
-      copyHint.setAttribute('aria-hidden', 'true');
-      copyHint.textContent = 'copy';
-      srRight.appendChild(valEl);
-      srRight.appendChild(copyHint);
-
       div.appendChild(srLeft);
-      div.appendChild(srRight);
-
-      const doAction = () => {
-        const text = s.username || s.url || '';
-        if (!text) return;
-        navigator.clipboard?.writeText(text).catch(() => {});
-        const ct = document.getElementById('copy-toast');
-        if (ct) {
-          ct.textContent = `copied ${s.label}!`;
-          ct.classList.add('show');
-          clearTimeout(ct._t);
-          ct._t = setTimeout(() => ct.classList.remove('show'), 1800);
-        }
-      };
-
-      div.addEventListener('click', doAction);
-      div.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doAction(); }
-      });
 
       con.appendChild(div);
     });
@@ -970,11 +948,15 @@ function initMusic() {
     if (artistEl) artistEl.textContent = track.artist || '—';
     if (coverEl) {
       if (track.cover) {
-        coverEl.style.backgroundImage = `url(${track.cover})`;
-        coverEl.innerHTML = '';
+        const cover = normalizeAssetPath(track.cover) || safeExternalUrl(track.cover);
+        if (cover) coverEl.style.backgroundImage = `url("${cover.replace(/"/g, '%22')}")`;
+        else coverEl.style.backgroundImage = '';
+        coverEl.replaceChildren();
       } else {
         coverEl.style.backgroundImage = '';
-        coverEl.innerHTML = '<i class="fas fa-music"></i>';
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-music';
+        coverEl.replaceChildren(icon);
       }
     }
     S.audioEl.src = normalizeAssetPath(track.src);
@@ -1518,8 +1500,8 @@ async function init() {
   initParticles();
   initWeather();
   initAnnouncement();
-  initEnter();
   initMusic();
+   initEditorialReveals();
   renderProfile();
   initSpotify();
   initKeys();
@@ -2421,4 +2403,33 @@ function initEasterEggTerminal() {
       }
     }
   });
+}
+
+function renderProjects() {
+  const con = $('#projects-container');
+  if (!con) return;
+  const projects = Array.isArray(S.cfg.projects) ? S.cfg.projects : [];
+  con.innerHTML = '';
+  if (!projects.length) { con.innerHTML = '<p class="empty-work">More work is taking shape.</p>'; return; }
+  projects.forEach((project, index) => {
+    const article = document.createElement('article'); article.className = 'project' + (index % 2 ? ' reverse' : '');
+    const copy = document.createElement('div'); copy.className = 'project-copy';
+    copy.innerHTML = `<span class="project-number">${String(index + 1).padStart(2, '0')}</span><h3></h3><p class="project-description"></p><p class="project-tech"></p>`;
+    copy.querySelector('h3').textContent = project.name || project.title || 'Untitled project';
+    copy.querySelector('.project-description').textContent = project.description || '';
+    copy.querySelector('.project-tech').textContent = Array.isArray(project.technologies) ? project.technologies.join(' · ') : (project.technology || '');
+    const projectUrl = safeExternalUrl(project.url);
+    if (projectUrl) { const link = document.createElement('a'); link.className = 'project-link'; link.href = projectUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'View project ↗'; copy.appendChild(link); }
+    const media = document.createElement('div'); media.className = 'project-media';
+    const image = normalizeAssetPath(project.image || project.screenshot || '');
+    if (image) { const img = document.createElement('img'); img.src = image; img.alt = `${project.name || 'Project'} preview`; media.appendChild(img); } else { const placeholder = document.createElement('div'); placeholder.className = 'project-placeholder'; placeholder.textContent = 'Preview'; media.appendChild(placeholder); }
+    article.append(copy, media); con.appendChild(article);
+  });
+}
+
+function initEditorialReveals() {
+  const items = $$('.reveal');
+  if (!('IntersectionObserver' in window)) { items.forEach(el => el.classList.add('in-view')); return; }
+  const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('in-view'); observer.unobserve(entry.target); } }), {threshold:.12});
+  items.forEach(item => observer.observe(item));
 }
