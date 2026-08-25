@@ -11,10 +11,11 @@ async function sha256hex(msg) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-function makeToken() {
-  const a = new Uint8Array(32);
-  crypto.getRandomValues(a);
-  return Array.from(a).map(b => b.toString(16).padStart(2,'0')).join('');
+async function makeToken(env) {
+  // Stateless signed session: Cloudflare can serve later requests from another isolate.
+  const exp = Date.now() + 3600000;
+  const signature = await sha256hex(`${env.PASS_HASH}:${exp}`);
+  return `${exp}.${signature}`;
 }
 
 function corsHeaders(origin, env) {
@@ -60,12 +61,15 @@ function checkRate(ip) {
   return true;
 }
 
-function validSession(token) {
-  if (!token || typeof token !== 'string' || token.length !== 64) return false;
-  const s = SESSIONS.get(token);
-  if (!s) return false;
-  if (Date.now() > s.exp) { SESSIONS.delete(token); return false; }
-  return true;
+async function validSession(token, env) {
+  if (!token || typeof token !== 'string') return false;
+  const separator = token.indexOf('.');
+  if (separator < 1) return false;
+  const exp = Number(token.slice(0, separator));
+  const signature = token.slice(separator + 1);
+  if (!Number.isSafeInteger(exp) || exp <= Date.now() || !/^[a-f0-9]{64}$/.test(signature) || !env?.PASS_HASH) return false;
+  const expected = await sha256hex(`${env.PASS_HASH}:${exp}`);
+  return signature === expected;
 }
 
 // The project currently has no SQL database. Keep incoming JSON strictly data-only
@@ -96,14 +100,13 @@ async function handleLogin(req, ip, env, origin) {
   if (!body || !isSafeData(body) || typeof body.password !== 'string' || body.password.length < 1 || body.password.length > 256) return res({ ok:false, error:'Invalid credentials' }, 400, origin, env);
   const hash = await sha256hex(body.password);
   if (!env.PASS_HASH || hash !== env.PASS_HASH) return res({ ok:false, error:'Invalid credentials' }, 401, origin, env);
-  const token = makeToken();
-  SESSIONS.set(token, { exp: Date.now() + 3600000 });
+  const token = await makeToken(env);
   return res({ ok:true, token }, 200, origin, env);
 }
 
 async function handleSaveConfig(req, env, origin) {
   const sToken = req.headers.get('X-Session-Token');
-  if (!validSession(sToken)) return res({ ok:false, error:'Unauthorized' }, 401, origin, env);
+  if (!(await validSession(sToken, env))) return res({ ok:false, error:'Unauthorized' }, 401, origin, env);
 
   let body; try { body = await readJson(req); } catch { return res({ ok:false, error:'Bad request' }, 400, origin, env); }
   const cfg = body?.config;
@@ -161,7 +164,7 @@ async function handleSaveConfig(req, env, origin) {
 
 async function handleUpload(req, env, origin) {
   const sToken = req.headers.get('X-Session-Token');
-  if (!validSession(sToken)) return res({ ok:false, error:'Unauthorized' }, 401, origin, env);
+  if (!(await validSession(sToken, env))) return res({ ok:false, error:'Unauthorized' }, 401, origin, env);
   let body; try { body = await readJson(req, 140 * 1024 * 1024); } catch { return res({ ok:false, error:'Bad request' }, 400, origin, env); }
   const ALLOWED = ['assets/images/avatar.png','assets/images/background.mp4','assets/music/song.mp3'];
   if (!body || typeof body !== 'object' || !ALLOWED.includes(body.path) || Object.keys(body).some(k => !['path','content'].includes(k))) return res({ ok:false, error:'Invalid upload' }, 400, origin, env);
@@ -199,7 +202,7 @@ function handleLogout(req, env, origin) {
 // Health check for admin panel "Test Connection" button
 async function handleTest(req, env, origin) {
   const sToken = req.headers.get('X-Session-Token');
-  if (!validSession(sToken)) return res({ ok:false, error:'Unauthorized' }, 401, origin, env);
+  if (!(await validSession(sToken, env))) return res({ ok:false, error:'Unauthorized' }, 401, origin, env);
 
   const ghToken = env.GH_TOKEN;
   if (!ghToken) return res({ ok:false, error:'Service unavailable' }, 500, origin, env);

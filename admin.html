@@ -1206,10 +1206,11 @@ async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEn
 /* ── Session ── */
 function sessSet(t){const ttl=Math.max(60,Number(AS.config?.admin?.sessionTimeout)||3600)*1000;sessionStorage.setItem('za_t',t);sessionStorage.setItem('za_e',String(Date.now()+ttl));}
 function sessOk(){
-  const t=sessionStorage.getItem('za_t'),e=parseInt(sessionStorage.getItem('za_e')||'0');
-  if(!t||Date.now()>e){sessClear();return false;}
-  // Restore Worker session token
-  window.AS.sessionToken=sessionStorage.getItem('za_worker_token')||t;
+  const t=sessionStorage.getItem('za_t'),workerToken=sessionStorage.getItem('za_worker_token'),e=parseInt(sessionStorage.getItem('za_e')||'0');
+  // Tokens issued by the current Worker are signed and contain a dot. Reject old
+  // in-memory/session tokens so the dashboard cannot open into an Unauthorized state.
+  if(!t||!workerToken||!workerToken.includes('.')||Date.now()>e){sessClear();return false;}
+  window.AS.sessionToken=workerToken;
   return true;
 }
 function sessClear(){sessionStorage.removeItem('za_t');sessionStorage.removeItem('za_e');sessionStorage.removeItem('za_worker_token');window.AS.sessionToken=null;}
@@ -1283,16 +1284,23 @@ async function ghUploadFile(path,file,onProgress){
         const dataUrl = e.target.result;
         const base64 = typeof dataUrl === 'string' && dataUrl.includes(',') ? dataUrl.split(',')[1] : btoa(dataUrl);
         if(onProgress)onProgress(50);
-        const r=await fetch(WORKER_URL+'/upload',{
+        const r=await workerFetch('/upload',{
           method:'POST',
           headers:{'Content-Type':'application/json','X-Session-Token':token},
           body:JSON.stringify({path,content:base64})
         });
         const d=await r.json().catch(()=>({ok:false,error:r.statusText}));
+        if(r.status===401){
+          sessClear();
+          throw new Error('Session expired. Please log in again.');
+        }
         if(!d.ok)throw new Error(d.error||'Upload failed');
         if(onProgress)onProgress(100);
         resolve(path);
-      }catch(err){reject(err);}
+      }catch(err){
+      if(err.name==='AbortError') reject(new Error('Upload timed out. Large files may exceed the Worker limit.'));
+      else reject(err);
+    }
     };
     reader.onerror=()=>reject(new Error('Could not read the selected file'));
     reader.onabort=()=>reject(new Error('File reading was cancelled'));
