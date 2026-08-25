@@ -162,47 +162,32 @@ async function handleSaveConfig(req, env, origin) {
 async function handleUpload(req, env, origin) {
   const sToken = req.headers.get('X-Session-Token');
   if (!validSession(sToken)) return res({ ok:false, error:'Unauthorized' }, 401, origin, env);
-
   let body; try { body = await readJson(req, 140 * 1024 * 1024); } catch { return res({ ok:false, error:'Bad request' }, 400, origin, env); }
   const ALLOWED = ['assets/images/avatar.png','assets/images/background.mp4','assets/music/song.mp3'];
   if (!body || typeof body !== 'object' || !ALLOWED.includes(body.path) || Object.keys(body).some(k => !['path','content'].includes(k))) return res({ ok:false, error:'Invalid upload' }, 400, origin, env);
-
-  // Enforce 100MB decoded file limit (~133.4MB base64)
-  if (typeof body.content !== 'string' || !body.content) {
-    return res({ ok:false, error:'Missing file content' }, 400, origin, env);
-  }
+  if (typeof body.content !== 'string' || !body.content || body.content.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(body.content)) return res({ ok:false, error:'Invalid file encoding' }, 400, origin, env);
   const maxBase64Length = Math.ceil(100 * 1024 * 1024 * 4 / 3);
-  if (body.content.length % 4 !== 0 || body.content.length > maxBase64Length || !/^[A-Za-z0-9+/]*={0,2}$/.test(body.content)) {
-    return res({ ok:false, error:'File exceeds 100MB limit or has invalid encoding' }, 413, origin, env);
-  }
-
+  if (body.content.length > maxBase64Length) return res({ ok:false, error:'File exceeds the 100MB limit' }, 413, origin, env);
   const ghToken = env.GH_TOKEN;
   if (!ghToken) return res({ ok:false, error:'Service unavailable' }, 500, origin, env);
-
-  const ghH = {
-    'Authorization': 'token ' + ghToken,
-    'Accept':        'application/vnd.github.v3+json',
-    'Content-Type':  'application/json',
-    'User-Agent':    'zaza-admin-worker',
+  const ghH = {'Authorization':'token '+ghToken,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json','User-Agent':'zaza-admin-worker'};
+  const api = async (url, options={}) => {
+    const r = await fetch(url, { ...options, headers:{...ghH,...(options.headers||{})} });
+    const text = await r.text(); let data; try { data=JSON.parse(text); } catch { data={message:text||r.statusText}; }
+    if (!r.ok) throw new Error(`GitHub ${r.status}: ${data.message||'request failed'}`);
+    return data;
   };
-
-  let sha = null;
   try {
-    const g = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${body.path}`, { headers:ghH });
-    if (g.ok) sha = (await g.json()).sha;
-  } catch (_) {}
-
-  const rb = { message:`upload: ${body.path}`, content:body.content, branch:GH_BRANCH };
-  if (sha) rb.sha = sha;
-
-  const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${body.path}`, {
-    method:'PUT', headers:ghH, body:JSON.stringify(rb)
-  });
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({ message:r.statusText }));
-    return res({ ok:false, error:e.message }, 502, origin, env);
-  }
-  return res({ ok:true }, 200, origin, env);
+    // The Contents API rejects large binary updates with "file too large".
+    // The Git Data API stores the blob first, then creates a normal commit.
+    const blob = await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/blobs`, {method:'POST',body:JSON.stringify({content:body.content,encoding:'base64'})});
+    const ref = await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/ref/heads/${GH_BRANCH}`);
+    const baseCommit = await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/commits/${ref.object.sha}`);
+    const tree = await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/trees`, {method:'POST',body:JSON.stringify({base_tree:baseCommit.tree.sha,tree:[{path:body.path,mode:'100644',type:'blob',sha:blob.sha}]})});
+    const commit = await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/commits`, {method:'POST',body:JSON.stringify({message:`upload: ${body.path}`,tree:tree.sha,parents:[ref.object.sha]})});
+    await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/refs/heads/${GH_BRANCH}`, {method:'PATCH',body:JSON.stringify({sha:commit.sha,force:false})});
+    return res({ok:true},200,origin,env);
+  } catch (e) { return res({ok:false,error:e.message||'Upload failed'},502,origin,env); }
 }
 
 function handleLogout(req, env, origin) {

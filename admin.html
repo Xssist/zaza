@@ -1670,8 +1670,11 @@ function bindFileUploads(){
       markDirty();aToast('Background uploaded!','success');
       const pend=$('#a-bg-pending');if(pend)pend.style.display='none';
       _pendingBg=null;if(bgf)bgf.value='';
-    }catch(err){aToast('Upload failed: '+err.message,'error');}
-    finally{if(prog)prog.style.display='none';bgub.disabled=false;bgub.innerHTML='<i class="fas fa-cloud-arrow-up"></i> Upload to GitHub';}
+    }catch(err){
+      console.error('Background upload failed:',err);
+      aToast('Upload failed: '+(err.message||'Unknown error'),'error');
+    }
+    finally{if(prog)prog.style.display='none';if(bar)bar.style.width='0%';bgub.disabled=false;bgub.innerHTML='<i class="fas fa-cloud-arrow-up"></i> Upload to GitHub';}
   });
   const bgcb=$('#a-bg-cancel-btn');
   if(bgcb)bgcb.addEventListener('click',()=>{_pendingBg=null;const p=$('#a-bg-pending');if(p)p.style.display='none';if(bgf)bgf.value='';});
