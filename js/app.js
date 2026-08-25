@@ -627,6 +627,8 @@ function renderProfile() {
   if (bioEl) bioEl.textContent = p.bio || '';
   const aboutExtraEl = $('#profile-about-extra');
   if (aboutExtraEl) aboutExtraEl.textContent = p.aboutExtra || "When I'm not coding, I'm usually working on something new or learning something I haven't touched before.";
+  const focusEl = $('#profile-focus');
+  if (focusEl) focusEl.textContent = p.focus || 'Web development';
 
   // Avatar
   const wrap = $('#avatar-wrap');
