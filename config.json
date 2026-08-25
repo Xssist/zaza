@@ -120,9 +120,9 @@
     "enabled": true,
     "trailEnabled": true,
     "color": "#a855f7",
-    "style": "ring",
+    "style": "dot",
     "trail": {
-      "style": "rings",
+      "style": "dots",
       "length": 12,
       "fadeSpeed": 300,
       "color": ""
