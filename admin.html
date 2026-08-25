@@ -350,7 +350,7 @@ input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 .a-color-row{display:flex;align-items:center;gap:10px;}
 .a-color-swatch{
   width:36px;height:36px;border-radius:9px;border:1px solid rgba(255,255,255,.12);
-  cursor:pointer!important;flex-shrink:0;transition:transform .15px,box-shadow .2s;
+  cursor:pointer!important;flex-shrink:0;transition:transform .15s,box-shadow .2s;
 }
 .a-color-swatch:hover{transform:scale(1.1);box-shadow:0 0 14px rgba(168,85,247,.4);}
 input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
@@ -1105,6 +1105,8 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
     <div class="a-card-title"><i class="fas fa-image"></i> Avatar Sync</div>
     <div class="a-info success"><i class="fas fa-circle-check"></i> When the Discord widget is enabled, your Discord profile picture automatically replaces the site avatar in real time — no manual upload needed.</div>
   </div>
+</section>
+
 <!-- ═══ HISTORY ═══ -->
 <section class="a-section" id="sec-history">
   <div class="a-section-head">
@@ -1183,6 +1185,13 @@ const GH={
 
 // Cloudflare Worker proxy — GH token + password hash live server-side as encrypted secrets
 const WORKER_URL = 'https://zaza-admin.adrianbanatean45.workers.dev';
+const WORKER_REQUEST_TIMEOUT = 15000;
+async function workerFetch(path, options={}){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),WORKER_REQUEST_TIMEOUT);
+  try{return await fetch(WORKER_URL+path,{...options,signal:controller.signal});}
+  finally{clearTimeout(timer);}
+}
 window.AS = { config: null, dirty: false, sessionToken: sessionStorage.getItem('za_worker_token') || null };
 
 // Global error handler — shows JS errors visibly on the login screen
@@ -1222,7 +1231,7 @@ function markDirty(){setDirty(true);}
 function aPassStrength(v){const el=$('#a-pass-strength');if(!el)return;if(!v){el.className='a-pass-strength';return;}let cls='weak';if(v.length>=8&&/[A-Z]/.test(v)&&/[0-9]/.test(v))cls='strong';else if(v.length>=6)cls='fair';el.className='a-pass-strength '+cls;}
 
 /* ── Config load ── */
-async async function aLoadConfig(){
+async function aLoadConfig(){
   try{const r=await fetch('./config.json?t='+Date.now(),{cache:'no-store'});if(r.ok)return await r.json();}catch(_){}
   try{const ls=localStorage.getItem('zaza_config');if(ls){const cfg=JSON.parse(ls);if(cfg.spotify){delete cfg.spotify.accessToken;delete cfg.spotify.refreshToken;delete cfg.spotify.clientId;delete cfg.spotify.clientSecret;}return cfg;}}catch(_){}
   if(window.__ZAZA_CONFIG__)return JSON.parse(JSON.stringify(window.__ZAZA_CONFIG__));
@@ -1436,6 +1445,7 @@ function aCollectAll(){
   cfg.profile.bio=g('#inp-bio');
   cfg.profile.location=g('#inp-location');
   cfg.profile.joinDate=g('#inp-joindate');
+  cfg.profile.avatar=normalizeAssetPath(g('#inp-avatar-url'));
   cfg.profile.statusMessages=g('#inp-status-msgs').split('\n').map(s=>s.trim()).filter(Boolean);
 
   const avEl=document.querySelector('.a-avail-opt[class*="sel-"]');
@@ -1450,8 +1460,10 @@ function aCollectAll(){
   cfg.theme.gradientAngle=parseInt(g('#inp-grad'))||115;
 
   cfg.background.videoUrl=normalizeAssetPath(g('#inp-bg-url'));
-  cfg.background.overlayOpacity=parseFloat(g('#inp-overlay'))||0.55;
-  cfg.background.blur=parseFloat(g('#inp-blur'))||0;
+  const overlayValue=parseFloat(g('#inp-overlay'));
+  cfg.background.overlayOpacity=Number.isFinite(overlayValue)?overlayValue:0.55;
+  const blurValue=parseFloat(g('#inp-blur'));
+  cfg.background.blur=Number.isFinite(blurValue)?blurValue:0;
 
   const csEl=document.querySelector('.a-cursor-opt.active');
   if(csEl?.dataset?.v){if(!cfg.cursor)cfg.cursor={};cfg.cursor.style=csEl.dataset.v;}
@@ -1465,10 +1477,12 @@ function aCollectAll(){
   const tc=g('#inp-trail-color');cfg.cursor.trail.color=tc||'';
 
   cfg.music.enabled=gc('#tog-music');
-  cfg.music.defaultVolume=parseFloat(g('#inp-vol'))||0.5;
+  const volumeValue=parseFloat(g('#inp-vol'));
+  cfg.music.defaultVolume=Number.isFinite(volumeValue)?volumeValue:0.5;
 
   cfg.stats.showVisitorCount=gc('#tog-visitors');
-  cfg.stats.visitorCount=parseInt(g('#inp-visitor-count'))||1;
+  const visitorValue=parseInt(g('#inp-visitor-count'),10);
+  cfg.stats.visitorCount=Number.isFinite(visitorValue)?Math.max(0,visitorValue):1;
   cfg.stats.showMemberSince=gc('#tog-since');
 
   cfg.seo.title=g('#inp-seo-title');
@@ -1621,7 +1635,7 @@ function bindFileUploads(){
       if(!AS.config.music)AS.config.music={tracks:[]};
       if(!AS.config.music.tracks)AS.config.music.tracks=[];
       const track={id:1,title:ti?.value||_pendingMusic.name.replace(/\.[^.]+$/,''),artist:ar?.value||'zaza',src:path,cover:''};
-      AS.config.music.tracks=[track]; // replace, not append
+      AS.config.music.tracks.push(track);
       aRenderTracks(AS.config.music.tracks);markDirty();
       aToast('Track uploaded and added!','success');
       const pend=$('#a-music-pending');if(pend)pend.style.display='none';
@@ -1667,14 +1681,17 @@ function bindFileUploads(){
 function aBugCheck(){
   const cfg=AS.config;if(!cfg){aToast('No config','error');return;}
   const fixes=[];
+  if(!cfg.profile||typeof cfg.profile!=='object'||Array.isArray(cfg.profile)){cfg.profile={};fixes.push('profile');}
+  if(!cfg.theme||typeof cfg.theme!=='object'||Array.isArray(cfg.theme)){cfg.theme={};fixes.push('theme');}
+  if(!cfg.background||typeof cfg.background!=='object'||Array.isArray(cfg.background)){cfg.background={};fixes.push('background');}
+  if(!cfg.cursor||typeof cfg.cursor!=='object'||Array.isArray(cfg.cursor)){cfg.cursor={enabled:true,style:'dot'};fixes.push('cursor');}
+  if(!cfg.music||typeof cfg.music!=='object'||Array.isArray(cfg.music)){cfg.music={};fixes.push('music');}
+  if(!cfg.seo||typeof cfg.seo!=='object'||Array.isArray(cfg.seo)){cfg.seo={};fixes.push('seo');}
   if(!Array.isArray(cfg.socials)){cfg.socials=[];fixes.push('socials');}
   if(!Array.isArray(cfg.badges)){cfg.badges=[];fixes.push('badges');}
-  if(!Array.isArray(cfg.seo?.titleCycle)){if(cfg.seo)cfg.seo.titleCycle=[];fixes.push('titleCycle');}
-  if(!Array.isArray(cfg.music?.tracks)){if(cfg.music)cfg.music.tracks=[];fixes.push('tracks');}
-  if(!Array.isArray(cfg.profile?.statusMessages)){if(cfg.profile)cfg.profile.statusMessages=[];fixes.push('statusMessages');}
-  if(!cfg.theme){cfg.theme={};fixes.push('theme');}
-  if(!cfg.background){cfg.background={};fixes.push('background');}
-  if(!cfg.cursor){cfg.cursor={enabled:true,style:'dot'};fixes.push('cursor');}
+  if(!Array.isArray(cfg.seo.titleCycle)){cfg.seo.titleCycle=[];fixes.push('titleCycle');}
+  if(!Array.isArray(cfg.music.tracks)){cfg.music.tracks=[];fixes.push('tracks');}
+  if(!Array.isArray(cfg.profile.statusMessages)){cfg.profile.statusMessages=[];fixes.push('statusMessages');}
   if(typeof cfg.background.overlayOpacity!=='number'){cfg.background.overlayOpacity=0.55;fixes.push('overlayOpacity');}
   if(typeof cfg.background.blur!=='number'){cfg.background.blur=0;fixes.push('blur');}
   if(typeof cfg.theme.particleCount!=='number'){cfg.theme.particleCount=80;fixes.push('particleCount');}
@@ -1879,7 +1896,7 @@ function aInit(){
     try{
       await _configReady;
       // Authenticate via Cloudflare Worker — no password hash in browser
-      const resp=await fetch(WORKER_URL+'/login',{
+      const resp=await workerFetch('/login',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({password:pass})
@@ -1912,7 +1929,8 @@ function aInit(){
         if(errEl){errEl.textContent='Error: '+(data.error||'Could not connect to auth server.');errEl.classList.add('show');}
       }
     }catch(err){
-      if(errEl){errEl.textContent='Auth error — try again.';errEl.classList.add('show');}
+      console.error('Login request failed:',err);
+      if(errEl){errEl.textContent=err.name==='AbortError'?'Login timed out — try again.':'Could not reach the login server. Check your connection and try again.';errEl.classList.add('show');}
     }finally{if(btn){btn.textContent='Enter Panel';btn.disabled=false;}}
   });
 
@@ -2108,8 +2126,9 @@ window.markDirty = function() {
 // Patch aSave to snapshot before saving
 const _origASave = window.aSave;
 window.aSave = async function() {
-  if (AS.config) hSnapshot(AS.config, 'Save All');
+  const wasDirty = !!AS.dirty;
   if (typeof _origASave === 'function') await _origASave();
+  if (wasDirty && !AS.dirty && AS.config) hSnapshot(AS.config, 'Save All');
   _lastSaved = AS.config ? JSON.parse(JSON.stringify(AS.config)) : null;
   // Hide diff overlay and button after save
   const ov = document.getElementById('a-diff-overlay');

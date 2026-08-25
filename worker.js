@@ -21,13 +21,15 @@ function corsHeaders(origin, env) {
   // Keep the production site working even if ADMIN_ORIGIN was not configured;
   // deployments should still set ADMIN_ORIGIN explicitly for custom domains.
   const allowed = env?.ADMIN_ORIGIN || 'https://zad3.online';
+  const allowedOrigins = new Set([allowed, 'https://zad3.online', 'https://www.zad3.online']);
   const headers = {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token',
     'Access-Control-Max-Age': '600',
     'Vary': 'Origin',
   };
-  if (origin && allowed && origin === allowed) headers['Access-Control-Allow-Origin'] = origin;
+  if (origin && allowedOrigins.has(origin)) headers['Access-Control-Allow-Origin'] = origin;
+  else if (!origin) headers['Access-Control-Allow-Origin'] = allowed;
   return headers;
 }
 
@@ -238,7 +240,8 @@ export default {
     const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
     const origin = request.headers.get('Origin') || '';
     const corsH = corsHeaders(origin, env);
-    if (env.ADMIN_ORIGIN && origin !== env.ADMIN_ORIGIN) return new Response('Forbidden', { status:403, headers:corsH });
+    const allowedRequestOrigins = new Set([env.ADMIN_ORIGIN || 'https://zad3.online', 'https://zad3.online', 'https://www.zad3.online']);
+    if (origin && !allowedRequestOrigins.has(origin)) return new Response('Forbidden', { status:403, headers:corsH });
     if (request.method === 'OPTIONS') return new Response(null, { status:204, headers:corsH });
     if (request.method !== 'POST') return new Response('Method not allowed', { status:405, headers:corsH });
     const path = new URL(request.url).pathname;
