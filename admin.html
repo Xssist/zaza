@@ -621,6 +621,7 @@ input[type="color"]{opacity:0;width:0;height:0;position:absolute;}
       <div class="a-row"><label>Member Since</label><input type="text" id="inp-joindate" class="a-input" placeholder="2024"/></div>
     </div>
     <div class="a-row"><label>Bio</label><textarea id="inp-bio" class="a-textarea"></textarea></div>
+    <div class="a-row"><label for="inp-about-extra">About section — second paragraph</label><textarea id="inp-about-extra" class="a-textarea" placeholder="When I'm not coding..."></textarea></div>
   </div>
 
   <div class="a-card">
@@ -1337,6 +1338,7 @@ function aPopulate(cfg){
   set('#inp-username',cfg.profile?.username||'');
   set('#inp-displayname',cfg.profile?.displayName||'');
   set('#inp-bio',cfg.profile?.bio||'');
+  set('#inp-about-extra',cfg.profile?.aboutExtra||'');
   set('#inp-location',cfg.profile?.location||'');
   set('#inp-joindate',cfg.profile?.joinDate||'');
   set('#inp-status-msgs',(cfg.profile?.statusMessages||[]).join('\n'));
@@ -1451,6 +1453,7 @@ function aCollectAll(){
   cfg.profile.username=g('#inp-username');
   cfg.profile.displayName=g('#inp-displayname');
   cfg.profile.bio=g('#inp-bio');
+  cfg.profile.aboutExtra=g('#inp-about-extra');
   cfg.profile.location=g('#inp-location');
   cfg.profile.joinDate=g('#inp-joindate');
   cfg.profile.avatar=normalizeAssetPath(g('#inp-avatar-url'));

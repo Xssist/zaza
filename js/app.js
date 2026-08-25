@@ -622,9 +622,11 @@ function renderProfile() {
   const unEl = $('#profile-username');
   if (unEl) unEl.textContent = p.displayName || p.username || 'zaza';
 
-  // Bio
+  // Bio and the editable second About paragraph
   const bioEl = $('#profile-bio');
   if (bioEl) bioEl.textContent = p.bio || '';
+  const aboutExtraEl = $('#profile-about-extra');
+  if (aboutExtraEl) aboutExtraEl.textContent = p.aboutExtra || "When I'm not coding, I'm usually working on something new or learning something I haven't touched before.";
 
   // Avatar
   const wrap = $('#avatar-wrap');
