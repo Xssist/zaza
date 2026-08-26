@@ -2987,16 +2987,17 @@
         con.appendChild(d);
       });
       con.querySelectorAll('[data-friend-field]').forEach(el => el.addEventListener('input', () => { AS.config.friends[+el.dataset.index][el.dataset.friendField] = el.value.trim(); markDirty(); if (el.dataset.friendField === 'image') { const im = $('#a-friend-preview-' + el.dataset.index); if (im) { im.src = el.value.trim(); im.style.display = el.value.trim() ? 'block' : 'none'; }}}));
-      con.onclick = ev => {
-        const button = ev.target.closest('[data-friend-remove]');
-        if (!button || !con.contains(button)) return;
-        ev.preventDefault();
-        const index = Number(button.getAttribute('data-friend-remove'));
-        if (!Number.isInteger(index) || index < 0 || index >= AS.config.friends.length) return;
-        AS.config.friends.splice(index, 1);
-        aRenderFriends(AS.config.friends);
-        markDirty();
-      };
+      con.querySelectorAll('[data-friend-remove]').forEach(button => {
+        button.addEventListener('click', ev => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const index = Number(button.getAttribute('data-friend-remove'));
+          if (!Number.isInteger(index) || index < 0 || index >= AS.config.friends.length) return;
+          AS.config.friends.splice(index, 1);
+          aRenderFriends(AS.config.friends);
+          markDirty();
+        });
+      });
       con.querySelectorAll('[data-friend-file]').forEach(el => el.addEventListener('change', async ev => {
         const file = ev.target.files?.[0], i = +el.dataset.friendFile; if (!file) return;
         const preview = $('#a-friend-preview-' + i);
