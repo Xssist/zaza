@@ -834,8 +834,10 @@ function renderSocials() {
 
       const labelEl = document.createElement('span');
       const handle = s.username || s.label || 'Link';
-      const displayHandle = handle.startsWith('@') ? handle : `@${handle}`;
-      const platform = (s.label || 'Contact').charAt(0).toUpperCase() + (s.label || 'Contact').slice(1);
+      const platformName = s.label || 'Contact';
+      const isEmail = (s.id || '').toLowerCase() === 'email' || platformName.toLowerCase() === 'email';
+      const displayHandle = isEmail ? handle.replace(/^@/, '') : (handle.startsWith('@') ? handle : `@${handle}`);
+      const platform = platformName.charAt(0).toUpperCase() + platformName.slice(1);
       labelEl.textContent = `${platform} · ${displayHandle}`;
       srLeft.appendChild(labelEl);
       div.appendChild(srLeft);
