@@ -159,14 +159,29 @@ function _defaultConfig() {
 /* ══════════════════════════════════════════
    2. THEME  — apply CSS variables
 ══════════════════════════════════════════ */
+function applySeo() {
+  const seo = S.cfg.seo || {};
+  const title = seo.title || '';
+  if (title) document.title = title;
+  const description = document.querySelector('meta[name="description"]');
+  if (description && seo.description) description.content = seo.description;
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle && title) ogTitle.content = title;
+  const ogDescription = document.querySelector('meta[property="og:description"]');
+  if (ogDescription && seo.description) ogDescription.content = seo.description;
+  const ogImage = document.querySelector('meta[property="og:image"]');
+  if (ogImage && seo.ogImage) ogImage.content = normalizeAssetPath(seo.ogImage) || seo.ogImage;
+}
+
 function applyTheme() {
+  applySeo();
   const t = S.cfg.theme || {};
   const root = document.documentElement;
   root.style.setProperty('--accent',  t.accentColor || '#a855f7');
   root.style.setProperty('--accent2', t.accentColorSecondary || '#ec4899');
   root.style.setProperty('--accent-glow', hexAlpha(t.accentColor || '#a855f7', 0.35));
   const mt = $('meta[name="theme-color"]');
-  if (mt) mt.content = t.accentColor || '#a855f7';
+  if (mt) mt.content = S.cfg.seo?.themeColor || t.accentColor || '#a855f7';
 
   // Font family
   const fontMap = { 'Space Grotesk':'font-space', 'JetBrains Mono':'font-mono' };
@@ -1523,6 +1538,7 @@ async function init() {
   initMusic();
    initEditorialReveals();
   renderProfile();
+  initSpringInteractions();
   initSpotify();
   initKeys();
   initThemeFab();
@@ -2451,6 +2467,12 @@ function renderProjects() {
     if (image) { const img = document.createElement('img'); img.src = image; img.alt = `${project.name || 'Project'} preview`; media.appendChild(img); } else { const placeholder = document.createElement('div'); placeholder.className = 'project-placeholder'; placeholder.textContent = 'Preview'; media.appendChild(placeholder); }
     article.append(copy, media); con.appendChild(article);
   });
+}
+
+function initSpringInteractions() {
+  if (!window.ZazaMotion) return;
+  ZazaMotion.bind('button, .contact-link, .project-link, .badge, .scroll-cue, .theme-fab, .music-btn-mini', { preset: 'snappy' });
+  ZazaMotion.reveal('.reveal');
 }
 
 function initEditorialReveals() {

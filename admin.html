@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     crossorigin="anonymous" />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/motion.js"></script>
   <style>
     /* Strict monochrome admin palette */
     .a-admin,
@@ -1776,6 +1777,24 @@
       background-color: transparent !important;
     }
   </style>
+  <style>
+    /* Keep admin UI dark; prevent palette overrides from rendering white blocks. */
+    .a-admin .a-login-logo,
+    .a-admin .a-topbar-brand-name,
+    .a-admin .a-section-title {
+      background: none !important;
+      color: #f0f0f5 !important;
+      -webkit-text-fill-color: #f0f0f5 !important;
+    }
+    .a-admin [style*="#a855f7"],
+    .a-admin [style*="#ec4899"],
+    .a-admin [style*="168,85,247"],
+    .a-admin [style*="168, 85, 247"],
+    .a-admin [style*="236,72,153"],
+    .a-admin [style*="236, 72, 153"] {
+      background-color: transparent !important;
+    }
+  </style>
 </head>
 
 <body class="a-admin">
@@ -2253,6 +2272,9 @@
                 style="min-height:60px;"></textarea></div>
             <div class="a-row"><label>OG Image URL or Path</label><input type="text" id="inp-og-image"
                 class="a-input" /></div>
+            <div class="a-row"><label>Browser Theme Color</label><input type="text" id="inp-seo-theme-color"
+                class="a-input" placeholder="#a855f7" /></div>
+            <div class="a-info"><i class="fas fa-circle-info"></i> These settings update the browser title, search description, social preview title/description, preview image, and browser tab color.</div>
           </div>
         </section>
 
@@ -2767,6 +2789,7 @@
       set('#inp-seo-cycle', (cfg.seo?.titleCycle || []).join('\n'));
       set('#inp-seo-desc', cfg.seo?.description || '');
       set('#inp-og-image', normalizeAssetPath(cfg.seo?.ogImage || ''));
+      set('#inp-seo-theme-color', cfg.seo?.themeColor || cfg.theme?.accentColor || '#a855f7');
       set('#inp-session-timeout', cfg.admin?.sessionTimeout || 3600);
 
       // Spotify
@@ -2859,6 +2882,7 @@
       cfg.seo.titleCycle = g('#inp-seo-cycle').split('\n').map(s => s.trim()).filter(Boolean);
       cfg.seo.description = g('#inp-seo-desc');
       cfg.seo.ogImage = normalizeAssetPath(g('#inp-og-image'));
+      cfg.seo.themeColor = g('#inp-seo-theme-color') || cfg.theme?.accentColor || '#a855f7';
       cfg.admin.sessionTimeout = parseInt(g('#inp-session-timeout')) || 3600;
 
       if (!cfg.spotify) cfg.spotify = {};
@@ -3314,6 +3338,9 @@
         document.documentElement.style.setProperty('--accent', cfg?.theme?.accentColor || '#a855f7');
         document.documentElement.style.setProperty('--accent2', cfg?.theme?.accentColorSecondary || '#ec4899');
         if (sessOk()) aShowDashboard();
+        if (window.ZazaMotion) {
+          ZazaMotion.bind('.a-admin button, .a-social-item, .a-card, .a-nav-item, .a-btn, .a-btn-sm', { preset: 'snappy', hover: { scale: 1.015, y: -1 } });
+        }
       }).catch(err => console.error('Config load failed:', err));
     }
 
