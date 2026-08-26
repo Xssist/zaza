@@ -107,6 +107,15 @@
       "icon": "fab fa-telegram",
       "color": "#26A5E4",
       "enabled": false
+    },
+    {
+      "id": "email_1787731468450",
+      "label": "email",
+      "icon": "fas fa-envelope",
+      "color": "#ffffff",
+      "url": "#",
+      "username": "me@zad3.online",
+      "enabled": true
     }
   ],
   "stats": {
