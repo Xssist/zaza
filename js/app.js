@@ -9,6 +9,29 @@ const $$  = (s, ctx = document) => [...ctx.querySelectorAll(s)];
 const rand = (a, b) => Math.random() * (b - a) + a;
 const lerp = (a, b, t) => a + (b - a) * t;
 
+// Small lifecycle helpers keep background work paused when the page is hidden.
+function onPageVisible(callback) {
+  const run = () => { if (!document.hidden) callback(); };
+  document.addEventListener('visibilitychange', run, { passive: true });
+  return () => document.removeEventListener('visibilitychange', run);
+}
+
+function createVisibilityInterval(callback, delay) {
+  let timer = 0;
+  const schedule = () => {
+    if (!document.hidden) timer = window.setTimeout(() => { callback(); schedule(); }, delay);
+  };
+  schedule();
+  const stop = () => { clearTimeout(timer); timer = 0; };
+  const handleVisibility = () => { if (document.hidden) stop(); else start(); };
+  const start = () => { stop(); schedule(); };
+  document.addEventListener('visibilitychange', handleVisibility, { passive: true });
+  return () => {
+    stop();
+    document.removeEventListener('visibilitychange', handleVisibility);
+  };
+}
+
 /** Turn local Windows/file paths into web-relative paths for GitHub Pages */
 function normalizeAssetPath(path) {
   if (!path || typeof path !== 'string') return '';
@@ -81,7 +104,10 @@ function _ensureConfig(cfg) {
 async function loadConfig() {
   // 1. HTTP fetch (works on GitHub Pages) — most trusted source
   try {
-    const r = await fetch('./config.json?t=' + Date.now());
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const r = await fetch('./config.json', { signal: controller.signal, cache: 'no-cache' });
+    clearTimeout(timeout);
     if (r.ok) {
       const cfg = await r.json();
       if (_validateConfig(cfg)) { S.cfg = _ensureConfig(cfg); return; }
@@ -666,7 +692,8 @@ function renderProfile() {
   const hour = new Date().getHours();
   if (greeting) greeting.textContent = `${hour >= 5 && hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : hour < 23 ? 'Good evening' : "You're up late"}, visitor.`;
   const updateClock = () => { const now = new Date(); const clock = $('#hero-time'); if (clock) clock.textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false}); };
-  updateClock(); setInterval(updateClock, 30000);
+  updateClock();
+  createVisibilityInterval(updateClock, 30000);
   renderProjects();
 
   // Display name
@@ -848,9 +875,9 @@ function initSpotify() {
     }
   }
 
-  // Poll immediately then every 15s — store handle to prevent leak
+  // Poll immediately, then only while the tab is visible.
   poll();
-  S.spotifyInterval = setInterval(poll, 15000);
+  S.spotifyInterval = createVisibilityInterval(poll, 15000);
 
   // Clean up on page unload
   window.addEventListener('beforeunload', () => {
@@ -1574,7 +1601,8 @@ async function init() {
   initWeather();
   initAnnouncement();
   initMusic();
-   initEditorialReveals();
+  initEditorialReveals();
+  initSmoothScrollEffects();
   renderProfile();
   initSpringInteractions();
   initSpotify();
@@ -2496,4 +2524,25 @@ function initEditorialReveals() {
   if (!('IntersectionObserver' in window)) { items.forEach(el => el.classList.add('in-view')); return; }
   const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('in-view'); observer.unobserve(entry.target); } }), {threshold:.12});
   items.forEach(item => observer.observe(item));
+}
+
+function initSmoothScrollEffects() {
+  const sections = $$('.editorial-section');
+  if (!sections.length) return;
+  let frame = 0;
+  const update = () => {
+    frame = 0;
+    if (S.perf.hidden || S.prefersReduced) return;
+    const center = window.innerHeight * .52;
+    sections.forEach(section => {
+      const rect = section.getBoundingClientRect();
+      const distance = Math.abs(rect.top + rect.height * .5 - center);
+      const progress = Math.max(0, 1 - distance / (window.innerHeight * 1.35));
+      section.style.setProperty('--section-focus', progress.toFixed(3));
+    });
+  };
+  const requestUpdate = () => { if (!frame) frame = requestAnimationFrame(update); };
+  window.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('resize', requestUpdate, { passive: true });
+  requestUpdate();
 }

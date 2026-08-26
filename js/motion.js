@@ -13,8 +13,8 @@
     const p = typeof preset === 'object' ? preset : presets[preset] || presets.default;
     const from = el._springValue || { x: 0, y: 0, scale: 1, rotate: 0 };
     const goal = { ...from, ...target };
-    if (reduced()) { el.style.transform = `translate3d(${goal.x}px,${goal.y}px,0) scale(${goal.scale}) rotate(${goal.rotate}deg)`; el._springValue = goal; done?.(); return; }
-    cancelAnimationFrame(el._springFrame);
+    if (el._springFrame) cancelAnimationFrame(el._springFrame);
+    if (reduced()) { el.style.transform = `translate3d(${goal.x}px,${goal.y}px,0) scale(${goal.scale}) rotate(${goal.rotate}deg)`; el._springValue = goal; el.style.willChange = 'auto'; done?.(); return; }
     let value = { ...from }, velocity = { x: 0, y: 0, scale: 0, rotate: 0 }, last = performance.now();
     const tick = now => {
       const dt = Math.min((now - last) / 1000, 0.032); last = now;
@@ -27,7 +27,10 @@
       }
       el.style.transform = `translate3d(${value.x}px,${value.y}px,0) scale(${value.scale}) rotate(${value.rotate}deg)`;
       el._springValue = value;
-      if (settled) { el.style.transform = `translate3d(${goal.x}px,${goal.y}px,0) scale(${goal.scale}) rotate(${goal.rotate}deg)`; el._springValue = goal; done?.(); return; }
+      if (settled) {
+        el.style.transform = `translate3d(${goal.x}px,${goal.y}px,0) scale(${goal.scale}) rotate(${goal.rotate}deg)`;
+        el._springValue = goal; el._springFrame = 0; el.style.willChange = 'auto'; done?.(); return;
+      }
       el._springFrame = requestAnimationFrame(tick);
     };
     el._springFrame = requestAnimationFrame(tick);
@@ -43,12 +46,15 @@
       el.addEventListener('pointerleave', () => spring(el, rest, options.preset || 'smooth'));
       el.addEventListener('pointerdown', () => spring(el, { ...hover, scale: .97 }, 'snappy'));
       el.addEventListener('pointerup', () => spring(el, hover, 'snappy'));
+      el.addEventListener('pointercancel', () => spring(el, rest, options.preset || 'smooth'));
     });
   }
   function reveal(selector = '.reveal') {
     document.querySelectorAll(selector).forEach((el, i) => {
       el.classList.add('spring-reveal');
+      el.addEventListener('transitionend', () => el.classList.add('spring-revealed'), { once: true });
       el.style.setProperty('--spring-delay', `${Math.min(i * 70, 420)}ms`);
+      el.style.setProperty('--reveal-index', i);
     });
   }
   root.ZazaMotion = { presets, spring, bind, reveal };
