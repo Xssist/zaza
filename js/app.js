@@ -825,8 +825,18 @@ function renderSocials() {
 
       const srLeft = document.createElement('span');
       srLeft.className = 'sr-left';
+
+      const iconEl = document.createElement('i');
+      iconEl.className = `sr-icon ${s.icon || 'fas fa-link'}`;
+      iconEl.style.color = s.color || '';
+      iconEl.setAttribute('aria-hidden', 'true');
+      srLeft.appendChild(iconEl);
+
       const labelEl = document.createElement('span');
-      labelEl.textContent = `${s.label || 'Link'} ↗`;
+      const handle = s.username || s.label || 'Link';
+      const displayHandle = handle.startsWith('@') ? handle : `@${handle}`;
+      const platform = (s.label || 'Contact').charAt(0).toUpperCase() + (s.label || 'Contact').slice(1);
+      labelEl.textContent = `${platform} · ${displayHandle}`;
       srLeft.appendChild(labelEl);
       div.appendChild(srLeft);
 

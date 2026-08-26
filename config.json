@@ -57,7 +57,7 @@
     {
       "id": "discord",
       "label": "discord",
-      "username": "@heavenlygifted",
+      "username": "heavenlygifted",
       "url": "https://discord.com/users/",
       "icon": "fab fa-discord",
       "color": "#5865F2",
@@ -75,7 +75,7 @@
     {
       "id": "instagram",
       "label": "instagram",
-      "username": "@z4de.1",
+      "username": "z4de.1",
       "url": "https://instagram.com/z4de.1",
       "icon": "fab fa-instagram",
       "color": "#E1306C",
