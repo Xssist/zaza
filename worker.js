@@ -169,7 +169,8 @@ async function handleUpload(req, env, origin) {
   if (!(await validSession(sToken, env))) return res({ ok:false, error:'Unauthorized' }, 401, origin, env);
   let body; try { body = await readJson(req, 140 * 1024 * 1024); } catch { return res({ ok:false, error:'Bad request' }, 400, origin, env); }
   const ALLOWED = ['assets/images/avatar.png','assets/images/background.mp4','assets/music/song.mp3'];
-  if (!body || typeof body !== 'object' || !ALLOWED.includes(body.path) || Object.keys(body).some(k => !['path','content'].includes(k))) return res({ ok:false, error:'Invalid upload' }, 400, origin, env);
+  const isFriendImage = typeof body?.path === 'string' && /^assets\/images\/friend-[0-9]+\.(?:png|jpe?g|gif|webp)$/i.test(body.path);
+  if (!body || typeof body !== 'object' || (!ALLOWED.includes(body.path) && !isFriendImage) || Object.keys(body).some(k => !['path','content'].includes(k))) return res({ ok:false, error:'Invalid upload' }, 400, origin, env);
   if (typeof body.content !== 'string' || !body.content || body.content.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(body.content)) return res({ ok:false, error:'Invalid file encoding' }, 400, origin, env);
   const maxBase64Length = Math.ceil(100 * 1024 * 1024 * 4 / 3);
   if (body.content.length > maxBase64Length) return res({ ok:false, error:'File exceeds the 100MB limit' }, 413, origin, env);
@@ -221,7 +222,7 @@ async function handleTest(req, env, origin) {
     const d = await r.json();
     return res({ ok:true, repo:d.full_name }, 200, origin, env);
   } catch (e) {
-    return res({ ok:false, error:'Network error: '+e.message }, 502);
+    return res({ ok:false, error:'Network error: '+e.message }, 502, origin, env);
   }
 }
 

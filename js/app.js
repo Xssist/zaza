@@ -881,7 +881,12 @@ function renderFriends() {
     img.width = 88;
     img.height = 31;
     img.loading = 'lazy';
+    img.onerror = () => { link.style.display = 'none'; };
     link.appendChild(img);
+    const name = document.createElement('span');
+    name.className = 'friend-name';
+    name.textContent = f.name || 'Friend';
+    link.appendChild(name);
     con.appendChild(link);
   });
 }

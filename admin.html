@@ -2982,15 +2982,27 @@
       con.innerHTML = '';
       if (!friends.length) { con.innerHTML = '<p style="color:rgba(240,240,245,.3);font-size:.76rem;text-align:center;padding:10px 0;">No friends added yet.</p>'; return; }
       friends.forEach((f, i) => {
-        const d = document.createElement('div'); d.className = 'a-social-item'; d.style.alignItems = 'flex-start';
-        d.innerHTML = '<div style="width:88px;height:31px;flex-shrink:0;border:1px solid rgba(255,255,255,.14);display:grid;place-items:center;overflow:hidden;"><img id="a-friend-preview-' + i + '" src="' + esc(f.image || '') + '" alt="" style="max-width:88px;width:88px;height:31px;object-fit:contain;' + (f.image ? '' : 'display:none;') + '"></div><div style="flex:1;min-width:0;display:grid;gap:6px;"><input class="a-input" style="padding:6px 9px;font-size:.72rem;" placeholder="Friend name" value="' + esc(f.name || '') + '" data-friend-field="name" data-index="' + i + '"><input class="a-input" style="padding:6px 9px;font-size:.72rem;" placeholder="Redirect URL (https://...)" value="' + esc(f.url || '') + '" data-friend-field="url" data-index="' + i + '"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;"><label class="a-btn-sm secondary" style="padding:5px 9px;">Upload 88×31<input type="file" accept="image/*" data-friend-file="' + i + '" style="display:none;"></label><input class="a-input" style="padding:5px 9px;font-size:.68rem;flex:1;min-width:180px;" placeholder="Or paste image path / URL" value="' + esc(f.image || '') + '" data-friend-field="image" data-index="' + i + '"></div></div><button class="a-btn-sm danger" style="padding:5px 10px;font-size:.7rem;" data-friend-remove="' + i + '">×</button>';
+        const d = document.createElement('div'); d.className = 'a-social-item'; d.style.alignItems = 'flex-start'; d.style.flexWrap = 'wrap';
+        d.innerHTML = '<div style="width:88px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:5px;"><div style="width:88px;height:31px;border:1px solid rgba(255,255,255,.14);display:grid;place-items:center;overflow:hidden;"><img id="a-friend-preview-' + i + '" src="' + esc(normalizeAssetPath(f.image || '') || f.image || '') + '" alt="" style="max-width:88px;width:88px;height:31px;object-fit:contain;' + (f.image ? '' : 'display:none;') + '" onerror="this.style.display=\'none\';"></div><span style="width:110px;text-align:center;font-size:.65rem;color:rgba(240,240,245,.55);word-break:break-word;">' + esc(f.name || 'Friend') + '</span></div><div style="flex:1;min-width:0;display:grid;gap:6px;"><input class="a-input" style="padding:6px 9px;font-size:.72rem;" placeholder="Friend name" value="' + esc(f.name || '') + '" data-friend-field="name" data-index="' + i + '"><input class="a-input" style="padding:6px 9px;font-size:.72rem;" placeholder="Redirect URL (https://...)" value="' + esc(f.url || '') + '" data-friend-field="url" data-index="' + i + '"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;"><label class="a-btn-sm secondary" style="padding:5px 9px;">Upload 88×31<input type="file" accept="image/*" data-friend-file="' + i + '" style="display:none;"></label><input class="a-input" style="padding:5px 9px;font-size:.68rem;flex:1;min-width:180px;" placeholder="Or paste image path / URL" value="' + esc(f.image || '') + '" data-friend-field="image" data-index="' + i + '"></div></div><button type="button" class="a-btn-sm danger" style="padding:5px 10px;font-size:.7rem;" data-friend-remove="' + i + '" aria-label="Remove friend" title="Remove friend"><i class="fas fa-trash"></i></button>';
         con.appendChild(d);
       });
       con.querySelectorAll('[data-friend-field]').forEach(el => el.addEventListener('input', () => { AS.config.friends[+el.dataset.index][el.dataset.friendField] = el.value.trim(); markDirty(); if (el.dataset.friendField === 'image') { const im = $('#a-friend-preview-' + el.dataset.index); if (im) { im.src = el.value.trim(); im.style.display = el.value.trim() ? 'block' : 'none'; }}}));
-      con.querySelectorAll('[data-friend-remove]').forEach(el => el.addEventListener('click', () => { AS.config.friends.splice(+el.dataset.friendRemove, 1); aRenderFriends(AS.config.friends); markDirty(); }));
+      con.onclick = ev => {
+        const button = ev.target.closest('[data-friend-remove]');
+        if (!button || !con.contains(button)) return;
+        ev.preventDefault();
+        const index = Number(button.getAttribute('data-friend-remove'));
+        if (!Number.isInteger(index) || index < 0 || index >= AS.config.friends.length) return;
+        AS.config.friends.splice(index, 1);
+        aRenderFriends(AS.config.friends);
+        markDirty();
+      };
       con.querySelectorAll('[data-friend-file]').forEach(el => el.addEventListener('change', async ev => {
         const file = ev.target.files?.[0], i = +el.dataset.friendFile; if (!file) return;
-        try { const path = 'assets/images/friend-' + Date.now() + '.png'; await ghUploadFile(path, file); AS.config.friends[i].image = path; aRenderFriends(AS.config.friends); markDirty(); aToast('Friend button uploaded!', 'success'); } catch (err) { aToast('Upload failed: ' + err.message, 'error'); }
+        const preview = $('#a-friend-preview-' + i);
+        const localPreview = URL.createObjectURL(file);
+        if (preview) { preview.src = localPreview; preview.style.display = 'block'; }
+        try { const ext = (file.name.match(/\.(png|jpe?g|gif|webp)$/i) || [])[1] || 'png'; const path = 'assets/images/friend-' + Date.now() + '.' + ext.toLowerCase(); await ghUploadFile(path, file); AS.config.friends[i].image = path; if (preview) preview.src = path + '?t=' + Date.now(); URL.revokeObjectURL(localPreview); markDirty(); aToast('Friend button uploaded!', 'success'); } catch (err) { URL.revokeObjectURL(localPreview); aToast('Upload failed: ' + err.message, 'error'); }
         ev.target.value = '';
       }));
     }
