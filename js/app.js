@@ -75,6 +75,7 @@ function _ensureConfig(cfg) {
   result.cursor.trail = { ...defaults.cursor.trail, ...(cfg?.cursor?.trail || {}) };
   result.music.tracks = Array.isArray(cfg?.music?.tracks) ? cfg.music.tracks : [];
   result.socials = Array.isArray(cfg?.socials) ? cfg.socials : [];
+  result.friends = Array.isArray(cfg?.friends) ? cfg.friends : [];
   return result;
 }
 
@@ -166,6 +167,7 @@ function _defaultConfig() {
     background: { videoUrl:'assets/images/background.mp4', overlayOpacity:0.35 },
     music:   { enabled:true, defaultVolume:0.5, tracks:[] },
     socials: [],
+    friends: [],
     cursor:  { enabled:true, style:'dot', trail:{ style:'dots', length:12, fadeSpeed:300, color:'' } },
     seo:     { title:'zaza', titleCycle:['zaza — personal'], description:'' },
   };
@@ -720,7 +722,8 @@ function renderProfile() {
   // Badges
   renderBadges();
 
-  // Socials
+  // Friends and socials
+  renderFriends();
   renderSocials();
 
   // Typewriter
@@ -855,6 +858,31 @@ function initSpotify() {
   // Clean up on page unload
   window.addEventListener('beforeunload', () => {
     if (S.spotifyInterval) clearInterval(S.spotifyInterval);
+  });
+}
+
+function renderFriends() {
+  const section = $('#friends');
+  const con = $('#friends-container');
+  if (!section || !con) return;
+  const friends = (S.cfg.friends || []).filter(f => f.enabled !== false && f.image && safeExternalUrl(f.url));
+  section.style.display = friends.length ? '' : 'none';
+  con.innerHTML = '';
+  friends.forEach(f => {
+    const link = document.createElement('a');
+    link.href = safeExternalUrl(f.url);
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.className = 'friend-link';
+    link.setAttribute('aria-label', `Visit ${f.name || 'friend'}`);
+    const img = document.createElement('img');
+    img.src = normalizeAssetPath(f.image) || f.image;
+    img.alt = f.name || 'Friend site';
+    img.width = 88;
+    img.height = 31;
+    img.loading = 'lazy';
+    link.appendChild(img);
+    con.appendChild(link);
   });
 }
 

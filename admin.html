@@ -1849,6 +1849,7 @@
         <button class="a-nav-item active" data-sec="profile"><i class="fas fa-user-pen"></i> About</button>
         <button class="a-nav-item" data-sec="socials"><i class="fas fa-arrow-up-right-from-square"></i> Contact
           links</button>
+        <button class="a-nav-item" data-sec="friends"><i class="fas fa-id-badge"></i> Friends</button>
         <button class="a-nav-item" data-sec="music"><i class="fas fa-music"></i> Music</button>
         <span class="a-nav-lbl">Atmosphere</span>
         <button class="a-nav-item" data-sec="background"><i class="fas fa-image"></i> Background</button>
@@ -1956,6 +1957,20 @@
             <div style="margin-top:12px;">
               <button class="a-btn-sm" id="a-add-social-btn"><i class="fas fa-plus"></i> Add Custom Platform</button>
             </div>
+          </div>
+        </section>
+
+        <!-- ═══ FRIENDS ═══ -->
+        <section class="a-section" id="sec-friends">
+          <div class="a-section-head">
+            <div class="a-section-title">Friends</div>
+            <div class="a-section-desc">Add 88×31 buttons that link visitors to your friends' websites.</div>
+          </div>
+          <div class="a-card">
+            <div class="a-card-title"><i class="fas fa-id-badge"></i> Friend buttons</div>
+            <div class="a-info"><i class="fas fa-circle-info"></i> Upload a button image or paste its path. Images are displayed at exactly 88×31 pixels.</div>
+            <div id="a-friends-list"></div>
+            <button class="a-btn-sm" id="a-add-friend-btn"><i class="fas fa-plus"></i> Add Friend</button>
           </div>
         </section>
 
@@ -2780,6 +2795,7 @@
       aRenderTracks(cfg.music?.tracks || []);
 
       aRenderSocials(cfg.socials || []);
+      aRenderFriends(cfg.friends || []);
 
       chk('#tog-visitors', cfg.stats?.showVisitorCount ?? true);
       set('#inp-visitor-count', cfg.stats?.visitorCount || 1);
@@ -2826,6 +2842,7 @@
       cfg.stats ||= {};
       cfg.seo ||= {};
       cfg.admin ||= {};
+      if (!Array.isArray(cfg.friends)) cfg.friends = [];
       const g = id => $(id)?.value?.trim() || '';
       const gc = id => $(id)?.checked || false;
 
@@ -2958,6 +2975,25 @@
       if (!confirm('Remove track?')) return;
       AS.config.music.tracks.splice(i, 1); aRenderTracks(AS.config.music.tracks); markDirty();
     };
+
+    /* ── Render friends ── */
+    function aRenderFriends(friends) {
+      const con = $('#a-friends-list'); if (!con) return;
+      con.innerHTML = '';
+      if (!friends.length) { con.innerHTML = '<p style="color:rgba(240,240,245,.3);font-size:.76rem;text-align:center;padding:10px 0;">No friends added yet.</p>'; return; }
+      friends.forEach((f, i) => {
+        const d = document.createElement('div'); d.className = 'a-social-item'; d.style.alignItems = 'flex-start';
+        d.innerHTML = '<div style="width:88px;height:31px;flex-shrink:0;border:1px solid rgba(255,255,255,.14);display:grid;place-items:center;overflow:hidden;"><img id="a-friend-preview-' + i + '" src="' + esc(f.image || '') + '" alt="" style="max-width:88px;width:88px;height:31px;object-fit:contain;' + (f.image ? '' : 'display:none;') + '"></div><div style="flex:1;min-width:0;display:grid;gap:6px;"><input class="a-input" style="padding:6px 9px;font-size:.72rem;" placeholder="Friend name" value="' + esc(f.name || '') + '" data-friend-field="name" data-index="' + i + '"><input class="a-input" style="padding:6px 9px;font-size:.72rem;" placeholder="Redirect URL (https://...)" value="' + esc(f.url || '') + '" data-friend-field="url" data-index="' + i + '"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;"><label class="a-btn-sm secondary" style="padding:5px 9px;">Upload 88×31<input type="file" accept="image/*" data-friend-file="' + i + '" style="display:none;"></label><input class="a-input" style="padding:5px 9px;font-size:.68rem;flex:1;min-width:180px;" placeholder="Or paste image path / URL" value="' + esc(f.image || '') + '" data-friend-field="image" data-index="' + i + '"></div></div><button class="a-btn-sm danger" style="padding:5px 10px;font-size:.7rem;" data-friend-remove="' + i + '">×</button>';
+        con.appendChild(d);
+      });
+      con.querySelectorAll('[data-friend-field]').forEach(el => el.addEventListener('input', () => { AS.config.friends[+el.dataset.index][el.dataset.friendField] = el.value.trim(); markDirty(); if (el.dataset.friendField === 'image') { const im = $('#a-friend-preview-' + el.dataset.index); if (im) { im.src = el.value.trim(); im.style.display = el.value.trim() ? 'block' : 'none'; }}}));
+      con.querySelectorAll('[data-friend-remove]').forEach(el => el.addEventListener('click', () => { AS.config.friends.splice(+el.dataset.friendRemove, 1); aRenderFriends(AS.config.friends); markDirty(); }));
+      con.querySelectorAll('[data-friend-file]').forEach(el => el.addEventListener('change', async ev => {
+        const file = ev.target.files?.[0], i = +el.dataset.friendFile; if (!file) return;
+        try { const path = 'assets/images/friend-' + Date.now() + '.png'; await ghUploadFile(path, file); AS.config.friends[i].image = path; aRenderFriends(AS.config.friends); markDirty(); aToast('Friend button uploaded!', 'success'); } catch (err) { aToast('Upload failed: ' + err.message, 'error'); }
+        ev.target.value = '';
+      }));
+    }
 
     /* ── Render socials ── */
     function aRenderSocials(socials) {
@@ -3144,6 +3180,11 @@
         if (!AS.config.music.tracks) AS.config.music.tracks = [];
         AS.config.music.tracks.push({ id: Date.now(), title, artist, src: normalizeAssetPath(src), cover: '' });
         aRenderTracks(AS.config.music.tracks); markDirty();
+      });
+      $('#a-add-friend-btn')?.addEventListener('click', () => {
+        if (!Array.isArray(AS.config.friends)) AS.config.friends = [];
+        AS.config.friends.push({ id: 'friend_' + Date.now(), name: 'New friend', image: '', url: '', enabled: true });
+        aRenderFriends(AS.config.friends); markDirty();
       });
       $('#a-add-social-btn')?.addEventListener('click', () => {
         const label = prompt('Platform name:'); if (!label) return;
