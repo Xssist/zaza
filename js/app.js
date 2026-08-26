@@ -2112,9 +2112,6 @@ function initContextMenu() {
 
   /* ── Menu items definition ── */
   function buildItems() {
-    const musicLabel = S.musicPlaying ? 'Pause Music' : 'Play Music';
-    const musicIcon  = S.musicPlaying ? 'fa-pause' : 'fa-play';
-
     return [
       { label: 'Profile', icon: 'fa-user', section: true },
       {
@@ -2140,32 +2137,7 @@ function initContextMenu() {
         }
       },
       { sep: true },
-      { label: 'Music', icon: 'fa-music', section: true },
-      {
-        label: musicLabel,
-        icon: musicIcon,
-        kbd: 'Space',
-        action: () => { S.playPause?.(); }
-      },
-      {
-        label: 'Next Track',
-        icon: 'fa-forward-step',
-        kbd: 'Alt →',
-        action: () => { $('#next-btn')?.click(); }
-      },
-      {
-        label: 'Previous Track',
-        icon: 'fa-backward-step',
-        kbd: 'Alt ←',
-        action: () => { $('#prev-btn')?.click(); }
-      },
-      { sep: true },
       { label: 'Site', icon: 'fa-globe', section: true },
-      {
-        label: 'Change Theme',
-        icon: 'fa-palette',
-        action: () => { $('#theme-fab')?.click(); }
-      },
       {
         label: 'Admin Panel',
         icon: 'fa-screwdriver-wrench',
