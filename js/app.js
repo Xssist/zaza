@@ -44,7 +44,22 @@ const S = {
   prefersReduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   // Consolidated mousemove handlers
   _mouseMoveHandlers: [],
+  perf: { dpr: 1, quality: 1, hidden: document.hidden },
 };
+
+/* Rendering budget shared by visual subsystems. Hidden tabs stop visual loops;
+   quality changes only after sustained pressure to avoid oscillation. */
+const RenderBudget = {
+  slowFrames: 0,
+  fastFrames: 0,
+  update(ms) {
+    if (ms > 24) { this.slowFrames++; this.fastFrames = 0; }
+    else if (ms < 17) { this.fastFrames++; this.slowFrames = 0; }
+    if (this.slowFrames > 45) { S.perf.quality = Math.max(.55, S.perf.quality - .15); this.slowFrames = 0; }
+    if (this.fastFrames > 180) { S.perf.quality = Math.min(1, S.perf.quality + .1); this.fastFrames = 0; }
+  }
+};
+document.addEventListener('visibilitychange', () => { S.perf.hidden = document.hidden; });
 
 /* ══════════════════════════════════════════
    1. CONFIG LOADER
@@ -502,12 +517,18 @@ function initCursor() {
   });
 
   // Lerp follower
-  (function follow() {
-    S.folX = lerp(S.folX, S.curX, 0.12);
-    S.folY = lerp(S.folY, S.curY, 0.12);
-    if (fol) { fol.style.left = S.folX + 'px'; fol.style.top = S.folY + 'px'; }
-    requestAnimationFrame(follow);
-  })();
+  let followFrame;
+  (function follow(now) {
+    if (!S.perf.hidden) {
+      const step = Math.min(1, (now - (follow.last || now)) / 16.67);
+      follow.last = now;
+      S.folX = lerp(S.folX, S.curX, 1 - Math.pow(0.88, step));
+      S.folY = lerp(S.folY, S.curY, 1 - Math.pow(0.88, step));
+      if (fol) fol.style.transform = `translate3d(${S.folX}px,${S.folY}px,0)`;
+    }
+    followFrame = requestAnimationFrame(follow);
+  })(performance.now());
+  document.addEventListener('visibilitychange', () => { if (document.hidden) cancelAnimationFrame(followFrame); else followFrame = requestAnimationFrame(follow); });
 
   const style = S.cfg.cursor?.style || 'dot';
   document.body.classList.remove('cursor-crosshair','cursor-ring','cursor-emoji');
@@ -548,12 +569,21 @@ function initParticles() {
 
   // Reduce particle count on small screens to save battery
   const isMobile = window.matchMedia('(max-width: 480px)').matches;
-  const finalCount = isMobile ? Math.min(count, 40) : count;
+  const finalCount = Math.round((isMobile ? Math.min(count, 40) : count) * S.perf.quality);
 
   let W = 0, H = 0;
-  const resize = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
+  const resize = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    S.perf.dpr = dpr;
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
   resize();
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', resize, { passive: true });
+  cv.style.contain = 'strict';
+  cv.style.transform = 'translate3d(0,0,0)';
 
   class Dot {
     init(full) {
@@ -570,7 +600,8 @@ function initParticles() {
     }
     constructor() { this.init(true); }
     tick() {
-      this.x += this.vx; this.y += this.vy; this.life -= this.decay;
+      const step = this._step || 1;
+      this.x += this.vx * step; this.y += this.vy * step; this.life -= this.decay * step;
       if (this.life <= 0 || this.y < -5) this.init(false);
     }
     draw() {
@@ -585,7 +616,11 @@ function initParticles() {
   const dots = Array.from({ length: finalCount }, () => new Dot());
   const DIST_SQ = 90 * 90; // avoid Math.sqrt — compare squared distances
 
-  (function loop() {
+  let lastFrame = performance.now();
+  (function loop(now) {
+    if (S.perf.hidden) { requestAnimationFrame(loop); return; }
+    const frameStart = performance.now();
+    const delta = Math.min((now - lastFrame) / 16.67, 2); lastFrame = now;
     ctx.clearRect(0, 0, W, H);
 
     // Batch all connection lines into a single path + stroke call
@@ -609,11 +644,12 @@ function initParticles() {
     // Draw dots (no save/restore per dot — manage globalAlpha directly)
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;
-    dots.forEach(d => { d.tick(); d.draw(); });
+    dots.forEach(d => { d._step = delta; d.tick(); d.draw(); });
     ctx.globalAlpha = 1;
 
+    RenderBudget.update(performance.now() - frameStart);
     requestAnimationFrame(loop);
-  })();
+  })(performance.now());
 }
 
 /* ══════════════════════════════════════════
@@ -1382,6 +1418,8 @@ function initBgPattern() {
     let t = 0;
     (function draw() {
       requestAnimationFrame(draw);
+      if (S.perf.hidden) { requestAnimationFrame(loop); return; }
+      const frameStart = performance.now();
       ctx.clearRect(0, 0, W, H);
       t += 1;
       waves.forEach(w => {
@@ -1555,10 +1593,16 @@ async function init() {
 
   // Single consolidated mousemove dispatcher — replaces N individual listeners
   if (S._mouseMoveHandlers.length) {
+    let queued = false, lastEvent = null;
     document.addEventListener('mousemove', e => {
-      for (let i = 0; i < S._mouseMoveHandlers.length; i++) {
-        S._mouseMoveHandlers[i](e);
-      }
+      lastEvent = e;
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        if (S.perf.hidden || !lastEvent) return;
+        for (let i = 0; i < S._mouseMoveHandlers.length; i++) S._mouseMoveHandlers[i](lastEvent);
+      });
     }, { passive: true });
   }
 }
