@@ -40,14 +40,14 @@
       {
         "id": 1785355383455,
         "title": "song",
-        "artist": "zaza",
+        "artist": "zade",
         "src": "assets/music/song.mp3",
         "cover": ""
       },
       {
         "id": 1785355630848,
         "title": "song",
-        "artist": "zaza",
+        "artist": "zade",
         "src": "assets/music/song.mp3",
         "cover": ""
       }
@@ -66,8 +66,8 @@
     {
       "id": "twitter",
       "label": "twitter",
-      "username": "@zaza",
-      "url": "https://twitter.com/zaza",
+      "username": "@zade",
+      "url": "https://twitter.com/zade",
       "icon": "fab fa-twitter",
       "color": "#1DA1F2",
       "enabled": false
@@ -84,8 +84,8 @@
     {
       "id": "github",
       "label": "github",
-      "username": "zaza",
-      "url": "https://github.com/zaza",
+      "username": "zade",
+      "url": "https://github.com/zade",
       "icon": "fab fa-github",
       "color": "#ffffff",
       "enabled": false
@@ -93,8 +93,8 @@
     {
       "id": "youtube",
       "label": "youtube",
-      "username": "@zaza",
-      "url": "https://youtube.com/@zaza",
+      "username": "@zade",
+      "url": "https://youtube.com/@zade",
       "icon": "fab fa-youtube",
       "color": "#FF0000",
       "enabled": false
@@ -102,8 +102,8 @@
     {
       "id": "telegram",
       "label": "telegram",
-      "username": "@zaza",
-      "url": "https://t.me/zaza",
+      "username": "@zade",
+      "url": "https://t.me/zade",
       "icon": "fab fa-telegram",
       "color": "#26A5E4",
       "enabled": false

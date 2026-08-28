@@ -1,5 +1,5 @@
 /* ============================================================
-   ZAZA — app.js  (clean rewrite)
+   ZADE — app.js  (clean rewrite)
    ============================================================ */
 'use strict';
 
@@ -116,7 +116,7 @@ async function loadConfig() {
 
   // 2. localStorage — treat as UNTRUSTED user-controlled data
   try {
-    const ls = localStorage.getItem('zaza_config');
+    const ls = localStorage.getItem('zade_config');
     if (ls) {
       const parsed = JSON.parse(ls);
       if (_validateConfig(parsed)) {
@@ -124,16 +124,16 @@ async function loadConfig() {
         return;
       } else {
         // Corrupted or tampered — remove it
-        localStorage.removeItem('zaza_config');
+        localStorage.removeItem('zade_config');
       }
     }
   } catch (_) {
-    localStorage.removeItem('zaza_config');
+    localStorage.removeItem('zade_config');
   }
 
   // 3. Inline fallback
-  if (window.__ZAZA_CONFIG__) {
-    S.cfg = _ensureConfig(_sanitizeConfig(window.__ZAZA_CONFIG__));
+  if (window.__ZADE_CONFIG__) {
+    S.cfg = _ensureConfig(_sanitizeConfig(window.__ZADE_CONFIG__));
     return;
   }
 
@@ -187,13 +187,13 @@ function _sanitizeConfig(cfg) {
 
 function _defaultConfig() {
   return {
-    profile: { username:'zaza', displayName:'zaza', bio:'living in the moment.', avatar:'assets/images/avatar.png', status:'online', availability:'online', statusMessages:['just vibing 🎵'], joinDate:'2024' },
+    profile: { username:'zade', displayName:'zade', bio:'living in the moment.', avatar:'assets/images/avatar.png', status:'online', availability:'online', statusMessages:['just vibing 🎵'], joinDate:'2024' },
     theme:   { accentColor:'#a855f7', accentColorSecondary:'#ec4899', particleCount:80, glassmorphism:true, gradientAngle:160 },
     background: { videoUrl:'assets/images/background.mp4', overlayOpacity:0.35 },
     music:   { enabled:true, defaultVolume:0.5, tracks:[] },
     socials: [],
     cursor:  { enabled:true, style:'dot', trail:{ style:'dots', length:12, fadeSpeed:300, color:'' } },
-    seo:     { title:'zaza', titleCycle:['zaza — personal'], description:'' },
+    seo:     { title:'zade', titleCycle:['zade — personal portfolio'], description:'' },
   };
 }
 
@@ -256,7 +256,7 @@ function hexAlpha(hex, a) {
 function initDarkMode() {
   const prefDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   let stored = null;
-  try { stored = localStorage.getItem('zaza_theme'); } catch (_) {}
+  try { stored = localStorage.getItem('zade_theme'); } catch (_) {}
 
   let isDark = stored ? stored === 'dark' : prefDark;
 
@@ -272,7 +272,7 @@ function initDarkMode() {
       root.style.setProperty('--text', '#1a1a1a');
       root.style.setProperty('--text-muted', 'rgba(26,26,26,0.5)');
     }
-    try { localStorage.setItem('zaza_theme', dark ? 'dark' : 'light'); } catch (_) {}
+    try { localStorage.setItem('zade_theme', dark ? 'dark' : 'light'); } catch (_) {}
   }
 
   applyDarkMode(isDark);
@@ -302,7 +302,7 @@ const SoundSystem = {
 
   init() {
     // AudioContext created lazily in play() — avoids autoplay-policy warnings at page load
-    this.enabled = localStorage.getItem('zaza_sounds') !== 'false';
+    this.enabled = localStorage.getItem('zade_sounds') !== 'false';
   },
 
   play(name) {
@@ -336,7 +336,7 @@ function playSound(name) {
 function trackEvent(event, data) {
   let analytics = {};
   try {
-    analytics = JSON.parse(localStorage.getItem('zaza_analytics') || '{}') || {};
+    analytics = JSON.parse(localStorage.getItem('zade_analytics') || '{}') || {};
   } catch (_) {
     analytics = {};
   }
@@ -344,7 +344,7 @@ function trackEvent(event, data) {
   analytics.events.push({ event, data, timestamp: Date.now() });
   if (analytics.events.length > 1000) analytics.events.shift(); // Limit to 1000 events
   try {
-    localStorage.setItem('zaza_analytics', JSON.stringify(analytics));
+    localStorage.setItem('zade_analytics', JSON.stringify(analytics));
   } catch (_) {}
 }
 
@@ -361,9 +361,9 @@ function initLoading() {
     { prompt:'',          text:' Linux zade 6.6.1-arch1 #1 SMP PREEMPT x86_64 GNU/Linux', delay:200, cls:'ok' },
     { prompt:'zade@arch', text:' ~ $ cat /etc/motd', delay:420, cls:'' },
     { prompt:'',          text:' welcome back. loading your space...', delay:620, cls:'ok' },
-    { prompt:'zade@arch', text:' ~ $ systemctl start zaza.service', delay:900, cls:'' },
-    { prompt:'',          text:' [ OK ] Started zaza personal site.', delay:1100, cls:'ok' },
-    { prompt:'zade@arch', text:' ~ $ zaza --init', delay:1320, cls:'' },
+    { prompt:'zade@arch', text:' ~ $ systemctl start zade.service', delay:900, cls:'' },
+    { prompt:'',          text:' [ OK ] Started zade personal portfolio.', delay:1100, cls:'ok' },
+    { prompt:'zade@arch', text:' ~ $ zade --init', delay:1320, cls:'' },
     { prompt:'',          text:' [ OK ] particles engine   ready', delay:1480, cls:'ok' },
     { prompt:'',          text:' [ OK ] music player       ready', delay:1600, cls:'ok' },
     { prompt:'',          text:' [ OK ] all systems        online', delay:1720, cls:'ok' },
@@ -698,7 +698,7 @@ function renderProfile() {
 
   // Display name
   const unEl = $('#profile-username');
-  if (unEl) unEl.textContent = p.displayName || p.username || 'zaza';
+  if (unEl) unEl.textContent = p.displayName || p.username || 'zade';
 
   // Bio and the editable second About paragraph
   const bioEl = $('#profile-bio');
@@ -754,7 +754,7 @@ function renderProfile() {
   typewriter($('#status-typewriter'), p.statusMessages || ['just vibing 🎵']);
 
   // Page title cycle
-  titleCycle(S.cfg.seo?.titleCycle || [S.cfg.seo?.title || 'zaza']);
+  titleCycle(S.cfg.seo?.titleCycle || [S.cfg.seo?.title || 'zade']);
 }
 
 function makeInitial(p) {
@@ -893,11 +893,18 @@ function renderSocials() {
     .filter(s => s.enabled !== false && (s.username || s.url))
     .forEach(s => {
       const div = document.createElement('a');
-      const href = safeExternalUrl(s.url);
+      const platformName = s.label || 'Contact';
+      const isEmail = (s.id || '').toLowerCase() === 'email' || platformName.toLowerCase() === 'email';
+      const email = String(s.username || '').trim();
+      const href = isEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+        ? `mailto:${email}`
+        : safeExternalUrl(s.url);
       if (!href) return;
       div.href = href;
-      div.target = '_blank';
-      div.rel = 'noopener noreferrer';
+      if (!isEmail) {
+        div.target = '_blank';
+        div.rel = 'noopener noreferrer';
+      }
       div.className = 'contact-link';
       div.setAttribute('aria-label', `Open ${s.label || 'link'}`);
 
@@ -912,8 +919,6 @@ function renderSocials() {
 
       const labelEl = document.createElement('span');
       const handle = s.username || s.label || 'Link';
-      const platformName = s.label || 'Contact';
-      const isEmail = (s.id || '').toLowerCase() === 'email' || platformName.toLowerCase() === 'email';
       const displayHandle = isEmail ? handle.replace(/^@/, '') : (handle.startsWith('@') ? handle : `@${handle}`);
       const platform = platformName.charAt(0).toUpperCase() + platformName.slice(1);
       labelEl.textContent = `${platform} · ${displayHandle}`;
@@ -1651,11 +1656,11 @@ function initVisualFeatures() {
 
 /* ── SVG filter injection (grain noise) ── */
 function _injectSVGFilters() {
-  if (document.getElementById('zaza-svg-filters')) return;
+  if (document.getElementById('zade-svg-filters')) return;
 
   // Hidden SVG with feTurbulence for grain
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.id = 'zaza-svg-filters';
+  svg.id = 'zade-svg-filters';
   svg.setAttribute('width', '0');
   svg.setAttribute('height', '0');
   svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;';
@@ -1979,7 +1984,7 @@ function initDiscord() {
     }
 
     // Username
-    const name = data.discord_user?.global_name || data.discord_user?.username || 'zaza';
+    const name = data.discord_user?.global_name || data.discord_user?.username || 'zade';
     if (dcUser) dcUser.textContent = name;
     if (dcStatus) dcStatus.textContent = STATUS_TEXT[status] || status;
 

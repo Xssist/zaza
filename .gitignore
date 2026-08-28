@@ -13,11 +13,16 @@ desktop.ini
 *.log
 
 # Local overrides (never commit real tokens)
-*.env
-.env.local
+.env
+.env.*
+!.env.example
 .wrangler/
 __pycache__/
 *.pyc
+.next/
+out/
+build/
+node_modules/
 
 # Large media (upload separately or use CDN)
 assets/*.mp4

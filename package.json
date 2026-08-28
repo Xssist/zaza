@@ -1,0 +1,13 @@
+{
+  "name": "zade-portfolio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Personal portfolio site served by Node on Railway",
+  "scripts": {
+    "build": "node build.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
