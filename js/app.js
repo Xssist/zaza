@@ -32,11 +32,17 @@ function createVisibilityInterval(callback, delay) {
   };
 }
 
-/** Turn local Windows/file paths into web-relative paths for GitHub Pages */
+/** Turn local Windows/file paths into web-relative paths for GitHub Pages.
+    Remote https:// image URLs (e.g. Discord CDN attachments) are allowed through. */
 function normalizeAssetPath(path) {
   if (!path || typeof path !== 'string') return '';
   path = path.trim();
-  if (!path || /^(?:https?:|data:|blob:|javascript:|file:)/i.test(path)) return '';
+  if (!path || /^(?:data:|blob:|javascript:|file:)/i.test(path)) return '';
+  if (/^https:\/\//i.test(path)) {
+    try { const u = new URL(path); return u.protocol === 'https:' ? u.href : ''; }
+    catch (_) { return ''; }
+  }
+  if (/^http:\/\//i.test(path)) return '';
   const m = path.match(/assets[/\\][^?#]+$/i);
   return (m ? m[0] : path.replace(/^\/+/, '')).replace(/\\/g, '/');
 }
