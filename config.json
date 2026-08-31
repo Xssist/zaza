@@ -156,34 +156,77 @@
     {
       "name": "Languages",
       "items": [
-        { "label": "TypeScript", "icon": "fas fa-file-code", "color": "#a0a0a0" },
-        { "label": "JavaScript", "icon": "fab fa-js", "color": "#a0a0a0" },
-        { "label": "HTML", "icon": "fab fa-html5", "color": "#a0a0a0" },
-        { "label": "C++", "icon": "fas fa-code", "color": "#a0a0a0" },
-        { "label": "AutoHotkey", "icon": "fas fa-keyboard", "color": "#a0a0a0" }
+        {
+          "label": "TypeScript",
+          "icon": "fas fa-file-code",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "JavaScript",
+          "icon": "fab fa-js",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "HTML",
+          "icon": "fab fa-html5",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "C++",
+          "icon": "fas fa-code",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "AutoHotkey",
+          "icon": "fas fa-keyboard",
+          "color": "#a0a0a0"
+        }
       ]
     },
     {
       "name": "Frameworks & Libraries",
       "items": [
-        { "label": "Node.js", "icon": "fab fa-node-js", "color": "#a0a0a0" }
+        {
+          "label": "Node.js",
+          "icon": "fab fa-node-js",
+          "color": "#a0a0a0"
+        }
       ]
     },
     {
       "name": "Tools & Platforms",
       "items": [
-        { "label": "VS Code", "icon": "fas fa-code", "color": "#a0a0a0" },
-        { "label": "Git", "icon": "fab fa-git-alt", "color": "#a0a0a0" },
-        { "label": "GitHub", "icon": "fab fa-github", "color": "#a0a0a0" },
-        { "label": "Cloudflare", "icon": "fas fa-cloud", "color": "#a0a0a0" }
+        {
+          "label": "VS Code",
+          "icon": "fas fa-code",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "Git",
+          "icon": "fab fa-git-alt",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "GitHub",
+          "icon": "fab fa-github",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "Cloudflare",
+          "icon": "fas fa-cloud",
+          "color": "#a0a0a0"
+        }
       ]
     }
   ],
   "projects": [
     {
-      "name": "Example Project",
-      "description": "A short description of what this project does and why it's cool.",
-      "technologies": ["TypeScript", "Node.js"],
+      "name": "zaza.app biolink",
+      "description": "casual biolink with drag and drop features",
+      "technologies": [
+        "TypeScript",
+        "Node.js"
+      ],
       "url": "https://example.com",
       "image": ""
     }
