@@ -155,8 +155,8 @@
   "projects": [],
   "consoleArt": {
     "enabled": true,
-    "art": "  ____              _\n / ___| _   _  __ _| | ___   _\n| |  _|| | | |/ _` | |/ / | | |\n| |_| || |_| | (_| |   <| |_| |\n \\____| \\__, |\\__,_|_|\\_\\\\__, |\n       |___/             |___/",
-    "message": "why the fuck are you poking around in the console?",
+    "art": "*\\ (^_^)",
+    "message": "hi visitor, weird to see you here",
     "subMessage": "Contact me if something is broken or if u found bugs"
   }
 }
