@@ -4,4 +4,4 @@ Disallow: /admin.html
 Disallow: /push.html
 Disallow: /config.json
 
-Sitemap: https://xssist.github.io/zaza/sitemap.xml
+Sitemap: https://zad3.online/sitemap.xml

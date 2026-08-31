@@ -8,15 +8,32 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="zade — personal portfolio" />
   <meta property="og:description" content="living in the moment. creating something real." />
-  <meta property="og:image" content="assets/images/avatar.png" />
+  <meta property="og:image" content="https://zad3.online/assets/images/avatar.png" />
+  <meta property="og:url" content="https://zad3.online/" />
   <meta name="twitter:card" content="summary_large_image" />
+  <link rel="canonical" href="https://zad3.online/" />
   <title>zade — personal portfolio</title>
+  <link rel="icon" href="favicon.ico" sizes="32x32" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Nunito:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="css/style.css" />
-  <script src="js/motion.js"></script>
+  <script src="js/motion.min.js" defer></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "home", "item": "https://zad3.online/" },
+      { "@type": "ListItem", "position": 2, "name": "about", "item": "https://zad3.online/#about" },
+      { "@type": "ListItem", "position": 3, "name": "work", "item": "https://zad3.online/#work" },
+      { "@type": "ListItem", "position": 4, "name": "contact", "item": "https://zad3.online/#contact" }
+    ]
+  }
+  </script>
 </head>
 <body>
 
@@ -62,6 +79,9 @@
 
 <!-- Continuous editorial page -->
 <main id="main-page" class="editorial-page">
+  <nav class="page-crumbs" aria-label="Breadcrumb">
+    <a href="#top" aria-current="page">home</a><span class="crumb-sep" aria-hidden="true">/</span><a href="#about">about</a><span class="crumb-sep" aria-hidden="true">/</span><a href="#work">work</a><span class="crumb-sep" aria-hidden="true">/</span><a href="#contact">contact</a>
+  </nav>
   <section class="hero editorial-section" id="top">
     <div class="hero-time" id="hero-time">00:00</div>
     <div class="hero-copy reveal"><p id="hero-greeting">Good evening, visitor.</p><p>Thanks for stopping by.</p></div>
@@ -112,8 +132,8 @@
 <div id="ctx-menu" role="menu" aria-label="Site menu"></div>
 
 <script>
-window.__ZADE_CONFIG__ = {"profile":{"username":"zade","displayName":"zade","bio":"living in the moment. creating something real.","avatar":"assets/images/avatar.png","status":"online","availability":"online","statusMessages":["vibing to music rn \uD83C\uDFB5","cooking something up...","living rent free in your head","making moves quietly \uD83E\uDD2B","just existing, doing my thing"],"location":"somewhere cool","joinDate":"2024","subtitle":"Developer · Creator","aboutHeading":"A little about me.","focus":"Web development"},"theme":{"accentColor":"#a855f7","accentColorSecondary":"#ec4899","backgroundColor":"#0a0a0f","fontFamily":"Inter","particleCount":80,"snowEnabled":false,"rainEnabled":false,"glassmorphism":true,"gradientAngle":115},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.5,"tracks":[{"id":1,"title":"song","artist":"zade","src":"assets/music/song.mp3","cover":""}]},"badges":[{"icon":"fab fa-js-square","color":"#F7DF1E","label":"JavaScript"},{"icon":"fab fa-python","color":"#3776AB","label":"Python"},{"icon":"fab fa-discord","color":"#5865F2","label":"Discord"},{"icon":"fab fa-github","color":"#ffffff","label":"GitHub"},{"icon":"fab fa-html5","color":"#E34F26","label":"HTML5"},{"icon":"fab fa-css3-alt","color":"#1572B6","label":"CSS3"}],"socials":[{"id":"discord","label":"discord","username":"heavenlygifted","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zade","url":"https://twitter.com/zade","icon":"fab fa-twitter","color":"#1DA1F2","enabled":true},{"id":"instagram","label":"instagram","username":"z4de.1","url":"https://instagram.com/z4de.1","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zade","url":"https://github.com/zade","icon":"fab fa-github","color":"#ffffff","enabled":true},{"id":"youtube","label":"youtube","username":"@zade","url":"https://youtube.com/@zade","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zade","url":"https://t.me/zade","icon":"fab fa-telegram","color":"#26A5E4","enabled":false}],"stats":{"showVisitorCount":false,"visitorCount":1,"showMemberSince":false,"showViews":false},"spotify":{"enabled":false,"showWidget":true,"fallbackText":"not playing","serverProxy":false},"announcement":{"enabled":false,"text":"","emoji":"📢","color":"#a855f7"},"cursor":{"enabled":true,"style":"dot","color":"#a855f7","trail":{"style":"dots","length":12,"fadeSpeed":300,"color":""}},"admin":{"sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zade \u2014 personal portfolio","living in the moment.","creating something real.","zade."],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"}};
+window.__ZADE_CONFIG__ = {"profile":{"username":"zade","displayName":"zade","bio":"living in the moment. creating something real.","aboutExtra":"Hey im zAde, I am a Front-End Web Developer\n\n15, From somewhere in Romania \n\nWhen im not coding, i make things in AutoHotKey, Listen to music and Play games\n\nI am mainly on the Web Designing/Developing part, I worked on a few little Websites and have a little bit of experience","avatar":"assets/images/avatar.png","status":"online","statusMessages":["cooking something up...","listening to music","making moves quietly","just existing, doing my thing"],"location":"Romania","joinDate":"2024","availability":"online","focus":"Coding","subtitle":"Developer · Creator","aboutHeading":"a bit about me"},"theme":{"accentColor":"#ffffff","accentColorSecondary":"#000000","backgroundColor":"#0a0a0f","fontFamily":"Space Grotesk","particleCount":80,"snowEnabled":true,"rainEnabled":false,"glassmorphism":false,"gradientAngle":155},"background":{"videoUrl":"assets/images/background.mp4","overlayOpacity":0.55,"blur":0},"music":{"enabled":true,"autoPlay":false,"defaultVolume":0.66,"tracks":[{"id":1785355383455,"title":"song","artist":"zade","src":"assets/music/song.mp3","cover":""}]},"socials":[{"id":"discord","label":"discord","username":"heavenlygifted","url":"https://discord.com/users/","icon":"fab fa-discord","color":"#5865F2","enabled":true},{"id":"twitter","label":"twitter","username":"@zade","url":"https://twitter.com/zade","icon":"fab fa-twitter","color":"#1DA1F2","enabled":false},{"id":"instagram","label":"instagram","username":"z4de.1","url":"https://instagram.com/z4de.1","icon":"fab fa-instagram","color":"#E1306C","enabled":true},{"id":"github","label":"github","username":"zade","url":"https://github.com/zade","icon":"fab fa-github","color":"#ffffff","enabled":false},{"id":"youtube","label":"youtube","username":"@zade","url":"https://youtube.com/@zade","icon":"fab fa-youtube","color":"#FF0000","enabled":false},{"id":"telegram","label":"telegram","username":"@zade","url":"https://t.me/zade","icon":"fab fa-telegram","color":"#26A5E4","enabled":false},{"id":"email_1787731468450","label":"email","icon":"fas fa-envelope","color":"#ffffff","url":"#","username":"me@zad3.online","enabled":true}],"stats":{"showVisitorCount":false,"visitorCount":1,"showMemberSince":false,"showViews":true},"discord":{"enabled":true,"userId":"1246068508039708672","showWidget":true},"spotify":{"enabled":false,"showCurrentlyPlaying":true,"fallbackText":"not playing","showWidget":true,"serverProxy":false},"cursor":{"enabled":true,"trailEnabled":true,"color":"#a855f7","style":"dot","trail":{"style":"dots","length":12,"fadeSpeed":300,"color":""}},"admin":{"sessionTimeout":3600},"seo":{"title":"zade","titleCycle":["zade"],"description":"living in the moment. creating something real.","ogImage":"assets/images/avatar.png","themeColor":"#a855f7"},"badges":[],"projects":[],"announcement":{"enabled":false,"text":"","emoji":"📢","color":"#a855f7"}};
 </script>
-<script src="js/app.js"></script>
+<script src="js/app.min.js" defer></script>
 </body>
 </html>

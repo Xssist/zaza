@@ -2,18 +2,21 @@
   "profile": {
     "username": "zade",
     "displayName": "zade",
-    "bio": "",
+    "bio": "living in the moment. creating something real.",
     "aboutExtra": "Hey im zAde, I am a Front-End Web Developer\n\n15, From somewhere in Romania \n\nWhen im not coding, i make things in AutoHotKey, Listen to music and Play games\n\nI am mainly on the Web Designing/Developing part, I worked on a few little Websites and have a little bit of experience",
     "avatar": "assets/images/avatar.png",
     "status": "online",
     "statusMessages": [
-      "k"
+      "cooking something up...",
+      "listening to music",
+      "making moves quietly",
+      "just existing, doing my thing"
     ],
     "location": "Romania",
-    "joinDate": "2001",
+    "joinDate": "2024",
     "availability": "online",
     "focus": "Coding",
-    "subtitle": "Front End Web Developer · Web Designer",
+    "subtitle": "Developer · Creator",
     "aboutHeading": "a bit about me"
   },
   "theme": {
@@ -39,13 +42,6 @@
     "tracks": [
       {
         "id": 1785355383455,
-        "title": "song",
-        "artist": "zade",
-        "src": "assets/music/song.mp3",
-        "cover": ""
-      },
-      {
-        "id": 1785355630848,
         "title": "song",
         "artist": "zade",
         "src": "assets/music/song.mp3",
@@ -156,7 +152,7 @@
     "titleCycle": [
       "zade"
     ],
-    "description": "part time retard",
+    "description": "living in the moment. creating something real.",
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#a855f7"
   },

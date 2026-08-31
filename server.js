@@ -8,11 +8,23 @@ const contentTypes = {
   ".css": "text/css; charset=utf-8", ".html": "text/html; charset=utf-8",
   ".ico": "image/x-icon", ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8", ".mp3": "audio/mpeg",
-  ".mp4": "video/mp4", ".png": "image/png", ".txt": "text/plain; charset=utf-8",
+  ".mp4": "video/mp4", ".png": "image/png", ".svg": "image/svg+xml",
+  ".txt": "text/plain; charset=utf-8", ".webp": "image/webp",
   ".xml": "application/xml; charset=utf-8",
 };
 
 function sendError(response, status) {
+  if (status === 404) {
+    const notFoundPath = join(root, "404.html");
+    if (existsSync(notFoundPath)) {
+      response.writeHead(404, {
+        "Content-Type": "text/html; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+      });
+      createReadStream(notFoundPath).pipe(response);
+      return;
+    }
+  }
   response.writeHead(status, { "Content-Type": "text/plain; charset=utf-8" });
   response.end(status === 404 ? "Not found" : "Method not allowed");
 }

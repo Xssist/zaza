@@ -1100,3 +1100,10 @@ html{scroll-behavior:smooth;scroll-padding-top:3rem}
 body:not(.a-admin) ::selection{background:transparent;color:inherit}
 body:not(.a-admin) *{-webkit-user-select:none!important;user-select:none!important}
 body.a-admin input,body.a-admin textarea,body.a-admin [contenteditable="true"]{-webkit-user-select:text!important;user-select:text!important}
+
+/* ── Breadcrumbs (monochrome editorial) ── */
+.page-crumbs{position:relative;z-index:9;display:flex;align-items:center;gap:.6rem;padding:1.4rem clamp(1.5rem,6vw,5rem);font-size:.62rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(244,244,240,.42)}
+.page-crumbs a{color:inherit;border-bottom:1px solid transparent;padding-bottom:.15rem;transition:color .25s,border-color .25s}
+.page-crumbs a:hover{color:#fff;border-color:#fff}
+.page-crumbs a[aria-current]{color:rgba(244,244,240,.75);border-color:rgba(244,244,240,.4)}
+.crumb-sep{opacity:.4;user-select:none}

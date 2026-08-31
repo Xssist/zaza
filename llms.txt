@@ -1,0 +1,40 @@
+# zade — zad3.online
+
+> Personal portfolio of zade — a developer from Romania who builds websites,
+> experiments with new technologies, and makes small things for the internet.
+> Living in the moment. Creating something real.
+
+## Site
+
+- Domain: https://zad3.online
+- Type: single-page personal portfolio (static site)
+- Language: English
+- Theme: minimal, monochrome (black & white) editorial layout
+
+## Pages
+
+- `/` — the portfolio: hero with a live clock and greeting, an about section,
+  a work/projects section, a contact section with social links, and a footer.
+- `/404.html` — custom "page not found" screen in the same editorial style.
+
+## Sections on the main page (anchor navigation)
+
+- `/#top` — hero: name ("zade"), role (Developer · Creator), local time, greeting.
+- `/#about` — a short bio: who zade is, what he focuses on (coding), where he's based (Romania).
+- `/#work` — selected projects. Each project has a name, description, tech list and optional link.
+- `/#contact` — contact links: Discord (heavenlygifted), Instagram (@z4de.1), email (me@zad3.online).
+
+## Contact
+
+- Email: me@zad3.online
+- Discord: heavenlygifted
+- Instagram: @z4de.1
+
+## Notes for AI agents
+
+- Content is driven by `config.json` — profile, theme, music, socials and SEO
+  settings live there. Edits to that file change the site without touching HTML.
+- `robots.txt` disallows `/admin.html`, `/push.html` and `/config.json` for crawlers;
+  those are private tooling, not content pages.
+- The site prefers `prefers-reduced-motion` and disables decorative animation for
+  users who ask for reduced motion.

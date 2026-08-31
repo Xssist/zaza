@@ -83,6 +83,8 @@ const RenderBudget = {
   }
 };
 document.addEventListener('visibilitychange', () => { S.perf.hidden = document.hidden; });
+/* Never surface benign async failures (media, clipboard, sockets) as console errors */
+window.addEventListener('unhandledrejection', e => e.preventDefault());
 
 /* ══════════════════════════════════════════
    1. CONFIG LOADER
@@ -254,37 +256,10 @@ function hexAlpha(hex, a) {
    2.5 DARK MODE — auto-detect + toggle
 ══════════════════════════════════════════ */
 function initDarkMode() {
-  const prefDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  let stored = null;
-  try { stored = localStorage.getItem('zade_theme'); } catch (_) {}
-
-  let isDark = stored ? stored === 'dark' : prefDark;
-
-  function applyDarkMode(dark) {
-    isDark = dark;
-    if (dark) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      // Light mode: invert background but not text
-      const root = document.documentElement;
-      root.style.setProperty('--bg', '#f5f5f5');
-      root.style.setProperty('--text', '#1a1a1a');
-      root.style.setProperty('--text-muted', 'rgba(26,26,26,0.5)');
-    }
-    try { localStorage.setItem('zade_theme', dark ? 'dark' : 'light'); } catch (_) {}
-  }
-
-  applyDarkMode(isDark);
-
-  // Keyboard shortcut: Alt+T to toggle dark mode
-  window.addEventListener('keydown', e => {
-    if (e.altKey && e.key === 't') {
-      e.preventDefault();
-      applyDarkMode(!isDark);
-      playSound('toggle');
-    }
-  });
+  // The site is intentionally monochrome black — never invert to light mode,
+  // as the editorial typography uses fixed light-on-dark colors.
+  document.documentElement.setAttribute('data-theme', 'dark');
+  try { localStorage.setItem('zade_theme', 'dark'); } catch (_) {}
 }
 
 /* ══════════════════════════════════════════
@@ -457,6 +432,12 @@ function initBackground() {
 
     vid.addEventListener('canplaythrough', fadeInVideo, { once: true });
     vid.addEventListener('loadeddata',     fadeInVideo, { once: true });
+    // If the video is missing or unsupported, hide it instead of logging media errors
+    vid.addEventListener('error', () => {
+      vid.style.display = 'none';
+      vid.removeAttribute('src');
+      vid.load();
+    }, { once: true });
 
     const tryPlay = () => vid.play().catch(() => {});
     tryPlay();
@@ -814,11 +795,12 @@ function initSpotify() {
   if (idleText) idleText.textContent = sp.fallbackText || 'not playing';
 
   async function poll() {
-    const token = sp.accessToken;
-    if (!token) return;
     try {
-      const r = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
-        headers: { Authorization: 'Bearer ' + token }
+      // The proxy endpoint (a server-side worker) holds the Spotify token
+      // in a secret and returns the currently-playing JSON. We never ship
+      // a token to the client.
+      const r = await fetch(sp.serverProxy === true ? '/api/spotify' : sp.serverProxy, {
+        headers: { Accept: 'application/json' }
       });
 
       if (r.status === 204 || r.status === 404) {
@@ -877,11 +859,11 @@ function initSpotify() {
 
   // Poll immediately, then only while the tab is visible.
   poll();
-  S.spotifyInterval = createVisibilityInterval(poll, 15000);
+  S.spotifyStop = createVisibilityInterval(poll, 15000);
 
   // Clean up on page unload
   window.addEventListener('beforeunload', () => {
-    if (S.spotifyInterval) clearInterval(S.spotifyInterval);
+    if (S.spotifyStop) S.spotifyStop();
   });
 }
 
@@ -1450,7 +1432,7 @@ function initBgPattern() {
     let t = 0;
     (function draw() {
       requestAnimationFrame(draw);
-      if (S.perf.hidden) { requestAnimationFrame(loop); return; }
+      if (S.perf.hidden) return;
       const frameStart = performance.now();
       ctx.clearRect(0, 0, W, H);
       t += 1;
@@ -1952,6 +1934,7 @@ function initDiscord() {
     if (img.src !== url) {
       img.style.transition = 'opacity 0.4s ease';
       img.style.opacity = '0';
+      img.onerror = () => img.remove();
       img.onload = () => { img.style.opacity = '1'; };
       img.src = url;
     }
@@ -1964,8 +1947,9 @@ function initDiscord() {
       } else {
         const dcImg = document.createElement('img');
         dcImg.className = 'dc-avatar';
-        dcImg.src = url;
         dcImg.alt = 'discord avatar';
+        dcImg.onerror = () => dcImg.remove();
+        dcImg.src = url;
         dcAvWrap.parentElement.replaceChild(dcImg, dcAvWrap);
       }
     }
@@ -2000,7 +1984,9 @@ function initDiscord() {
 
     // Spotify via Lanyard (if Spotify widget not already active)
     const sp = data.spotify;
-    const spotifyWidgetActive = S.cfg.spotify?.enabled && S.cfg.spotify?.accessToken;
+    // Spotify tokens never live in the public config; the widget is driven
+    // entirely by the /api/spotify server proxy.
+    const spotifyWidgetActive = S.cfg.spotify?.enabled;
     if (sp && !spotifyWidgetActive) {
       if (spTrack)  spTrack.textContent  = sp.song  || '—';
       if (spArtist) spArtist.textContent = sp.artist || '—';
@@ -2142,6 +2128,7 @@ function initContextMenu() {
 
   let focusedIndex = -1;
   let isOpen = false;
+  let lastTrigger = null; // element to restore focus to on close
 
   /* ── Menu items definition ── */
   function buildItems() {
@@ -2150,7 +2137,6 @@ function initContextMenu() {
       {
         label: 'Copy Profile Link',
         icon: 'fa-link',
-        kbd: 'Ctrl+C',
         action: () => {
           navigator.clipboard?.writeText(window.location.href).catch(() => {});
           toast('🔗 Profile link copied!');
@@ -2182,6 +2168,7 @@ function initContextMenu() {
 
   /* ── Render menu at position ── */
   function openAt(x, y) {
+    lastTrigger = document.activeElement;
     const items = buildItems();
     menu.innerHTML = '';
     focusedIndex = -1;
@@ -2241,10 +2228,13 @@ function initContextMenu() {
 
     let cx = x;
     let cy = y;
-    if (cx + mw > vw - 8) { cx = vw - mw - 8; menu.style.transformOrigin = 'top right'; }
-    if (cy + mh > vh - 8) { cy = vh - mh - 8; menu.style.transformOrigin = cy === y ? 'bottom left' : 'bottom right'; }
-    if (cx < 8) cx = 8;
-    if (cy < 8) cy = 8;
+    let flipX = false;
+    let flipY = false;
+    if (cx + mw > vw - 8) { cx = vw - mw - 8; flipX = true; }
+    if (cy + mh > vh - 8) { cy = vh - mh - 8; flipY = true; }
+    if (cx < 8) { cx = 8; flipX = false; }
+    if (cy < 8) { cy = 8; flipY = false; }
+    menu.style.transformOrigin = `${flipY ? 'bottom' : 'top'} ${flipX ? 'right' : 'left'}`;
 
     menu.style.left = cx + 'px';
     menu.style.top  = cy + 'px';
@@ -2255,6 +2245,10 @@ function initContextMenu() {
     menu.classList.remove('open');
     isOpen = false;
     focusedIndex = -1;
+    if (lastTrigger && document.contains(lastTrigger)) {
+      try { lastTrigger.focus({ preventScroll: true }); } catch { /* ignore */ }
+    }
+    lastTrigger = null;
   }
 
   function setFocus(idx) {
@@ -2294,7 +2288,7 @@ function initContextMenu() {
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setFocus(Math.max(focusedIndex - 1, 0));
+        setFocus(focusedIndex <= 0 ? items.length - 1 : focusedIndex - 1);
         break;
       case 'Home':
         e.preventDefault();
@@ -2332,8 +2326,11 @@ function initEasterEggTerminal() {
   // Only active after entering the site
   const SPEED_THRESHOLD = 120; // ms between keystrokes to count as "fast"
   const MIN_KEYS = 5; // minimum fast keystrokes to trigger
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   let keyTimes = [];
   let terminalOpen = false;
+  let closeTimer = null;
+  let outputTimers = [];
   let termHistory = [];
   let histIdx = -1;
 
@@ -2351,7 +2348,18 @@ function initEasterEggTerminal() {
 
   /* ── Build terminal DOM ── */
   function buildTerminal() {
-    if (document.getElementById('egg-terminal')) return;
+    const existing = document.getElementById('egg-terminal');
+    if (existing) {
+      // Terminal is mid-close animation — cancel the close and reuse it
+      if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+      outputTimers.forEach(clearTimeout); outputTimers = [];
+      existing.style.opacity = '1';
+      existing.style.transform = 'translateX(-50%) translateY(0)';
+      existing.querySelector('#egg-input')?.focus();
+      terminalOpen = true;
+      return;
+    }
+    outputTimers.forEach(clearTimeout); outputTimers = [];
 
     const el = document.createElement('div');
     el.id = 'egg-terminal';
@@ -2421,12 +2429,12 @@ function initEasterEggTerminal() {
 
   function appendOutput(output, lines) {
     lines.forEach((line, i) => {
-      setTimeout(() => {
+      outputTimers.push(setTimeout(() => {
         const d = document.createElement('div');
         d.innerHTML = line;
         output.appendChild(d);
         output.scrollTop = output.scrollHeight;
-      }, i * 60);
+      }, i * 60));
     });
   }
 
@@ -2459,7 +2467,9 @@ function initEasterEggTerminal() {
     if (!el) return;
     el.style.opacity = '0';
     el.style.transform = 'translateX(-50%) translateY(20px)';
-    setTimeout(() => { el.remove(); terminalOpen = false; }, 300);
+    terminalOpen = false; // release the key detector immediately
+    outputTimers.forEach(clearTimeout); outputTimers = [];
+    closeTimer = setTimeout(() => { el.remove(); closeTimer = null; }, 300);
   }
 
   /* ── Key speed detector ── */
@@ -2467,6 +2477,7 @@ function initEasterEggTerminal() {
     if (!S.entered) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (terminalOpen) return;
+    if (e.repeat) return; // ignore auto-repeat
     // Ignore modifier-only keys
     if (['Shift','Control','Alt','Meta','CapsLock','Tab','Escape'].includes(e.key)) return;
 
