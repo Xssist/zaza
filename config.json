@@ -156,26 +156,26 @@
     {
       "name": "Languages",
       "items": [
-        { "label": "TypeScript", "icon": "fas fa-square-ts", "color": "#3178c6" },
-        { "label": "JavaScript", "icon": "fab fa-js", "color": "#f7df1e" },
-        { "label": "HTML", "icon": "fab fa-html5", "color": "#e34f26" },
-        { "label": "C++", "icon": "fas fa-code", "color": "#659ad2" },
-        { "label": "AutoHotkey", "icon": "fas fa-keyboard", "color": "#e7e7e7" }
+        { "label": "TypeScript", "icon": "fas fa-file-code", "color": "#a0a0a0" },
+        { "label": "JavaScript", "icon": "fab fa-js", "color": "#a0a0a0" },
+        { "label": "HTML", "icon": "fab fa-html5", "color": "#a0a0a0" },
+        { "label": "C++", "icon": "fas fa-code", "color": "#a0a0a0" },
+        { "label": "AutoHotkey", "icon": "fas fa-keyboard", "color": "#a0a0a0" }
       ]
     },
     {
       "name": "Frameworks & Libraries",
       "items": [
-        { "label": "Node.js", "icon": "fab fa-node-js", "color": "#83cd29" }
+        { "label": "Node.js", "icon": "fab fa-node-js", "color": "#a0a0a0" }
       ]
     },
     {
       "name": "Tools & Platforms",
       "items": [
-        { "label": "VS Code", "icon": "fas fa-code", "color": "#23a9f2" },
-        { "label": "Git", "icon": "fab fa-git-alt", "color": "#f05032" },
-        { "label": "GitHub", "icon": "fab fa-github", "color": "#f0f0f0" },
-        { "label": "Cloudflare", "icon": "fas fa-cloud", "color": "#f6821f" }
+        { "label": "VS Code", "icon": "fas fa-code", "color": "#a0a0a0" },
+        { "label": "Git", "icon": "fab fa-git-alt", "color": "#a0a0a0" },
+        { "label": "GitHub", "icon": "fab fa-github", "color": "#a0a0a0" },
+        { "label": "Cloudflare", "icon": "fas fa-cloud", "color": "#a0a0a0" }
       ]
     }
   ],

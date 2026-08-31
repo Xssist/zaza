@@ -3376,9 +3376,6 @@
         document.documentElement.style.setProperty('--accent', cfg?.theme?.accentColor || '#a855f7');
         document.documentElement.style.setProperty('--accent2', cfg?.theme?.accentColorSecondary || '#ec4899');
         if (sessOk()) aShowDashboard();
-        if (window.ZazaMotion) {
-          ZazaMotion.bind('.a-admin button, .a-social-item, .a-card, .a-nav-item, .a-btn, .a-btn-sm', { preset: 'snappy', hover: { scale: 1.015, y: -1 } });
-        }
       }).catch(err => console.error('Config load failed:', err));
     }
 
