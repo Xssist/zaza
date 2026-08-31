@@ -151,7 +151,7 @@
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#ffffff",
     "titleEffect": "glitchHard",
-    "titleSpeed": 1
+    "titleSpeed": 0.5
   },
   "badges": [],
   "skills": [
