@@ -1,4 +1,4 @@
-// Full audit drive: load, interact, exercise subsystems, assert invariants.
+﻿// Full audit drive: load, interact, exercise subsystems, assert invariants.
 export default async function run(page, ui) {
   const results = {};
   const errors = [];
@@ -22,13 +22,18 @@ export default async function run(page, ui) {
       hasProfile: !!c?.profile,
       bioNonEmpty: typeof c?.profile?.bio === 'string' && c.profile.bio.length > 0,
       tracks: c?.music?.tracks?.length,
-      noMojibake: !/Ã|ð/.test(document.documentElement.innerHTML.slice(0, 0) + JSON.stringify(c)),
+      noMojibake:
+        !/Ãƒ|Ã°/.test(JSON.stringify(c)) &&
+        !/Ãƒ|Ã°/.test(document.documentElement.innerHTML),
       seoDescriptionOk: typeof c?.seo?.description === 'string' && !/part time/.test(c.seo.description),
     };
   });
 
   // 3. Wait for app init (loading screen hidden, reveals)
-  await page.waitForFunction(() => document.querySelector('#loading-screen')?.classList.contains('hidden'), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForFunction(() => document.querySelector('#loading-screen')?.classList.contains('hidden'), null, { timeout: 15000 }).catch((e) => {
+    results.initTimeout = true;
+    errors.push("init-timeout: " + (e?.message || e));
+  });
   results.loadingHidden = await page.evaluate(() => document.querySelector('#loading-screen')?.classList.contains('hidden') ?? 'missing');
 
   // 4. Rendered content sanity
@@ -45,18 +50,22 @@ export default async function run(page, ui) {
     document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }));
   });
   await page.waitForTimeout(300);
-  results.afterKeys = await page.evaluate(() => ({ spaceKeyHandled: true }));
+  results.afterKeys = await page.evaluate(() => ({
+    spaceKeyHandled:
+      document.querySelector(".music-playing, .player.playing") !== null ||
+      !!document.querySelector("#audio-player")?.paused === false,
+  }));
 
   // 6. Context menu opens via right-click
-  await page.mouse.click(400, 400, { button: 'right' });
+  await page.locator('body').click({ button: 'right', position: { x: 400, y: 400 } });
   await page.waitForTimeout(200);
-  results.ctxMenuOpen = await page.evaluate(() => document.querySelector('#ctx-menu')?.classList.contains('open') ?? false);
+  const isCtxMenuOpen = () => page.evaluate(() => document.querySelector('#ctx-menu')?.classList.contains('open') ?? false);
+  results.ctxMenuOpen = await isCtxMenuOpen();
   results.ctxItemCount = await page.evaluate(() => document.querySelectorAll('#ctx-menu .ctx-item').length);
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
-  results.ctxMenuClosed = await page.evaluate(() => !document.querySelector('#ctx-menu')?.classList.contains('open'));
-
-  // 7. Easter egg terminal — the esc() fix
+  results.ctxMenuClosed = !(await isCtxMenuOpen());
+  // 7. Easter egg terminal â€” the esc() fix
   await page.evaluate(() => {
     const ev = new KeyboardEvent('keydown', { key: 'a', bubbles: true });
     for (let i = 0; i < 8; i++) document.dispatchEvent(ev);
@@ -70,7 +79,7 @@ export default async function run(page, ui) {
     results.eggTerminal = await page.evaluate(() => ({
       built: true,
       output: document.getElementById('egg-output')?.textContent?.includes('command not found: frobnicate'),
-      noErrorEcho: true,
+      noErrorEcho: errors.every((e) => !/frobnicate|egg/.test(e)),
     }));
   } else {
     results.eggTerminal = { built: false, note: 'keystroke detector did not trigger (synthetic events lack timing density)' };

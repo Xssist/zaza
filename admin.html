@@ -1854,7 +1854,7 @@
         <button class="a-nav-item" data-sec="background"><i class="fas fa-image"></i> Background</button>
         <button class="a-nav-item" data-sec="theme"><i class="fas fa-circle-half-stroke"></i> Colour & type</button>
         <button class="a-nav-item" data-sec="cursor"><i class="fas fa-arrow-pointer"></i> Cursor</button>
-        <button class="a-nav-item" data-sec="banner"><i class="fas fa-megaphone"></i> Announcement</button>
+        <button class="a-nav-item" data-sec="consoleart"><i class="fas fa-terminal"></i> Console art</button>
         <span class="a-nav-lbl">Connections</span>
         <button class="a-nav-item" data-sec="spotify"><i class="fab fa-spotify"></i> Spotify</button>
         <button class="a-nav-item" data-sec="discord"><i class="fab fa-discord"></i> Discord</button>
@@ -2393,38 +2393,31 @@
           </div>
         </section>
 
-        <!-- ═══ BANNER ═══ -->
-        <section class="a-section" id="sec-banner">
+        <!-- ═══ CONSOLE ART ═══ -->
+        <section class="a-section" id="sec-consoleart">
           <div class="a-section-head">
-            <div class="a-section-title">Announcement Banner</div>
-            <div class="a-section-desc">A dismissible glassmorphism banner at the top of your site.</div>
+            <div class="a-section-title">Console Art</div>
+            <div class="a-section-desc">An easter egg printed in the browser console when someone opens devtools (F12).</div>
           </div>
           <div class="a-card">
-            <div class="a-card-title"><i class="fas fa-megaphone"></i> Banner Settings</div>
+            <div class="a-card-title"><i class="fas fa-terminal"></i> Console Message</div>
             <div class="a-row">
-              <label>Enable Banner</label>
+              <label>Enable Console Art</label>
               <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-                <label class="a-toggle"><input type="checkbox" id="tog-banner" /><span
+                <label class="a-toggle"><input type="checkbox" id="tog-consoleart" /><span
                     class="a-toggle-slider"></span></label>
-                <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Show banner on site</span>
+                <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Print message in browser console</span>
               </div>
             </div>
-            <div class="a-grid-2">
-              <div class="a-row"><label>Emoji</label><input type="text" id="inp-banner-emoji" class="a-input"
-                  placeholder="📢" maxlength="4" /></div>
-              <div class="a-row">
-                <label>Accent Color</label>
-                <div class="a-color-row">
-                  <div class="a-color-swatch" id="sw-banner-color" style="background:#a855f7;" title="Pick color"></div>
-                  <input type="color" id="pk-banner-color" value="#a855f7" />
-                  <input type="text" id="inp-banner-color" class="a-input" placeholder="#a855f7" maxlength="7" />
-                </div>
-              </div>
-            </div>
-            <div class="a-row"><label>Message</label><input type="text" id="inp-banner-text" class="a-input"
-                placeholder="✨ Something exciting is happening..." /></div>
-            <div class="a-info" style="margin-top:8px;"><i class="fas fa-circle-info"></i> The banner is dismissible per
-              session. Changing the text resets dismissal for all visitors.</div>
+            <div class="a-row"><label>ASCII Art (optional, monospace)</label><textarea id="inp-consoleart-art" class="a-input"
+                rows="7" placeholder="  ____  _   _ ..." spellcheck="false"
+                style="font-family:monospace;white-space:pre;resize:vertical;"></textarea></div>
+            <div class="a-row"><label>Main message</label><input type="text" id="inp-consoleart-message" class="a-input"
+                placeholder="why are you poking around in the console?" /></div>
+            <div class="a-row"><label>Sub message (optional)</label><input type="text" id="inp-consoleart-sub" class="a-input"
+                placeholder="go sign the guestbook or something." /></div>
+            <div class="a-info" style="margin-top:8px;"><i class="fas fa-circle-info"></i> ASCII art renders in the accent
+              color. Tip: generate art with a text-to-ASCII tool and paste it here.</div>
           </div>
         </section>
 
@@ -2801,14 +2794,12 @@
       const chkDc = $('#tog-discord'); if (chkDc) chkDc.checked = !!(cfg.discord?.enabled);
       set('#inp-discord-uid', cfg.discord?.userId || '');
 
-      // Banner
-      const chkBn = $('' + '#tog-banner'); if (chkBn) chkBn.checked = !!(cfg.announcement?.enabled);
-      set('#inp-banner-text', cfg.announcement?.text || '');
-      set('#inp-banner-emoji', cfg.announcement?.emoji || '📢');
-      set('#inp-banner-color', cfg.announcement?.color || '#a855f7');
-      const swBn = $('#sw-banner-color'), pkBn = $('#pk-banner-color');
-      if (swBn) swBn.style.background = cfg.announcement?.color || '#a855f7';
-      if (pkBn) pkBn.value = cfg.announcement?.color || '#a855f7';
+      // Console art
+      const chkCa = $('#tog-consoleart'); if (chkCa) chkCa.checked = cfg.consoleArt?.enabled !== false;
+      const artEl = $('#inp-consoleart-art');
+      if (artEl) artEl.value = cfg.consoleArt?.art || '';
+      set('#inp-consoleart-message', cfg.consoleArt?.message || '');
+      set('#inp-consoleart-sub', cfg.consoleArt?.subMessage || '');
 
       document.documentElement.style.setProperty('--accent', cfg.theme?.accentColor || '#a855f7');
       document.documentElement.style.setProperty('--accent2', cfg.theme?.accentColorSecondary || '#ec4899');
@@ -2901,11 +2892,11 @@
       cfg.discord.userId = g('#inp-discord-uid') || '';
       cfg.discord.showWidget = true;
 
-      if (!cfg.announcement) cfg.announcement = {};
-      cfg.announcement.enabled = gc('#tog-banner');
-      cfg.announcement.text = g('#inp-banner-text');
-      cfg.announcement.emoji = g('#inp-banner-emoji') || '📢';
-      cfg.announcement.color = g('#inp-banner-color') || '#a855f7';
+      if (!cfg.consoleArt) cfg.consoleArt = {};
+      cfg.consoleArt.enabled = gc('#tog-consoleart');
+      cfg.consoleArt.art = $('#inp-consoleart-art') ? $('#inp-consoleart-art').value : (cfg.consoleArt.art || '');
+      cfg.consoleArt.message = g('#inp-consoleart-message');
+      cfg.consoleArt.subMessage = g('#inp-consoleart-sub');
     }
   </script>
 
@@ -3233,13 +3224,7 @@
         } catch (e) { aToast('Network error', 'error'); }
         finally { if (btn) { btn.textContent = 'Test Lanyard'; btn.disabled = false; } }
       });
-      // Banner color picker
-      const swBnD = $('#sw-banner-color'), pkBnD = $('#pk-banner-color'), inpBnD = $('#inp-banner-color');
-      if (swBnD && pkBnD && inpBnD) {
-        swBnD.addEventListener('click', () => pkBnD.click());
-        pkBnD.addEventListener('input', e => { const v = e.target.value; inpBnD.value = v; swBnD.style.background = v; markDirty(); });
-        inpBnD.addEventListener('input', e => { const v = e.target.value; if (/^#[0-9a-fA-F]{6}$/.test(v)) { pkBnD.value = v; swBnD.style.background = v; } markDirty(); });
-      }
+      // Banner color picker (removed with banner feature)
 
       $('#a-reset-cache-btn')?.addEventListener('click', () => {
         if (!confirm('Clear local config cache and reload?')) return;

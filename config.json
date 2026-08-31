@@ -153,10 +153,10 @@
   },
   "badges": [],
   "projects": [],
-  "announcement": {
-    "enabled": false,
-    "text": "",
-    "emoji": "📢",
-    "color": "#a855f7"
+  "consoleArt": {
+    "enabled": true,
+    "art": "  ____              _\n / ___| _   _  __ _| | ___   _\n| |  _|| | | |/ _` | |/ / | | |\n| |_| || |_| | (_| |   <| |_| |\n \\____| \\__, |\\__,_|_|\\_\\\\__, |\n       |___/             |___/",
+    "message": "why the fuck are you poking around in the console?",
+    "subMessage": "seriously, go sign the guestbook or something. (if something's broken, that's fair though.)"
   }
 }

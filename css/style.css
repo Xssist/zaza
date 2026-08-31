@@ -600,35 +600,6 @@ body.cursor-click #cursor { transform: translate(-50%,-50%) scale(0.6); }
 }
 
 /* ══════════════════════════════════════════
-   ANNOUNCEMENT BANNER
-══════════════════════════════════════════ */
-.ann-banner {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 8000;
-  display: flex; align-items: center; justify-content: center;
-  padding: 10px 48px 10px 20px;
-  background: rgba(8,8,15,0.60);
-  backdrop-filter: blur(24px) saturate(1.5);
-  border-bottom: 1px solid rgba(168,85,247,0.18);
-  box-shadow: 0 1px 0 rgba(168,85,247,0.07), 0 8px 28px rgba(0,0,0,.3);
-  animation: slideDown .4s var(--ease) both;
-}
-.ann-banner.hidden { display: none; }
-@keyframes slideDown { from{transform:translateY(-100%);opacity:0} to{transform:translateY(0);opacity:1} }
-.ann-inner { display: flex; align-items: center; gap: 9px; }
-.ann-emoji { font-size: .95rem; flex-shrink: 0; }
-.ann-text { font-size: .76rem; font-weight: 500; color: #f0f0f8; line-height: 1.4; }
-.ann-close {
-  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
-  width: 24px; height: 24px; border-radius: 50%;
-  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08);
-  color: var(--text-muted); font-size: .65rem;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: background .2s;
-}
-.ann-close:hover { background: rgba(255,255,255,.14); color: #fff; }
-body.has-banner #main-page { padding-top: 40px; }
-
-/* ══════════════════════════════════════════
    THEME FAB
 ══════════════════════════════════════════ */
 .theme-fab {

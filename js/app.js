@@ -1356,39 +1356,15 @@ function toast(msg, dur = 1800) {
 }
 
 /* ══════════════════════════════════════════
-   ANNOUNCEMENT BANNER
+   CONSOLE ART — easter egg for the curious
 ══════════════════════════════════════════ */
-function initAnnouncement() {
-  const ann = S.cfg.announcement;
-  if (!ann?.enabled || !ann?.text) return;
-
-  const banner  = $('#ann-banner');
-  const textEl  = $('#ann-text');
-  const emojiEl = $('#ann-emoji');
-  const closeEl = $('#ann-close');
-  if (!banner) return;
-
-  // Check if dismissed this session
-  const dismissed = sessionStorage.getItem('ann_dismissed');
-  if (dismissed === ann.text) return;
-
-  if (textEl)  textEl.textContent  = ann.text;
-  if (emojiEl) emojiEl.textContent = ann.emoji || '📢';
-
-  // Apply custom color to banner border
-  if (ann.color) {
-    banner.style.borderBottomColor = ann.color + '44';
-    banner.style.boxShadow = `0 1px 0 ${ann.color}22, 0 8px 32px rgba(0,0,0,.3)`;
-  }
-
-  banner.classList.remove('hidden');
-  document.body.classList.add('has-banner');
-
-  closeEl?.addEventListener('click', () => {
-    banner.classList.add('hidden');
-    document.body.classList.remove('has-banner');
-    sessionStorage.setItem('ann_dismissed', ann.text);
-  });
+function initConsoleArt() {
+  const ca = S.cfg.consoleArt;
+  if (!ca?.enabled) return;
+  const style = 'color:#a855f7;font-family:monospace;font-size:12px;line-height:1.15;white-space:pre;';
+  if (ca.art) console.log('%c' + String(ca.art), style);
+  if (ca.message) console.log('%c' + ca.message, 'color:#f0f0f5;font-size:14px;font-weight:bold;font-family:monospace;');
+  if (ca.subMessage) console.log('%c' + ca.subMessage, 'color:#9a9aa5;font-style:italic;font-family:monospace;');
 }
 
 /* ══════════════════════════════════════════
@@ -1586,7 +1562,7 @@ async function init() {
   initCursor();
   initParticles();
   initWeather();
-  initAnnouncement();
+  initConsoleArt();
   initMusic();
   initEditorialReveals();
   initSmoothScrollEffects();
