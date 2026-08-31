@@ -149,7 +149,9 @@
     ],
     "description": "living in the moment. creating something real.",
     "ogImage": "assets/images/avatar.png",
-    "themeColor": "#ffffff"
+    "themeColor": "#ffffff",
+    "titleEffect": "glitchHard",
+    "titleSpeed": 1
   },
   "badges": [],
   "skills": [
