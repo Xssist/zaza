@@ -1361,7 +1361,7 @@ function toast(msg, dur = 1800) {
 function initConsoleArt() {
   const ca = S.cfg.consoleArt;
   if (!ca?.enabled) return;
-  const style = 'color:#a855f7;font-family:monospace;font-size:12px;line-height:1.15;white-space:pre;';
+  const style = 'color:#ffffff;font-family:monospace;font-size:12px;line-height:1.15;white-space:pre;';
   if (ca.art) console.log('%c' + String(ca.art), style);
   if (ca.message) console.log('%c' + ca.message, 'color:#f0f0f5;font-size:14px;font-weight:bold;font-family:monospace;');
   if (ca.subMessage) console.log('%c' + ca.subMessage, 'color:#9a9aa5;font-style:italic;font-family:monospace;');
