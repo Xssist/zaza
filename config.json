@@ -225,9 +225,10 @@
       "description": "casual biolink with drag and drop features",
       "technologies": [
         "TypeScript",
-        "Node.js"
+        "Node.js",
+        "PostgreSQL"
       ],
-      "url": "https://example.com",
+      "url": "https://zaza-production-dc12.up.railway.app/",
       "image": ""
     }
   ],
