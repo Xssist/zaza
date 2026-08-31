@@ -728,6 +728,9 @@ function renderProfile() {
   // Badges
   renderBadges();
 
+  // Skills
+  renderSkills();
+
   // Socials
   renderSocials();
 
@@ -748,14 +751,7 @@ function makeInitial(p) {
 function renderBadges() {
   const row = $('#badges-row');
   if (!row) return;
-  const badges = S.cfg.badges?.length ? S.cfg.badges : [
-    { icon:'fab fa-js-square', color:'#F7DF1E', label:'JavaScript' },
-    { icon:'fab fa-python',    color:'#3776AB', label:'Python'     },
-    { icon:'fab fa-discord',   color:'#5865F2', label:'Discord'    },
-    { icon:'fab fa-github',    color:'#ffffff', label:'GitHub'     },
-    { icon:'fab fa-html5',     color:'#E34F26', label:'HTML5'      },
-    { icon:'fab fa-css3-alt',  color:'#1572B6', label:'CSS3'       },
-  ];
+  const badges = S.cfg.badges?.length ? S.cfg.badges : [];
   row.innerHTML = '';
   badges.forEach(b => {
     const el = document.createElement('span');
@@ -766,6 +762,33 @@ function renderBadges() {
     icon.style.color = b.color;
     el.appendChild(icon);
     row.appendChild(el);
+  });
+}
+
+function renderSkills() {
+  const container = $('#skills-container');
+  if (!container) return;
+  const groups = Array.isArray(S.cfg.skills) ? S.cfg.skills : [];
+  container.innerHTML = '';
+  groups.forEach(group => {
+    if (!Array.isArray(group.items) || !group.items.length) return;
+    const section = document.createElement('section');
+    section.className = 'skill-group';
+    const heading = document.createElement('h3');
+    heading.textContent = group.name || 'Skills';
+    const chips = document.createElement('div');
+    chips.className = 'skill-chips';
+    group.items.forEach(skill => {
+      const chip = document.createElement('span');
+      chip.className = 'skill-chip';
+      const icon = document.createElement('i');
+      icon.className = skill.icon || 'fas fa-code';
+      if (skill.color) icon.style.color = skill.color;
+      const label = document.createElement('span');
+      label.textContent = skill.label || 'Untitled';
+      chip.append(icon, label); chips.appendChild(chip);
+    });
+    section.append(heading, chips); container.appendChild(section);
   });
 }
 

@@ -1850,6 +1850,8 @@
         <button class="a-nav-item" data-sec="socials"><i class="fas fa-arrow-up-right-from-square"></i> Contact
           links</button>
         <button class="a-nav-item" data-sec="music"><i class="fas fa-music"></i> Music</button>
+        <button class="a-nav-item" data-sec="skills"><i class="fas fa-code"></i> Skills</button>
+        <button class="a-nav-item" data-sec="projects"><i class="fas fa-briefcase"></i> Projects</button>
         <span class="a-nav-lbl">Atmosphere</span>
         <button class="a-nav-item" data-sec="background"><i class="fas fa-image"></i> Background</button>
         <button class="a-nav-item" data-sec="theme"><i class="fas fa-circle-half-stroke"></i> Colour & type</button>
@@ -2025,6 +2027,18 @@
             <button class="a-btn-sm secondary" id="a-add-track-btn"><i class="fas fa-plus"></i> Add Track by
               URL/Path</button>
           </div>
+        </section>
+
+        <!-- ═══ SKILLS ═══ -->
+        <section class="a-section" id="sec-skills">
+          <div class="a-section-head"><div class="a-section-title">Skills</div><div class="a-section-desc">Organize the technology stack shown on your portfolio.</div></div>
+          <div class="a-card"><div class="a-card-title"><i class="fas fa-code"></i> Technology Stack</div><div id="a-skills-list"></div><div style="margin-top:12px;"><button class="a-btn-sm" onclick="aAddSkillGroup()"><i class="fas fa-plus"></i> Add Skill Group</button></div></div>
+        </section>
+
+        <!-- ═══ PROJECTS ═══ -->
+        <section class="a-section" id="sec-projects">
+          <div class="a-section-head"><div class="a-section-title">Projects</div><div class="a-section-desc">Add work samples shown in the portfolio work section.</div></div>
+          <div class="a-card"><div class="a-card-title"><i class="fas fa-briefcase"></i> Project List</div><div id="a-projects-list"></div><div style="margin-top:12px;"><button class="a-btn-sm" onclick="aAddProject()"><i class="fas fa-plus"></i> Add Project</button></div></div>
         </section>
 
         <!-- ═══ THEME ═══ -->
@@ -2720,6 +2734,8 @@
       $$('.a-avail-opt').forEach(el => { el.className = 'a-avail-opt'; if (el.dataset.v === avail) el.classList.add('sel-' + avail); });
 
       aRenderBadges(cfg.badges || []);
+      aRenderSkills(cfg.skills || []);
+      aRenderProjects(cfg.projects || []);
 
       const sw1 = $('#sw-accent'), sw2 = $('#sw-accent2');
       if (sw1) sw1.style.background = cfg.theme?.accentColor || '#a855f7';
@@ -2925,6 +2941,43 @@
       if (!confirm('Remove badge?')) return;
       AS.config.badges.splice(i, 1); aRenderBadges(AS.config.badges); markDirty();
     };
+
+    /* ── Render skills ── */
+    function aRenderSkills(groups) {
+      const con = $('#a-skills-list'); if (!con) return;
+      con.innerHTML = '';
+      if (!groups.length) { con.innerHTML = '<p style="color:rgba(240,240,245,.3);font-size:.76rem;text-align:center;padding:10px 0;">No skill groups yet.</p>'; return; }
+      groups.forEach((group, groupIndex) => {
+        const block = document.createElement('div'); block.className = 'a-card'; block.style.margin = '0 0 12px'; block.style.padding = '14px';
+        const skills = Array.isArray(group.items) ? group.items : [];
+        block.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><input class="a-input" style="padding:7px 9px;font-size:.78rem;flex:1;" value="' + esc(group.name || '') + '" placeholder="Group name" oninput="AS.config.skills[' + groupIndex + '].name=this.value;markDirty();"><button class="a-btn-sm danger" style="padding:6px 9px;font-size:.7rem;" onclick="aRemoveSkillGroup(' + groupIndex + ')">x</button></div><div class="a-skill-items"></div><button class="a-btn-sm secondary" style="margin-top:10px;padding:6px 9px;font-size:.7rem;" onclick="aAddSkill(' + groupIndex + ')"><i class="fas fa-plus"></i> Add Skill</button>';
+        const list = $('.a-skill-items', block);
+        skills.forEach((skill, skillIndex) => {
+          const row = document.createElement('div'); row.style.cssText = 'display:grid;grid-template-columns:1fr 1.2fr 1.4fr auto;gap:6px;margin-top:6px;align-items:center;';
+          row.innerHTML = '<input class="a-input" style="padding:6px 8px;font-size:.7rem;" value="' + esc(skill.label || '') + '" placeholder="Name" oninput="AS.config.skills[' + groupIndex + '].items[' + skillIndex + '].label=this.value;markDirty();"><input class="a-input" style="padding:6px 8px;font-size:.7rem;" value="' + esc(skill.icon || '') + '" placeholder="Icon class" oninput="AS.config.skills[' + groupIndex + '].items[' + skillIndex + '].icon=this.value;markDirty();"><input class="a-input" style="padding:6px 8px;font-size:.7rem;" value="' + esc(skill.color || '') + '" placeholder="#ffffff" oninput="AS.config.skills[' + groupIndex + '].items[' + skillIndex + '].color=this.value;markDirty();"><button class="a-btn-sm danger" style="padding:6px 9px;font-size:.7rem;" onclick="aRemoveSkill(' + groupIndex + ',' + skillIndex + ')">x</button>';
+          list.appendChild(row);
+        });
+        con.appendChild(block);
+      });
+    }
+    window.aAddSkillGroup = () => { AS.config.skills ||= []; AS.config.skills.push({ name: 'New group', items: [] }); aRenderSkills(AS.config.skills); markDirty(); };
+    window.aRemoveSkillGroup = i => { AS.config.skills.splice(i, 1); aRenderSkills(AS.config.skills); markDirty(); };
+    window.aAddSkill = i => { AS.config.skills[i].items ||= []; AS.config.skills[i].items.push({ label: '', icon: 'fas fa-code', color: '#ffffff' }); aRenderSkills(AS.config.skills); markDirty(); };
+    window.aRemoveSkill = (group, skill) => { AS.config.skills[group].items.splice(skill, 1); aRenderSkills(AS.config.skills); markDirty(); };
+
+    /* ── Render projects ── */
+    function aRenderProjects(projects) {
+      const con = $('#a-projects-list'); if (!con) return;
+      con.innerHTML = '';
+      if (!projects.length) { con.innerHTML = '<p style="color:rgba(240,240,245,.3);font-size:.76rem;text-align:center;padding:10px 0;">No projects yet.</p>'; return; }
+      projects.forEach((project, i) => {
+        const row = document.createElement('div'); row.className = 'a-social-item';
+        row.innerHTML = '<div style="flex:1;min-width:0;display:grid;grid-template-columns:1fr 1.4fr;gap:6px;"><input class="a-input" style="padding:6px 9px;font-size:.72rem;" value="' + esc(project.name || '') + '" placeholder="Project name" oninput="AS.config.projects[' + i + '].name=this.value;markDirty();"><input class="a-input" style="padding:6px 9px;font-size:.72rem;" value="' + esc(project.url || '') + '" placeholder="Project URL" oninput="AS.config.projects[' + i + '].url=this.value;markDirty();"><input class="a-input" style="padding:6px 9px;font-size:.72rem;" value="' + esc(project.description || '') + '" placeholder="Description" oninput="AS.config.projects[' + i + '].description=this.value;markDirty();"><input class="a-input" style="padding:6px 9px;font-size:.72rem;" value="' + esc(Array.isArray(project.technologies) ? project.technologies.join(', ') : '') + '" placeholder="Technologies, comma separated" oninput="AS.config.projects[' + i + '].technologies=this.value.split(\',\').map(x=>x.trim()).filter(Boolean);markDirty();"><input class="a-input" style="padding:6px 9px;font-size:.72rem;grid-column:1/-1;" value="' + esc(project.image || '') + '" placeholder="Image URL or path (optional)" oninput="AS.config.projects[' + i + '].image=this.value;markDirty();"></div><button class="a-btn-sm danger" style="padding:6px 9px;font-size:.7rem;align-self:start;" onclick="aRemoveProject(' + i + ')">x</button>';
+        con.appendChild(row);
+      });
+    }
+    window.aAddProject = () => { AS.config.projects ||= []; AS.config.projects.push({ name: '', description: '', technologies: [], url: '', image: '' }); aRenderProjects(AS.config.projects); markDirty(); };
+    window.aRemoveProject = i => { AS.config.projects.splice(i, 1); aRenderProjects(AS.config.projects); markDirty(); };
 
     /* ── Render tracks ── */
     function aRenderTracks(tracks) {

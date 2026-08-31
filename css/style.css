@@ -1078,3 +1078,12 @@ body.a-admin input,body.a-admin textarea,body.a-admin [contenteditable="true"]{-
 .page-crumbs a:hover{color:#fff;border-color:#fff}
 .page-crumbs a[aria-current]{color:rgba(244,244,240,.75);border-color:rgba(244,244,240,.4)}
 .crumb-sep{opacity:.4;user-select:none}
+
+/* Skills stack */
+.editorial-page .skills-section{display:grid;grid-template-columns:minmax(110px,18%) 1fr;gap:clamp(2rem,7vw,8rem);padding:11vh 0 9vh;border-top:1px solid rgba(255,255,255,.1)}
+.editorial-page .skills-content{max-width:680px}.editorial-page .skills-kicker{margin:0 0 .5rem;font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(244,244,240,.48)}
+.editorial-page .skills-content h2{margin:0 0 1.2rem;font-size:clamp(2rem,3.6vw,3.4rem);font-weight:600;letter-spacing:-.05em}.editorial-page .skills-intro{margin:0 0 3rem;max-width:610px;font-size:clamp(.92rem,1.25vw,1.05rem);line-height:1.8;color:rgba(244,244,240,.62)}
+.editorial-page .skill-group{margin-top:2.25rem}.editorial-page .skill-group h3{margin:0 0 1rem;font-size:.72rem;font-weight:700;color:rgba(244,244,240,.65)}
+.editorial-page .skill-chips{display:flex;flex-wrap:wrap;gap:.65rem}.editorial-page .skill-chip{display:inline-flex;align-items:center;gap:.48rem;min-height:30px;padding:.3rem .72rem;border:1px solid rgba(255,255,255,.18);border-radius:6px;background:rgba(255,255,255,.025);font-size:.75rem;font-weight:600;color:rgba(244,244,240,.73)}
+.editorial-page .skill-chip i{width:1rem;text-align:center;font-size:.86rem;color:rgba(244,244,240,.8)}
+@media(max-width:700px){.editorial-page .skills-section{display:block;padding-block:clamp(7rem,18vw,10rem)}.editorial-page .skills-content{margin-top:3.5rem}.editorial-page .skills-content h2{font-size:clamp(1.8rem,10vw,2.6rem)}.editorial-page .skill-chip{font-size:.72rem}}
