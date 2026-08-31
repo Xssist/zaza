@@ -130,7 +130,7 @@
   "cursor": {
     "enabled": true,
     "trailEnabled": true,
-    "color": "#a855f7",
+    "color": "#ffffff",
     "style": "dot",
     "trail": {
       "style": "dots",
@@ -149,7 +149,7 @@
     ],
     "description": "living in the moment. creating something real.",
     "ogImage": "assets/images/avatar.png",
-    "themeColor": "#a855f7"
+    "themeColor": "#ffffff"
   },
   "badges": [],
   "skills": [

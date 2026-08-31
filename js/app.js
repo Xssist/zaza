@@ -196,7 +196,7 @@ function _sanitizeConfig(cfg) {
 function _defaultConfig() {
   return {
     profile: { username:'zade', displayName:'zade', bio:'living in the moment.', avatar:'assets/images/avatar.png', status:'online', availability:'online', statusMessages:['just vibing 🎵'], joinDate:'2024' },
-    theme:   { accentColor:'#a855f7', accentColorSecondary:'#ec4899', particleCount:80, glassmorphism:true, gradientAngle:160 },
+    theme:   { accentColor:'#ffffff', accentColorSecondary:'#ffffff', particleCount:80, glassmorphism:true, gradientAngle:160 },
     background: { videoUrl:'assets/images/background.mp4', overlayOpacity:0.35 },
     music:   { enabled:true, defaultVolume:0.5, tracks:[] },
     socials: [],
@@ -226,11 +226,11 @@ function applyTheme() {
   applySeo();
   const t = S.cfg.theme || {};
   const root = document.documentElement;
-  root.style.setProperty('--accent',  t.accentColor || '#a855f7');
-  root.style.setProperty('--accent2', t.accentColorSecondary || '#ec4899');
-  root.style.setProperty('--accent-glow', hexAlpha(t.accentColor || '#a855f7', 0.35));
+  root.style.setProperty('--accent',  t.accentColor || '#ffffff');
+  root.style.setProperty('--accent2', t.accentColorSecondary || '#ffffff');
+  root.style.setProperty('--accent-glow', hexAlpha(t.accentColor || '#ffffff', 0.35));
   const mt = $('meta[name="theme-color"]');
-  if (mt) mt.content = S.cfg.seo?.themeColor || t.accentColor || '#a855f7';
+  if (mt) mt.content = S.cfg.seo?.themeColor || t.accentColor || '#ffffff';
 
   // Font family
   const fontMap = { 'Space Grotesk':'font-space', 'JetBrains Mono':'font-mono' };
@@ -249,7 +249,7 @@ function applyTheme() {
 }
 
 function hexAlpha(hex, a) {
-  if (typeof hex !== 'string' || !/^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex.trim())) return `rgba(168,85,247,${a})`;
+  if (typeof hex !== 'string' || !/^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex.trim())) return `rgba(255,255,255,${a})`;
   hex = hex.replace('#', '');
   if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
   const r = parseInt(hex.slice(0,2),16);
@@ -568,25 +568,26 @@ function initParticles() {
   const ctx = cv.getContext('2d');
   const count = Math.max(0, Math.min(200, Number(S.cfg.theme?.particleCount) || 80));
 
-  const ac = S.cfg.theme?.accentColor || '#a855f7';
-  const a2 = S.cfg.theme?.accentColorSecondary || '#ec4899';
+  const ac = S.cfg.theme?.accentColor || '#ffffff';
+  const a2 = S.cfg.theme?.accentColorSecondary || '#ffffff';
 
   const toRGB = h => {
     h = h.replace('#','');
     if (h.length===3) h=h.split('').map(c=>c+c).join('');
     return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
   };
-  const safeHex = h => /^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(h || '').trim()) ? String(h).trim() : '#a855f7';
+  const safeHex = h => /^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(h || '').trim()) ? String(h).trim() : '#ffffff';
   const [r1,g1,b1] = toRGB(safeHex(ac));
   const [r2,g2,b2] = toRGB(safeHex(a2));
 
-  // Reduce particle count on small screens to save battery
-  const isMobile = window.matchMedia('(max-width: 480px)').matches;
-  const finalCount = Math.round((isMobile ? Math.min(count, 40) : count) * S.perf.quality);
+  // Mobile / touch devices get fewer particles, no link lines, lower DPR — biggest battery + FPS win
+  const isMobile = window.matchMedia('(max-width: 700px)').matches || window.matchMedia('(hover: none)').matches;
+  const drawLinks = !isMobile;
+  const finalCount = Math.round((isMobile ? Math.min(count, 30) : count) * S.perf.quality);
 
   let W = 0, H = 0;
   const resize = () => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
     S.perf.dpr = dpr;
     W = innerWidth; H = innerHeight;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
@@ -637,6 +638,8 @@ function initParticles() {
     ctx.clearRect(0, 0, W, H);
 
     // Batch all connection lines into a single path + stroke call
+    // (skipped on mobile — O(n²) per frame is not worth it on phones)
+    if (drawLinks) {
     ctx.beginPath();
     ctx.lineWidth = 0.4;
     for (let i = 0; i < dots.length; i++) {
@@ -653,6 +656,7 @@ function initParticles() {
     }
     ctx.strokeStyle = `rgb(${r1},${g1},${b1})`;
     ctx.stroke();
+    }
 
     // Draw dots (no save/restore per dot — manage globalAlpha directly)
     ctx.shadowColor = '';
@@ -1191,13 +1195,13 @@ function startVisualizer() {
   const buf = new Uint8Array(S.analyser.frequencyBinCount);
 
   // Cache colors — only read getComputedStyle once, update on theme change
-  let _accent  = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()  || '#a855f7';
-  let _accent2 = getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#ec4899';
+  let _accent  = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()  || '#ffffff';
+  let _accent2 = getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#ffffff';
 
   // Update cache when theme FAB changes colors
   const observer = new MutationObserver(() => {
-    _accent  = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()  || '#a855f7';
-    _accent2 = getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#ec4899';
+    _accent  = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()  || '#ffffff';
+    _accent2 = getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#ffffff';
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
 
@@ -1318,11 +1322,11 @@ function initThemeFab() {
   const fab = $('#theme-fab');
   if (!fab) return;
   const presets = [
-    { a:'#a855f7', b:'#ec4899' },
+    { a:'#ffffff', b:'#ffffff' },
     { a:'#3b82f6', b:'#06b6d4' },
     { a:'#10b981', b:'#34d399' },
     { a:'#f59e0b', b:'#ef4444' },
-    { a:'#f97316', b:'#ec4899' },
+    { a:'#f97316', b:'#ffffff' },
   ];
   let idx = 0;
   fab.addEventListener('click', () => {
@@ -1351,7 +1355,10 @@ function initWeather() {
     document.head.appendChild(s);
   }
 
-  for (let i = 0; i < 55; i++) {
+  // Snow/rain are pure DOM animations — cap hard on mobile to save battery
+  const isMobile = window.matchMedia('(max-width: 700px)').matches || window.matchMedia('(hover: none)').matches;
+  const flakes = isMobile ? 18 : 55;
+  for (let i = 0; i < flakes; i++) {
     const el = document.createElement('div');
     el.style.cssText = `position:fixed;pointer-events:none;z-index:5;animation:wFall linear infinite;`
       + `left:${rand(0,100)}%;top:${rand(-20,0)}%;animation-duration:${rand(6,14)}s;animation-delay:${rand(0,8)}s;opacity:${rand(0.2,0.7)};`;
@@ -1420,8 +1427,8 @@ function initBgPattern() {
   resize();
   window.addEventListener('resize', resize);
 
-  const ac = S.cfg.theme?.accentColor || '#a855f7';
-  const a2 = S.cfg.theme?.accentColorSecondary || '#ec4899';
+  const ac = S.cfg.theme?.accentColor || '#ffffff';
+  const a2 = S.cfg.theme?.accentColorSecondary || '#ffffff';
 
   if (pattern === 'aurora') {
     // Flowing aurora waves
@@ -2372,26 +2379,26 @@ function initEasterEggTerminal() {
       position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
       width:min(600px,92vw);max-height:360px;
       background:rgba(4,4,10,0.97);
-      border:1px solid rgba(168,85,247,0.35);
+      border:1px solid rgba(255,255,255,0.35);
       border-radius:14px;overflow:hidden;
-      box-shadow:0 0 60px rgba(168,85,247,0.2),0 24px 60px rgba(0,0,0,0.8);
+      box-shadow:0 0 60px rgba(255,255,255,0.2),0 24px 60px rgba(0,0,0,0.8);
       z-index:99995;
       opacity:0;transition:opacity .3s ease,transform .3s ease;
       font-family:'JetBrains Mono','Courier New',monospace;
     `;
 
     el.innerHTML = `
-      <div style="display:flex;align-items:center;gap:7px;padding:10px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(168,85,247,.15);">
+      <div style="display:flex;align-items:center;gap:7px;padding:10px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.15);">
         <span style="width:11px;height:11px;border-radius:50%;background:#ff5f57;"></span>
         <span style="width:11px;height:11px;border-radius:50%;background:#febc2e;"></span>
         <span style="width:11px;height:11px;border-radius:50%;background:#28c840;"></span>
         <span style="flex:1;text-align:center;font-size:.65rem;color:rgba(240,240,245,.25);margin-left:-60px;">zade@arch: ~ [secret terminal]</span>
       </div>
       <div id="egg-output" style="padding:14px 16px;max-height:260px;overflow-y:auto;font-size:.72rem;line-height:1.85;color:#22c55e;"></div>
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;border-top:1px solid rgba(168,85,247,.1);">
-        <span style="color:#a855f7;font-size:.72rem;font-weight:700;">zade@arch ~ $</span>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;border-top:1px solid rgba(255,255,255,.1);">
+        <span style="color:#ffffff;font-size:.72rem;font-weight:700;">zade@arch ~ $</span>
         <input id="egg-input" type="text" autocomplete="off" spellcheck="false"
-          style="flex:1;background:none;border:none;outline:none;color:#f0f0f5;font-family:inherit;font-size:.72rem;caret-color:#a855f7;"
+          style="flex:1;background:none;border:none;outline:none;color:#f0f0f5;font-family:inherit;font-size:.72rem;caret-color:#ffffff;"
           placeholder="type a command..."/>
       </div>
     `;
@@ -2407,7 +2414,7 @@ function initEasterEggTerminal() {
     const output = el.querySelector('#egg-output');
 
     // Welcome message
-    appendOutput(output, ['you found the secret terminal.', 'type <span style="color:#a855f7">help</span> for commands.', '']);
+    appendOutput(output, ['you found the secret terminal.', 'type <span style="color:#ffffff">help</span> for commands.', '']);
 
     input.focus();
     input.addEventListener('keydown', e => {
@@ -2446,10 +2453,10 @@ function initEasterEggTerminal() {
   function handleCommand(cmd, output) {
     // Echo command
     const echo = document.createElement('div');
-    echo.innerHTML = `<span style="color:#a855f7">zade@arch ~ $</span> <span style="color:#f0f0f5">${esc(cmd)}</span>`;
+    echo.innerHTML = `<span style="color:#ffffff">zade@arch ~ $</span> <span style="color:#f0f0f5">${esc(cmd)}</span>`;
     output.appendChild(echo);
 
-    const resp = RESPONSES[cmd] || [`command not found: ${esc(cmd)}`, 'try <span style="color:#a855f7">help</span>'];
+    const resp = RESPONSES[cmd] || [`command not found: ${esc(cmd)}`, 'try <span style="color:#ffffff">help</span>'];
 
     if (resp[0] === '__CLEAR__') { output.innerHTML = ''; return; }
     if (resp[0] === '__EXIT__')  { closeTerminal(); return; }
@@ -2529,7 +2536,7 @@ function renderProjects() {
     if (projectUrl) { const link = document.createElement('a'); link.className = 'project-link'; link.href = projectUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'View project ↗'; copy.appendChild(link); }
     const media = document.createElement('div'); media.className = 'project-media';
     const image = normalizeAssetPath(project.image || project.screenshot || '');
-    if (image) { const img = document.createElement('img'); img.src = image; img.alt = `${project.name || 'Project'} preview`; media.appendChild(img); } else { const placeholder = document.createElement('div'); placeholder.className = 'project-placeholder'; placeholder.textContent = 'Preview'; media.appendChild(placeholder); }
+    if (image) { const img = document.createElement('img'); img.src = image; img.alt = `${project.name || 'Project'} preview`; img.loading = 'lazy'; img.decoding = 'async'; media.appendChild(img); } else { const placeholder = document.createElement('div'); placeholder.className = 'project-placeholder'; placeholder.textContent = 'Preview'; media.appendChild(placeholder); }
     article.append(copy, media); con.appendChild(article);
   });
 }
