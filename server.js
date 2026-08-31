@@ -25,14 +25,22 @@ function sendError(response, status) {
       return;
     }
   }
+  const messages = { 400: "Bad request", 404: "Not found", 405: "Method not allowed" };
   response.writeHead(status, { "Content-Type": "text/plain; charset=utf-8" });
-  response.end(status === 404 ? "Not found" : "Method not allowed");
+  response.end(messages[status] || "Error");
 }
 
 const server = http.createServer(async (request, response) => {
   const pathname = new URL(request.url, "http://localhost").pathname;
   if (request.method !== "GET" && request.method !== "HEAD") return sendError(response, 405);
-  const relativePath = pathname === "/" ? "index.html" : decodeURIComponent(pathname).replace(/^[/\\]+/, "");
+  let decodedPathname;
+  try {
+    decodedPathname = decodeURIComponent(pathname);
+  } catch (_) {
+    // Malformed percent-encoding (e.g. /%E0%A4%A) — don't let the URIError crash the process.
+    return sendError(response, 400);
+  }
+  const relativePath = pathname === "/" ? "index.html" : decodedPathname.replace(/^[/\\]+/, "");
   const filePath = normalize(join(root, relativePath));
 
   if (!filePath.startsWith(root + sep) || !existsSync(filePath) || !statSync(filePath).isFile()) return sendError(response, 404);

@@ -13,7 +13,33 @@ const bundles = [
   { src: "js/app.js",    out: "js/app.min.js" },
 ];
 
+/** Replace the inline config JSON inside an HTML file so it always mirrors
+    config.json — the hand-edited copy used to drift out of sync. */
+function syncInlineConfig(htmlPath, configJson) {
+  const html = readFileSync(htmlPath, "utf8");
+  const marker = "window.__ZADE_CONFIG__ = ";
+  const start = html.indexOf(marker);
+  if (start === -1) return false;
+  const valueStart = start + marker.length;
+  const end = html.indexOf(";", valueStart);
+  if (end === -1) return false;
+  const updated = html.slice(0, valueStart) + configJson + html.slice(end);
+  if (updated !== html) {
+    writeFileSync(htmlPath, updated);
+    console.log(`${htmlPath}: inline __ZADE_CONFIG__ synced with config.json`);
+  }
+  return true;
+}
+
 (async () => {
+  // Inline config blocks must mirror config.json exactly.
+  const configJson = readFileSync("config.json", "utf8").trim();
+  let inlineSynced = false;
+  for (const htmlPath of ["index.html", "admin.html"]) {
+    if (syncInlineConfig(htmlPath, configJson)) inlineSynced = true;
+  }
+  if (!inlineSynced) console.warn("No inline __ZADE_CONFIG__ block found in any HTML file.");
+
   let before = 0;
   let after = 0;
   for (const { src, out } of bundles) {

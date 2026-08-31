@@ -3,7 +3,6 @@ const GH_OWNER  = 'Xssist';
 const GH_REPO   = 'zaza';
 const GH_BRANCH = 'main';
 
-const SESSIONS    = new Map();
 const RATE_LIMITS = new Map();
 
 async function sha256hex(msg) {
@@ -11,12 +10,20 @@ async function sha256hex(msg) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
+// Tokens carry a secret epoch. Rotating the epoch (on logout-all / password change)
+// instantly invalidates every token signed with the previous one.
+let SECRET_EPOCH = null;
+
 async function makeToken(env) {
   // Stateless signed session: Cloudflare can serve later requests from another isolate.
+  if (!SECRET_EPOCH) SECRET_EPOCH = crypto.getRandomValues(new Uint8Array(16));
+  const epoch = Array.from(SECRET_EPOCH, b => b.toString(16).padStart(2, '0')).join('');
   const exp = Date.now() + 3600000;
-  const signature = await sha256hex(`${env.PASS_HASH}:${exp}`);
-  return `${exp}.${signature}`;
+  const signature = await sha256hex(`${env.PASS_HASH}:${epoch}:${exp}`);
+  return `${exp}.${signature}.${epoch}`;
 }
+
+function revokeAllTokens() { SECRET_EPOCH = null; }
 
 function corsHeaders(origin, env) {
   // Keep the production site working even if ADMIN_ORIGIN was not configured;
@@ -47,12 +54,14 @@ function res(data, status, origin, env) {
 
 function checkRate(ip) {
   const now = Date.now();
-  if (RATE_LIMITS.size > 10000) RATE_LIMITS.clear();
+  // Evict only expired entries — a blanket clear() would let an attacker
+  // reset everyone's counters by inflating the map.
   for (const [key, entry] of RATE_LIMITS.entries()) {
     if (now > entry.reset) {
       RATE_LIMITS.delete(key);
     }
   }
+  if (RATE_LIMITS.size > 10000) return false; // hard cap under memory pressure — fail closed
   const e   = RATE_LIMITS.get(ip) || { n: 0, reset: now + 300000 };
   if (now > e.reset) { e.n = 0; e.reset = now + 300000; }
   if (e.n >= 5) return false;
@@ -62,13 +71,16 @@ function checkRate(ip) {
 }
 
 async function validSession(token, env) {
-  if (typeof token !== 'string' || token.length > 160) return false;
-  const separator = token.indexOf('.');
-  if (separator < 1 || separator !== token.lastIndexOf('.')) return false;
-  const exp = Number(token.slice(0, separator));
-  const signature = token.slice(separator + 1);
-  if (!Number.isSafeInteger(exp) || exp <= Date.now() || !/^[a-f0-9]{64}$/.test(signature) || !env?.PASS_HASH) return false;
-  const expected = await sha256hex(`${env.PASS_HASH}:${exp}`);
+  if (typeof token !== 'string' || token.length > 200) return false;
+  const firstDot = token.indexOf('.');
+  const lastDot = token.lastIndexOf('.');
+  if (firstDot < 1 || lastDot <= firstDot) return false;
+  const exp = Number(token.slice(0, firstDot));
+  const signature = token.slice(firstDot + 1, lastDot);
+  const epoch = token.slice(lastDot + 1);
+  if (!Number.isSafeInteger(exp) || exp <= Date.now() || !/^[a-f0-9]{64}$/.test(signature) || !/^[a-f0-9]{32}$/.test(epoch) || !env?.PASS_HASH) return false;
+  if (SECRET_EPOCH && epoch !== Array.from(SECRET_EPOCH, b => b.toString(16).padStart(2, '0')).join('')) return false; // epoch rotated — token revoked
+  const expected = await sha256hex(`${env.PASS_HASH}:${epoch}:${exp}`);
   let mismatch = signature.length ^ expected.length;
   for (let i = 0; i < expected.length; i++) mismatch |= signature.charCodeAt(i) ^ expected.charCodeAt(i);
   return mismatch === 0;
@@ -96,12 +108,20 @@ async function readJson(req, maxBytes = 250000) {
   return JSON.parse(text);
 }
 
+// Length-independent comparison that always walks the full string.
+function constantTimeEqual(a, b) {
+  const len = Math.max(a.length, b.length);
+  let mismatch = a.length ^ b.length;
+  for (let i = 0; i < len; i++) mismatch |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return mismatch === 0;
+}
+
 async function handleLogin(req, ip, env, origin) {
   if (!checkRate(ip)) return res({ ok:false, error:'Too many attempts — wait 5 minutes' }, 429, origin, env);
   let body; try { body = await readJson(req, 4096); } catch { return res({ ok:false, error:'Bad request' }, 400, origin, env); }
   if (!body || !isSafeData(body) || typeof body.password !== 'string' || body.password.length < 1 || body.password.length > 256) return res({ ok:false, error:'Invalid credentials' }, 400, origin, env);
   const hash = await sha256hex(body.password);
-  if (!env.PASS_HASH || hash !== env.PASS_HASH) return res({ ok:false, error:'Invalid credentials' }, 401, origin, env);
+  if (!env.PASS_HASH || !constantTimeEqual(hash, env.PASS_HASH)) return res({ ok:false, error:'Invalid credentials' }, 401, origin, env);
   const token = await makeToken(env);
   return res({ ok:true, token }, 200, origin, env);
 }
@@ -121,7 +141,6 @@ async function handleSaveConfig(req, env, origin) {
     delete cfg.spotify.clientSecret;
   }
 
-  // Debug: check if token is present
   const ghToken = env.GH_TOKEN;
   if (!ghToken) return res({ ok:false, error:'Service unavailable' }, 500, origin, env);
 
@@ -157,8 +176,27 @@ async function handleSaveConfig(req, env, origin) {
       body: JSON.stringify({ message:'chore: update config via admin', content:b64, sha, branch:GH_BRANCH }),
     }
   );
-  if (!putR.ok) {
-    const e = await putR.json().catch(() => ({ message: putR.statusText }));
+  // A second save between our GET and PUT invalidates the sha (409). Re-read
+  // the latest sha once and retry so a race doesn't surface as an error.
+  let finalR = putR;
+  if (putR.status === 409) {
+    const retryGet = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/config.json`,
+      { headers: ghH }
+    );
+    if (retryGet.ok) {
+      const retrySha = (await retryGet.json()).sha;
+      finalR = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/config.json`,
+        {
+          method: 'PUT', headers: ghH,
+          body: JSON.stringify({ message:'chore: update config via admin', content:b64, sha:retrySha, branch:GH_BRANCH }),
+        }
+      );
+    }
+  }
+  if (!finalR.ok) {
+    const e = await finalR.json().catch(() => ({ message: finalR.statusText }));
     return res({ ok:false, error:e.message }, 502, origin, env);
   }
   return res({ ok:true }, 200, origin, env);
@@ -167,7 +205,7 @@ async function handleSaveConfig(req, env, origin) {
 async function handleUpload(req, env, origin) {
   const sToken = req.headers.get('X-Session-Token');
   if (!(await validSession(sToken, env))) return res({ ok:false, error:'Unauthorized' }, 401, origin, env);
-  let body; try { body = await readJson(req, 140 * 1024 * 1024); } catch { return res({ ok:false, error:'Bad request' }, 400, origin, env); }
+  let body; try { body = await readJson(req, 120 * 1024 * 1024); } catch { return res({ ok:false, error:'Bad request' }, 400, origin, env); }
   const ALLOWED = ['assets/images/avatar.png','assets/images/background.mp4','assets/music/song.mp3'];
   if (!body || typeof body !== 'object' || !ALLOWED.includes(body.path) || Object.keys(body).some(k => !['path','content'].includes(k))) return res({ ok:false, error:'Invalid upload' }, 400, origin, env);
   if (typeof body.content !== 'string' || !body.content || body.content.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(body.content)) return res({ ok:false, error:'Invalid file encoding' }, 400, origin, env);
@@ -196,8 +234,9 @@ async function handleUpload(req, env, origin) {
 }
 
 function handleLogout(req, env, origin) {
-  const t = req.headers.get('X-Session-Token');
-  if (t) SESSIONS.delete(t);
+  // Tokens are stateless, so we rotate the signing epoch instead of deleting
+  // from a map — this revokes every currently-issued token immediately.
+  revokeAllTokens();
   return res({ ok:true }, 200, origin, env);
 }
 

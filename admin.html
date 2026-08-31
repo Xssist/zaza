@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     crossorigin="anonymous" />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/title-effects.js"></script>
   <script src="js/motion.js"></script>
   <style>
     /* Strict monochrome admin palette */
@@ -2092,10 +2093,10 @@
                 <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
                   <div style="display:flex;align-items:center;gap:8px;"><label class="a-toggle"><input type="checkbox"
                         id="tog-snow" /><span class="a-toggle-slider"></span></label><span
-                      style="font-size:.78rem;color:rgba(240,240,245,.5);">❄ Snow</span></div>
+                      style="font-size:.78rem;color:rgba(240,240,245,.5);">Snow</span></div>
                   <div style="display:flex;align-items:center;gap:8px;"><label class="a-toggle"><input type="checkbox"
                         id="tog-rain" /><span class="a-toggle-slider"></span></label><span
-                      style="font-size:.78rem;color:rgba(240,240,245,.5);">🌧 Rain</span></div>
+                      style="font-size:.78rem;color:rgba(240,240,245,.5);">Rain</span></div>
                 </div>
               </div>
             </div>
@@ -2184,7 +2185,7 @@
               <div class="a-cursor-opt" data-v="dot"><span class="a-cursor-opt-icon">●</span>Dot</div>
               <div class="a-cursor-opt" data-v="ring"><span class="a-cursor-opt-icon">○</span>Ring</div>
               <div class="a-cursor-opt" data-v="crosshair"><span class="a-cursor-opt-icon">✛</span>Cross</div>
-              <div class="a-cursor-opt" data-v="emoji"><span class="a-cursor-opt-icon">✨</span>Emoji</div>
+              <div class="a-cursor-opt" data-v="emoji"><span class="a-cursor-opt-icon"></span>Emoji</div>
             </div>
             <div class="a-row" style="margin-top:16px;">
               <label>Cursor Color</label>
@@ -2206,7 +2207,7 @@
               <div class="a-cursor-picker" id="a-trail-picker" style="margin-top:8px;">
                 <div class="a-cursor-opt" data-v="none"><span class="a-cursor-opt-icon">✕</span>None</div>
                 <div class="a-cursor-opt" data-v="dots"><span class="a-cursor-opt-icon">•••</span>Dots</div>
-                <div class="a-cursor-opt" data-v="sparkle"><span class="a-cursor-opt-icon">✦✦</span>Sparkle</div>
+                <div class="a-cursor-opt" data-v="sparkle"><span class="a-cursor-opt-icon">—</span>Sparkle</div>
                 <div class="a-cursor-opt" data-v="comet"><span class="a-cursor-opt-icon">—</span>Comet</div>
                 <div class="a-cursor-opt" data-v="rings"><span class="a-cursor-opt-icon">◯◯</span>Rings</div>
               </div>
@@ -2278,7 +2279,62 @@
             <div class="a-card-title"><i class="fas fa-magnifying-glass-chart"></i> Meta</div>
             <div class="a-row"><label>Page Title</label><input type="text" id="inp-seo-title" class="a-input" /></div>
             <div class="a-row">
-              <label>Title Typewriter Cycle <span style="font-weight:400;opacity:.5;">(one per line)</span></label>
+              <label>Title Effect</label>
+              <select id="inp-seo-title-effect" class="a-input">
+                <option value="typewriter">Typewriter (type &amp; delete)</option>
+                <option value="swap">Swap (simple cycle)</option>
+                <option value="marquee">Marquee (scrolling left)</option>
+                <option value="slide">Slide (in from right)</option>
+                <option value="scramble">Scramble (decode)</option>
+                <option value="glitch">Glitch (corrupted)</option>
+                <option value="rotate">Rotate (letter carousel)</option>
+                <option value="caseWave">Case Wave (uPpEr/lower)</option>
+                <option value="blink">Blink (on/off)</option>
+                <option value="bounce">Bounce (dot padding)</option>
+                <option value="reverse">Reverse (flip text)</option>
+                <option value="sparkle">Sparkle (~ orbit)</option>
+                <option value="pingpong">Ping-Pong (type &amp; rewind)</option>
+                <option value="reveal">Reveal (letters fade in)</option>
+                <option value="typeBack">Type Backwards (from the end)</option>
+                <option value="snake">Snake (slides right &amp; back)</option>
+                <option value="dots">Dots (loading...)</option>
+                <option value="spinner">Spinner (| / - \ prefix)</option>
+                <option value="blocks">Blocks (# fill sweep)</option>
+                <option value="caps">Caps (SHOUTS/whispers)</option>
+                <option value="lower">Lowercase (quiet mode)</option>
+                <option value="jumble">Jumble (letters swap)</option>
+                <option value="scatter">Scatter (chars blank out)</option>
+                <option value="underline">Underline (_ grows)</option>
+                <option value="arrows">Arrows (&gt;&gt;&gt; accumulate)</option>
+                <option value="brackets">Brackets ([[[ close in ]]])</option>
+                <option value="quotes">Quotes ("pulse around")</option>
+                <option value="stars">Stars (* orbit)</option>
+                <option value="hearts">Hearts (&lt;3 hops sides)</option>
+                <option value="typeFast">Type Fast (no delete)</option>
+                <option value="pulse">Pulse (breathing drift)</option>
+                <option value="zoom">Zoom (expand both sides)</option>
+                <option value="typeLoop">Type Loop (instant reset)</option>
+                <option value="mirrorBuild">Mirror Build (progressive)</option>
+                <option value="shuffleWords">Shuffle Words (swap order)</option>
+                <option value="initials">Initials (first letters first)</option>
+                <option value="shiver">Shiver (random case flips)</option>
+                <option value="marqueeRight">Marquee Right (scroll right)</option>
+                <option value="typo">Typo (mistakes &amp; fixes)</option>
+                <option value="frontDelete">Front Delete (erases from left)</option>
+                <option value="blinkFast">Blink Fast</option>
+                <option value="glitchHard">Glitch Hard (heavy corrupt)</option>
+              </select>
+            </div>
+            <div class="a-row">
+              <label>Effect Speed <span style="font-weight:400;opacity:.5;">(0.25 = slow, 1 = normal, 4 = fast)</span></label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="range" id="inp-seo-title-speed" min="0.25" max="4" step="0.25" value="1" style="flex:1;"
+                  oninput="this.nextElementSibling.textContent=this.value+'x'" />
+                <span style="font-size:.72rem;color:rgba(240,240,245,.6);min-width:34px;text-align:right;">1x</span>
+              </div>
+            </div>
+            <div class="a-row">
+              <label>Title Cycle <span style="font-weight:400;opacity:.5;">(one per line)</span></label>
               <textarea id="inp-seo-cycle" class="a-textarea" style="min-height:90px;"
                 placeholder="zade — personal portfolio&#10;building things for the web.&#10;creating something real."></textarea>
             </div>
@@ -2288,6 +2344,18 @@
                 class="a-input" /></div>
             <div class="a-row"><label>Browser Theme Color</label><input type="text" id="inp-seo-theme-color"
                 class="a-input" placeholder="#ffffff" /></div>
+            <div class="a-row">
+              <label>Live Preview <span style="font-weight:400;opacity:.5;">(uses your cycle entries &amp; speed)</span></label>
+              <div style="border:1px solid rgba(255,255,255,.12);border-radius:8px;background:rgba(255,255,255,.03);padding:8px 12px;display:flex;align-items:center;gap:10px;">
+                <span style="display:inline-flex;width:9px;height:9px;border-radius:50%;background:#22c55e;flex:none;box-shadow:0 0 8px #22c55e88;"></span>
+                <div id="title-preview-grid" style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;"></div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button type="button" id="btn-title-preview" class="a-btn-sm secondary" style="padding:6px 12px;font-size:.72rem;"><i class="fas fa-play"></i> Start preview</button>
+                <button type="button" id="btn-title-preview-stop" class="a-btn-sm danger" style="padding:6px 12px;font-size:.72rem;" disabled><i class="fas fa-stop"></i> Stop</button>
+                <span id="title-preview-note" style="font-size:.68rem;color:rgba(240,240,245,.45);align-self:center;">All 42 effects run side by side — pick the one you like.</span>
+              </div>
+            </div>
             <div class="a-info"><i class="fas fa-circle-info"></i> These settings update the browser title, search description, social preview title/description, preview image, and browser tab color.</div>
           </div>
         </section>
@@ -2548,7 +2616,247 @@
 
   <script>
     /* ── Inline config fallback ── */
-    window.__ZADE_CONFIG__ = { "profile": { "username": "zade", "displayName": "zade", "bio": "living in the moment. creating something real.", "avatar": "assets/images/avatar.png", "status": "online", "availability": "online", "statusMessages": ["vibing to music rn \uD83C\uDFB5", "cooking something up...", "living rent free in your head", "making moves quietly \uD83E\uDD2B", "just existing, doing my thing"], "location": "somewhere cool", "joinDate": "2024" }, "badges": [{ "icon": "fab fa-js-square", "color": "#F7DF1E", "label": "JavaScript" }, { "icon": "fab fa-python", "color": "#3776AB", "label": "Python" }, { "icon": "fab fa-discord", "color": "#5865F2", "label": "Discord" }, { "icon": "fab fa-github", "color": "#ffffff", "label": "GitHub" }, { "icon": "fab fa-html5", "color": "#E34F26", "label": "HTML5" }, { "icon": "fab fa-css3-alt", "color": "#1572B6", "label": "CSS3" }], "theme": { "accentColor": "#ffffff", "accentColorSecondary": "#ffffff", "backgroundColor": "#0a0a0f", "fontFamily": "Inter", "particleCount": 80, "snowEnabled": false, "rainEnabled": false, "glassmorphism": true, "gradientAngle": 115 }, "background": { "videoUrl": "assets/images/background.mp4", "overlayOpacity": 0.55, "blur": 0 }, "music": { "enabled": true, "autoPlay": false, "defaultVolume": 0.5, "tracks": [{ "id": 1, "title": "song", "artist": "zade", "src": "assets/music/song.mp3", "cover": "" }] }, "socials": [{ "id": "discord", "label": "discord", "username": "zade#0000", "url": "https://discord.com/users/", "icon": "fab fa-discord", "color": "#5865F2", "enabled": true }, { "id": "twitter", "label": "twitter", "username": "@zade", "url": "https://twitter.com/zade", "icon": "fab fa-twitter", "color": "#1DA1F2", "enabled": true }, { "id": "instagram", "label": "instagram", "username": "@zade", "url": "https://instagram.com/z4de.1", "icon": "fab fa-instagram", "color": "#E1306C", "enabled": true }, { "id": "github", "label": "github", "username": "zade", "url": "https://github.com/zade", "icon": "fab fa-github", "color": "#ffffff", "enabled": true }, { "id": "youtube", "label": "youtube", "username": "@zade", "url": "https://youtube.com/@zade", "icon": "fab fa-youtube", "color": "#FF0000", "enabled": false }, { "id": "telegram", "label": "telegram", "username": "@zade", "url": "https://t.me/zade", "icon": "fab fa-telegram", "color": "#26A5E4", "enabled": false }], "stats": { "showVisitorCount": true, "visitorCount": 1, "showMemberSince": true, "showViews": true }, "cursor": { "enabled": true, "style": "dot", "color": "#ffffff", "trail": { "style": "dots", "length": 12, "fadeSpeed": 300, "color": "" } }, "admin": { "sessionTimeout": 3600 }, "seo": { "title": "zade", "titleCycle": ["zade \u2014 personal portfolio", "living in the moment.", "creating something real.", "zade."], "description": "living in the moment. creating something real.", "ogImage": "assets/images/avatar.png", "themeColor": "#ffffff" } };
+    window.__ZADE_CONFIG__ = {
+  "profile": {
+    "username": "zade",
+    "displayName": "zade",
+    "bio": "",
+    "aboutExtra": "Hey im zAde, I am a Front-End Web Developer\n\n15, From somewhere in Romania \n\nWhen im not coding, i make things in AutoHotKey, Listen to music and Play games\n\nI am mainly on the Web Designing/Developing part, I worked on a few little Websites and have a little bit of experience",
+    "avatar": "assets/images/avatar.png",
+    "status": "online",
+    "statusMessages": [],
+    "location": "Romania",
+    "joinDate": "2024",
+    "availability": "online",
+    "focus": "Coding",
+    "subtitle": "Front End Web Developer · Freelancer",
+    "aboutHeading": "a bit about me"
+  },
+  "theme": {
+    "accentColor": "#ffffff",
+    "accentColorSecondary": "#000000",
+    "backgroundColor": "#0a0a0f",
+    "fontFamily": "Space Grotesk",
+    "particleCount": 80,
+    "snowEnabled": true,
+    "rainEnabled": false,
+    "glassmorphism": false,
+    "gradientAngle": 155
+  },
+  "background": {
+    "videoUrl": "assets/images/background.mp4",
+    "overlayOpacity": 0.55,
+    "blur": 0
+  },
+  "music": {
+    "enabled": true,
+    "autoPlay": false,
+    "defaultVolume": 0.66,
+    "tracks": [
+      {
+        "id": 1785355383455,
+        "title": "song",
+        "artist": "zade",
+        "src": "assets/music/song.mp3",
+        "cover": ""
+      }
+    ]
+  },
+  "socials": [
+    {
+      "id": "discord",
+      "label": "discord",
+      "username": "heavenlygifted",
+      "url": "https://discord.com/users/",
+      "icon": "fab fa-discord",
+      "color": "#5865F2",
+      "enabled": true
+    },
+    {
+      "id": "twitter",
+      "label": "twitter",
+      "username": "@zade",
+      "url": "https://twitter.com/zade",
+      "icon": "fab fa-twitter",
+      "color": "#1DA1F2",
+      "enabled": false
+    },
+    {
+      "id": "instagram",
+      "label": "instagram",
+      "username": "z4de.1",
+      "url": "https://instagram.com/z4de.1",
+      "icon": "fab fa-instagram",
+      "color": "#E1306C",
+      "enabled": true
+    },
+    {
+      "id": "github",
+      "label": "github",
+      "username": "zade",
+      "url": "https://github.com/zade",
+      "icon": "fab fa-github",
+      "color": "#ffffff",
+      "enabled": false
+    },
+    {
+      "id": "youtube",
+      "label": "youtube",
+      "username": "@zade",
+      "url": "https://youtube.com/@zade",
+      "icon": "fab fa-youtube",
+      "color": "#FF0000",
+      "enabled": false
+    },
+    {
+      "id": "telegram",
+      "label": "telegram",
+      "username": "@zade",
+      "url": "https://t.me/zade",
+      "icon": "fab fa-telegram",
+      "color": "#26A5E4",
+      "enabled": false
+    },
+    {
+      "id": "email_1787731468450",
+      "label": "email",
+      "icon": "fas fa-envelope",
+      "color": "#ffffff",
+      "url": "#",
+      "username": "me@zad3.online",
+      "enabled": true
+    }
+  ],
+  "stats": {
+    "showVisitorCount": false,
+    "visitorCount": 1,
+    "showMemberSince": false,
+    "showViews": true
+  },
+  "discord": {
+    "enabled": true,
+    "userId": "1246068508039708672",
+    "showWidget": true
+  },
+  "spotify": {
+    "enabled": false,
+    "showCurrentlyPlaying": true,
+    "fallbackText": "not playing",
+    "showWidget": true,
+    "serverProxy": false
+  },
+  "cursor": {
+    "enabled": true,
+    "trailEnabled": true,
+    "color": "#ffffff",
+    "style": "dot",
+    "trail": {
+      "style": "dots",
+      "length": 12,
+      "fadeSpeed": 300,
+      "color": ""
+    }
+  },
+  "admin": {
+    "sessionTimeout": 3600
+  },
+  "seo": {
+    "title": "zade",
+    "titleCycle": [
+      "z A d e"
+    ],
+    "description": "living in the moment. creating something real.",
+    "ogImage": "assets/images/avatar.png",
+    "themeColor": "#ffffff"
+  },
+  "badges": [],
+  "skills": [
+    {
+      "name": "Languages",
+      "items": [
+        {
+          "label": "TypeScript",
+          "icon": "fas fa-file-code",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "JavaScript",
+          "icon": "fab fa-js",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "HTML",
+          "icon": "fab fa-html5",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "C++",
+          "icon": "fas fa-code",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "AutoHotkey",
+          "icon": "fas fa-keyboard",
+          "color": "#a0a0a0"
+        }
+      ]
+    },
+    {
+      "name": "Frameworks & Libraries",
+      "items": [
+        {
+          "label": "Node.js",
+          "icon": "fab fa-node-js",
+          "color": "#a0a0a0"
+        }
+      ]
+    },
+    {
+      "name": "Tools & Platforms",
+      "items": [
+        {
+          "label": "VS Code",
+          "icon": "fas fa-code",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "Git",
+          "icon": "fab fa-git-alt",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "GitHub",
+          "icon": "fab fa-github",
+          "color": "#a0a0a0"
+        },
+        {
+          "label": "Cloudflare",
+          "icon": "fas fa-cloud",
+          "color": "#a0a0a0"
+        }
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "zaza.app biolink",
+      "description": "casual biolink with drag and drop features",
+      "technologies": [
+        "TypeScript",
+        "Node.js",
+        "PostgreSQL"
+      ],
+      "url": "https://zaza-production-dc12.up.railway.app/",
+      "image": "https://cdn.discordapp.com/attachments/1462427371075272917/1544092672254410852/image.png?ex=6a973fdc&is=6a95ee5c&hm=874742d01aa31ff2e3a38a29a3f3ccec82412f96918c747b94d603bf78728d62&"
+    }
+  ],
+  "consoleArt": {
+    "enabled": true,
+    "art": "*\\ (^_^)",
+    "message": "hi visitor, weird to see you here",
+    "subMessage": "Contact me if something is broken or if u found bugs"
+  }
+};
 
     const $ = (s, c = document) => c.querySelector(s);
     const $$ = (s, c = document) => [...c.querySelectorAll(s)];
@@ -2559,7 +2867,7 @@
       owner: 'Xssist',
       repo: 'zaza',
       branch: 'main',
-      // ⚠ TOKEN REMOVED — never put secrets in frontend code.
+      // TOKEN REMOVED — never put secrets in frontend code.
       // To re-enable GitHub saves, set up a Cloudflare Worker proxy
       // that holds the token server-side as an environment variable.
       // See: https://developers.cloudflare.com/workers/
@@ -2795,6 +3103,10 @@
       chk('#tog-since', cfg.stats?.showMemberSince ?? true);
 
       set('#inp-seo-title', cfg.seo?.title || '');
+      set('#inp-seo-title-effect', cfg.seo?.titleEffect || 'typewriter');
+      const sp = parseFloat(cfg.seo?.titleSpeed) || 1;
+      const spInp = $('#inp-seo-title-speed');
+      if (spInp) { spInp.value = sp; if (spInp.nextElementSibling) spInp.nextElementSibling.textContent = sp + 'x'; }
       set('#inp-seo-cycle', (cfg.seo?.titleCycle || []).join('\n'));
       set('#inp-seo-desc', cfg.seo?.description || '');
       set('#inp-og-image', normalizeAssetPath(cfg.seo?.ogImage || ''));
@@ -2886,6 +3198,8 @@
       cfg.stats.showMemberSince = gc('#tog-since');
 
       cfg.seo.title = g('#inp-seo-title');
+      cfg.seo.titleEffect = g('#inp-seo-title-effect') || 'typewriter';
+      cfg.seo.titleSpeed = parseFloat($('#inp-seo-title-speed')?.value) || 1;
       cfg.seo.titleCycle = g('#inp-seo-cycle').split('\n').map(s => s.trim()).filter(Boolean);
       cfg.seo.description = g('#inp-seo-desc');
       cfg.seo.ogImage = normalizeAssetPath(g('#inp-og-image'));
@@ -2914,6 +3228,81 @@
       cfg.consoleArt.message = g('#inp-consoleart-message');
       cfg.consoleArt.subMessage = g('#inp-consoleart-sub');
     }
+
+    /* ── Title effect live previews ──────────────────────────
+       Renders one animated cell per effect (43 total), all driven
+       by the same engine the site uses (js/title-effects.js). */
+    const TitlePreview = (() => {
+      let stops = [];
+      let running = false;
+
+      function currentTitles() {
+        const cycle = ($('#inp-seo-cycle')?.value || '')
+          .split('\n').map(s => s.trim()).filter(Boolean);
+        if (cycle.length) return cycle.slice(0, 3); // cap so fast cells stay readable
+        const t = $('#inp-seo-title')?.value.trim();
+        return [t || 'zade'];
+      }
+
+      function buildCells() {
+        const grid = $('#title-preview-grid');
+        if (!grid || !window.ZazaTitleEffects) return [];
+        grid.innerHTML = '';
+        return window.ZazaTitleEffects.names.map(name => {
+          const cell = document.createElement('div');
+          cell.style.cssText = 'min-width:0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:5px 8px;overflow:hidden;';
+          const label = document.createElement('div');
+          label.textContent = name;
+          label.style.cssText = 'font-size:.6rem;letter-spacing:.4px;text-transform:uppercase;color:rgba(240,240,245,.35);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+          const out = document.createElement('div');
+          out.style.cssText = 'font-family:monospace;font-size:.72rem;color:#f0f0f5;white-space:pre;overflow:hidden;text-overflow:clip;min-height:1.1em;';
+          cell.append(label, out);
+          grid.appendChild(cell);
+          return { name, out };
+        });
+      }
+
+      function start() {
+        if (running || !window.ZazaTitleEffects) return;
+        const titles = currentTitles();
+        const speed = parseFloat($('#inp-seo-title-speed')?.value) || 1;
+        const cells = buildCells();
+        if (!cells.length) return;
+        stops = cells.map(({ name, out }) =>
+          window.ZazaTitleEffects.start(titles, name, speed, t => { out.textContent = t; }));
+        running = true;
+        const a = $('#btn-title-preview'), b = $('#btn-title-preview-stop');
+        if (a) a.disabled = true;
+        if (b) b.disabled = false;
+      }
+
+      function stop() {
+        stops.forEach(fn => { try { fn(); } catch (_) {} });
+        stops = [];
+        running = false;
+        const a = $('#btn-title-preview'), b = $('#btn-title-preview-stop');
+        if (a) a.disabled = false;
+        if (b) b.disabled = true;
+      }
+
+      function init() {
+        $('#btn-title-preview')?.addEventListener('click', start);
+        $('#btn-title-preview-stop')?.addEventListener('click', stop);
+        // Restart previews when the source text changes while running
+        ['#inp-seo-cycle', '#inp-seo-title', '#inp-seo-title-speed'].forEach(sel => {
+          $(sel)?.addEventListener('change', () => { if (running) { stop(); start(); } });
+          $(sel)?.addEventListener('input', () => {
+            clearTimeout(TitlePreview._debounce);
+            TitlePreview._debounce = setTimeout(() => { if (running) { stop(); start(); } }, 400);
+          });
+        });
+        // Stop when the SEO section scrolls far out of view to save cycles
+        window.addEventListener('beforeunload', stop);
+      }
+
+      return { start, stop, init, _debounce: 0 };
+    })();
+    TitlePreview.init();
   </script>
 
   <script>
@@ -3133,6 +3522,9 @@
       if (!Array.isArray(cfg.socials)) { cfg.socials = []; fixes.push('socials'); }
       if (!Array.isArray(cfg.badges)) { cfg.badges = []; fixes.push('badges'); }
       if (!Array.isArray(cfg.seo.titleCycle)) { cfg.seo.titleCycle = []; fixes.push('titleCycle'); }
+      if (!cfg.seo.titleEffect) { cfg.seo.titleEffect = 'typewriter'; fixes.push('titleEffect'); }
+      const ts = parseFloat(cfg.seo.titleSpeed);
+      if (!isFinite(ts) || ts <= 0) { cfg.seo.titleSpeed = 1; fixes.push('titleSpeed'); }
       if (!Array.isArray(cfg.music.tracks)) { cfg.music.tracks = []; fixes.push('tracks'); }
       if (!Array.isArray(cfg.profile.statusMessages)) { cfg.profile.statusMessages = []; fixes.push('statusMessages'); }
       if (typeof cfg.background.overlayOpacity !== 'number') { cfg.background.overlayOpacity = 0.55; fixes.push('overlayOpacity'); }

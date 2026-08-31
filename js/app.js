@@ -55,6 +55,14 @@ function safeExternalUrl(value) {
   } catch (_) { return ''; }
 }
 
+/* Icon classes come from config (admin-written). Accept only FontAwesome
+   patterns so a poisoned config can't inject arbitrary class names. */
+function safeIconClass(value, fallback = '') {
+  if (typeof value !== 'string') return fallback;
+  const v = value.trim();
+  return /^(?:fas|fab|far|fal|fad|fass)\s+fa[\w-]+$/.test(v) ? v : fallback;
+}
+
 /* ── Global state ── */
 const S = {
   cfg: null,
@@ -89,8 +97,9 @@ const RenderBudget = {
   }
 };
 document.addEventListener('visibilitychange', () => { S.perf.hidden = document.hidden; });
-/* Never surface benign async failures (media, clipboard, sockets) as console errors */
-window.addEventListener('unhandledrejection', e => e.preventDefault());
+/* Log benign async failures (media, clipboard, sockets) at debug level instead of
+   surfacing them as console errors — but keep them visible when actually debugging. */
+window.addEventListener('unhandledrejection', e => { console.debug('[unhandled rejection]', e.reason); e.preventDefault(); });
 
 /* ══════════════════════════════════════════
    1. CONFIG LOADER
@@ -195,13 +204,13 @@ function _sanitizeConfig(cfg) {
 
 function _defaultConfig() {
   return {
-    profile: { username:'zade', displayName:'zade', bio:'living in the moment.', avatar:'assets/images/avatar.png', status:'online', availability:'online', statusMessages:['just vibing 🎵'], joinDate:'2024' },
+    profile: { username:'zade', displayName:'zade', bio:'living in the moment.', avatar:'assets/images/avatar.png', status:'online', availability:'online', statusMessages:['just vibing'], joinDate:'2024' },
     theme:   { accentColor:'#ffffff', accentColorSecondary:'#ffffff', particleCount:80, glassmorphism:true, gradientAngle:160 },
     background: { videoUrl:'assets/images/background.mp4', overlayOpacity:0.35 },
     music:   { enabled:true, defaultVolume:0.5, tracks:[] },
     socials: [],
     cursor:  { enabled:true, style:'dot', trail:{ style:'dots', length:12, fadeSpeed:300, color:'' } },
-    seo:     { title:'zade', titleCycle:['zade — personal portfolio'], description:'' },
+    seo:     { title:'zade', titleCycle:['zade — personal portfolio'], titleEffect:'typewriter', description:'' },
   };
 }
 
@@ -219,7 +228,20 @@ function applySeo() {
   const ogDescription = document.querySelector('meta[property="og:description"]');
   if (ogDescription && seo.description) ogDescription.content = seo.description;
   const ogImage = document.querySelector('meta[property="og:image"]');
-  if (ogImage && seo.ogImage) ogImage.content = normalizeAssetPath(seo.ogImage) || seo.ogImage;
+  if (ogImage && seo.ogImage) ogImage.content = new URL(normalizeAssetPath(seo.ogImage) || seo.ogImage, location.origin).href;
+  // Twitter card tags — fall back to creating them if missing
+  const twitter = (name, val) => {
+    if (!val) return;
+    let el = document.querySelector(`meta[name="twitter:${name}"]`);
+    if (!el) { el = document.createElement('meta'); el.setAttribute('name', `twitter:${name}`); document.head.appendChild(el); }
+    el.content = val;
+  };
+  twitter('title', title);
+  twitter('description', seo.description);
+  if (seo.ogImage) twitter('image', new URL(normalizeAssetPath(seo.ogImage) || seo.ogImage, location.origin).href);
+  // og:url follows the current page
+  const ogUrl = document.querySelector('meta[property="og:url"]');
+  if (ogUrl) ogUrl.content = location.origin + location.pathname;
 }
 
 function applyTheme() {
@@ -530,8 +552,8 @@ function initCursor() {
   });
 
   // Lerp follower
-  let followFrame;
-  (function follow(now) {
+  let followFrame = 0;
+  const follow = now => {
     if (!S.perf.hidden) {
       const step = Math.min(1, (now - (follow.last || now)) / 16.67);
       follow.last = now;
@@ -540,8 +562,12 @@ function initCursor() {
       if (fol) fol.style.transform = `translate3d(${S.folX}px,${S.folY}px,0)`;
     }
     followFrame = requestAnimationFrame(follow);
-  })(performance.now());
-  document.addEventListener('visibilitychange', () => { if (document.hidden) cancelAnimationFrame(followFrame); else followFrame = requestAnimationFrame(follow); });
+  };
+  followFrame = requestAnimationFrame(follow);
+  document.addEventListener('visibilitychange', () => {
+    cancelAnimationFrame(followFrame); // always cancel first — can't be a stale/duplicate loop
+    if (!document.hidden) { follow.last = performance.now(); followFrame = requestAnimationFrame(follow); }
+  });
 
   const style = S.cfg.cursor?.style || 'dot';
   document.body.classList.remove('cursor-crosshair','cursor-ring','cursor-emoji');
@@ -745,10 +771,10 @@ function renderProfile() {
   renderSocials();
 
   // Typewriter
-  typewriter($('#status-typewriter'), p.statusMessages || ['just vibing 🎵']);
+  typewriter($('#status-typewriter'), p.statusMessages || ['just vibing']);
 
   // Page title cycle
-  titleCycle(S.cfg.seo?.titleCycle || [S.cfg.seo?.title || 'zade']);
+  titleCycle(S.cfg.seo?.titleCycle || [S.cfg.seo?.title || 'zade'], S.cfg.seo?.titleEffect || 'typewriter', S.cfg.seo?.titleSpeed || 1);
 }
 
 function makeInitial(p) {
@@ -768,7 +794,7 @@ function renderBadges() {
     el.className = 'badge';
     el.title = b.label || '';
     const icon = document.createElement('i');
-    icon.className = b.icon;
+    icon.className = safeIconClass(b.icon);
     icon.style.color = b.color;
     el.appendChild(icon);
     row.appendChild(el);
@@ -792,7 +818,7 @@ function renderSkills() {
       const chip = document.createElement('span');
       chip.className = 'skill-chip';
       const icon = document.createElement('i');
-      icon.className = skill.icon || 'fas fa-code';
+      icon.className = safeIconClass(skill.icon) || 'fas fa-code';
       if (skill.color) icon.style.color = skill.color;
       const label = document.createElement('span');
       label.textContent = skill.label || 'Untitled';
@@ -981,41 +1007,23 @@ function typewriter(el, msgs) {
   step();
 }
 
-/* ══════════════════════════════════════════
-   9. PAGE TITLE CYCLE
-══════════════════════════════════════════ */
-let _titleCycleTimer = null;
-function titleCycle(titles) {
-  if (_titleCycleTimer) {
-    clearTimeout(_titleCycleTimer);
-    _titleCycleTimer = null;
-  }
+/* ============================================================
+   9. PAGE TITLE CYCLE (effects engine)
+   The generator engine lives in js/title-effects.js (shared with
+   the admin panel effect previews). This is just the consumer.
+   ============================================================ */
+let _titleCycleStop = null;
+
+function titleCycle(titles, effect, speed) {
+  if (_titleCycleStop) { _titleCycleStop(); _titleCycleStop = null; }
+  if (!window.ZazaTitleEffects) return;
   if (!titles || !titles.length) return;
-  let ti = 0, ci = 0, deleting = false, paused = false;
+  titles = titles.filter(Boolean);
+  if (!titles.length) return;
 
   // Set title immediately so users never see the static HTML <title>
   document.title = titles[0];
-
-  function tick() {
-    if (paused) return;
-    const t = titles[ti];
-    if (!deleting) {
-      ci++;
-      document.title = t.slice(0, ci);
-      if (ci === t.length) {
-        paused = true;
-        _titleCycleTimer = setTimeout(() => { deleting = true; paused = false; step(); }, 2800);
-        return;
-      }
-    } else {
-      ci--;
-      document.title = t.slice(0, ci) || '|';
-      if (ci === 0) { deleting = false; ti = (ti + 1) % titles.length; }
-    }
-    step();
-  }
-  function step() { _titleCycleTimer = setTimeout(tick, deleting ? 34 : rand(60, 100)); }
-  _titleCycleTimer = setTimeout(step, 800);
+  _titleCycleStop = window.ZazaTitleEffects.start(titles, effect, speed, t => { document.title = t; });
 }
 
 /* ══════════════════════════════════════════
@@ -1309,7 +1317,7 @@ function initKeys() {
       if (v) {
         v.value = parseFloat(v.value) > 0 ? '0' : '0.5';
         v.dispatchEvent(new Event('input'));
-        toast(parseFloat(v.value) > 0 ? '🔊 Unmuted' : '🔇 Muted');
+        toast(parseFloat(v.value) > 0 ? 'Unmuted' : 'Muted');
       }
     }
   });
@@ -1336,7 +1344,7 @@ function initThemeFab() {
     root.style.setProperty('--accent',  a);
     root.style.setProperty('--accent2', b);
     root.style.setProperty('--accent-glow', hexAlpha(a, 0.35));
-    toast('🎨 Theme changed');
+    toast('Theme changed');
   });
 }
 
@@ -1363,9 +1371,10 @@ function initWeather() {
     el.style.cssText = `position:fixed;pointer-events:none;z-index:5;animation:wFall linear infinite;`
       + `left:${rand(0,100)}%;top:${rand(-20,0)}%;animation-duration:${rand(6,14)}s;animation-delay:${rand(0,8)}s;opacity:${rand(0.2,0.7)};`;
     if (type === 'snow') {
-      el.textContent = '❄';
-      el.style.fontSize = rand(5, 12) + 'px';
-      el.style.color = 'rgba(255,255,255,.7)';
+      el.style.width = '6px';
+      el.style.height = '6px';
+      el.style.borderRadius = '50%';
+      el.style.background = 'rgba(255,255,255,.7)';
     } else {
       el.style.width = '1px';
       el.style.height = rand(10, 24) + 'px';
@@ -2037,8 +2046,11 @@ function initDiscord() {
         if (actImg) actImg.style.display = 'none';
         if (actPH) {
           actPH.style.display = 'flex';
-          const emojiMap = { 0:'🎮', 1:'📺', 2:'🎵', 3:'👁️', 5:'🏆' };
-          actPH.textContent = emojiMap[act.type] || '🎮';
+          const iconMap = { 0:'fas fa-gamepad', 1:'fas fa-tv', 2:'fas fa-music', 3:'fas fa-eye', 5:'fas fa-trophy' };
+          actPH.innerHTML = '';
+          const actIcon = document.createElement('i');
+          actIcon.className = iconMap[act.type] || 'fas fa-gamepad';
+          actPH.appendChild(actIcon);
         }
       }
 
@@ -2151,7 +2163,7 @@ function initContextMenu() {
         icon: 'fa-link',
         action: () => {
           navigator.clipboard?.writeText(window.location.href).catch(() => {});
-          toast('🔗 Profile link copied!');
+          toast('Profile link copied!');
         }
       },
       {
@@ -2161,7 +2173,7 @@ function initContextMenu() {
           const dc = (S.cfg.socials || []).find(s => s.id === 'discord');
           if (dc) {
             navigator.clipboard?.writeText(dc.username || dc.url).catch(() => {});
-            toast('💬 Discord copied!');
+            toast('Discord copied!');
           } else {
             toast('No Discord set');
           }
