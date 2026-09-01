@@ -182,6 +182,11 @@
           "label": "AutoHotkey",
           "icon": "fas fa-keyboard",
           "color": "#a0a0a0"
+        },
+        {
+          "label": "CSS",
+          "icon": "fa-brands fa-css",
+          "color": "#ffffff"
         }
       ]
     },
