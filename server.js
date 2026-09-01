@@ -51,7 +51,14 @@ const server = http.createServer(async (request, response) => {
     "X-Content-Type-Options": "nosniff",
   });
   if (request.method === "HEAD") return response.end();
-  createReadStream(filePath).pipe(response);
+  const stream = createReadStream(filePath);
+  stream.on("error", () => {
+    // File disappeared or became unreadable between the stat check and the read —
+    // don't let the uncaught stream error crash the whole server process.
+    if (!response.headersSent) sendError(response, 404);
+    else response.destroy();
+  });
+  stream.pipe(response);
 });
 
 server.listen(port, "0.0.0.0", () => console.log(`Zade portfolio server listening on port ${port}`));

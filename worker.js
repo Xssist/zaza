@@ -25,6 +25,26 @@ async function makeToken(env) {
 
 function revokeAllTokens() { SECRET_EPOCH = null; }
 
+/* Shared GitHub API helpers — used by save-config, upload and test handlers. */
+function ghHeaders(env) {
+  return {
+    'Authorization': 'token ' + env.GH_TOKEN,
+    'Accept':        'application/vnd.github.v3+json',
+    'Content-Type':  'application/json',
+    'User-Agent':    'zaza-admin-worker',
+  };
+}
+
+/* Fetch a GitHub API endpoint; parses the body once and throws on non-2xx. */
+async function ghApi(url, options = {}, ghH) {
+  const r = await fetch(url, { ...options, headers: { ...ghH, ...(options.headers || {}) } });
+  const text = await r.text();
+  let data;
+  try { data = JSON.parse(text); } catch { data = { message: text || r.statusText }; }
+  if (!r.ok) throw new Error(`GitHub ${r.status}: ${data.message || 'request failed'}`);
+  return data;
+}
+
 function corsHeaders(origin, env) {
   // Keep the production site working even if ADMIN_ORIGIN was not configured;
   // deployments should still set ADMIN_ORIGIN explicitly for custom domains.
@@ -152,52 +172,31 @@ async function handleSaveConfig(req, env, origin) {
   }
   const b64 = btoa(binaryStr);
 
-  const ghH = {
-    'Authorization': 'token ' + ghToken,
-    'Accept':        'application/vnd.github.v3+json',
-    'Content-Type':  'application/json',
-    'User-Agent':    'zaza-admin-worker',
-  };
-
-  const getR = await fetch(
-    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/config.json`,
-    { headers: ghH }
-  );
-  if (!getR.ok) {
-    const errText = await getR.text();
-    return res({ ok:false, error:`GitHub GET ${getR.status}: ${errText.slice(0,200)}` }, 502, origin, env);
-  }
-
-  const { sha } = await getR.json();
-  const putR = await fetch(
-    `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/config.json`,
-    {
-      method: 'PUT', headers: ghH,
-      body: JSON.stringify({ message:'chore: update config via admin', content:b64, sha, branch:GH_BRANCH }),
+  const ghH = ghHeaders(env);
+  let getResp;
+  try { getResp = await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/config.json`, {}, ghH); }
+  catch (e) { return res({ ok:false, error:`GitHub GET: ${String(e.message).slice(0,200)}` }, 502, origin, env); }
+  const { sha } = getResp;
+  try {
+    await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/config.json`, {
+      method:'PUT', body: JSON.stringify({ message:'chore: update config via admin', content:b64, sha, branch:GH_BRANCH }),
+    }, ghH);
+  } catch (e) {
+    // A second save between our GET and PUT invalidates the sha (409). Re-read
+    // the latest sha once and retry so a race doesn't surface as an error.
+    if (!String(e.message).startsWith('GitHub 409')) {
+      return res({ ok:false, error:String(e.message).slice(0,200) }, 502, origin, env);
     }
-  );
-  // A second save between our GET and PUT invalidates the sha (409). Re-read
-  // the latest sha once and retry so a race doesn't surface as an error.
-  let finalR = putR;
-  if (putR.status === 409) {
-    const retryGet = await fetch(
-      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/config.json`,
-      { headers: ghH }
-    );
-    if (retryGet.ok) {
-      const retrySha = (await retryGet.json()).sha;
-      finalR = await fetch(
-        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/config.json`,
-        {
-          method: 'PUT', headers: ghH,
-          body: JSON.stringify({ message:'chore: update config via admin', content:b64, sha:retrySha, branch:GH_BRANCH }),
-        }
-      );
+    let retrySha;
+    try { retrySha = (await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/config.json`, {}, ghH)).sha; }
+    catch { return res({ ok:false, error:'Save conflict — retry' }, 409, origin, env); }
+    try {
+      await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/config.json`, {
+        method:'PUT', body: JSON.stringify({ message:'chore: update config via admin', content:b64, sha:retrySha, branch:GH_BRANCH }),
+      }, ghH);
+    } catch (e2) {
+      return res({ ok:false, error:String(e2.message).slice(0,200) }, 502, origin, env);
     }
-  }
-  if (!finalR.ok) {
-    const e = await finalR.json().catch(() => ({ message: finalR.statusText }));
-    return res({ ok:false, error:e.message }, 502, origin, env);
   }
   return res({ ok:true }, 200, origin, env);
 }
@@ -213,22 +212,16 @@ async function handleUpload(req, env, origin) {
   if (body.content.length > maxBase64Length) return res({ ok:false, error:'File exceeds the 100MB limit' }, 413, origin, env);
   const ghToken = env.GH_TOKEN;
   if (!ghToken) return res({ ok:false, error:'Service unavailable' }, 500, origin, env);
-  const ghH = {'Authorization':'token '+ghToken,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json','User-Agent':'zaza-admin-worker'};
-  const api = async (url, options={}) => {
-    const r = await fetch(url, { ...options, headers:{...ghH,...(options.headers||{})} });
-    const text = await r.text(); let data; try { data=JSON.parse(text); } catch { data={message:text||r.statusText}; }
-    if (!r.ok) throw new Error(`GitHub ${r.status}: ${data.message||'request failed'}`);
-    return data;
-  };
+  const ghH = ghHeaders(env);
   try {
     // The Contents API rejects large binary updates with "file too large".
     // The Git Data API stores the blob first, then creates a normal commit.
-    const blob = await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/blobs`, {method:'POST',body:JSON.stringify({content:body.content,encoding:'base64'})});
-    const ref = await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/ref/heads/${GH_BRANCH}`);
-    const baseCommit = await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/commits/${ref.object.sha}`);
-    const tree = await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/trees`, {method:'POST',body:JSON.stringify({base_tree:baseCommit.tree.sha,tree:[{path:body.path,mode:'100644',type:'blob',sha:blob.sha}]})});
-    const commit = await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/commits`, {method:'POST',body:JSON.stringify({message:`upload: ${body.path}`,tree:tree.sha,parents:[ref.object.sha]})});
-    await api(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/refs/heads/${GH_BRANCH}`, {method:'PATCH',body:JSON.stringify({sha:commit.sha,force:false})});
+    const blob = await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/blobs`, {method:'POST',body:JSON.stringify({content:body.content,encoding:'base64'})}, ghH);
+    const ref = await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/ref/heads/${GH_BRANCH}`, {}, ghH);
+    const baseCommit = await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/commits/${ref.object.sha}`, {}, ghH);
+    const tree = await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/trees`, {method:'POST',body:JSON.stringify({base_tree:baseCommit.tree.sha,tree:[{path:body.path,mode:'100644',type:'blob',sha:blob.sha}]})}, ghH);
+    const commit = await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/commits`, {method:'POST',body:JSON.stringify({message:`upload: ${body.path}`,tree:tree.sha,parents:[ref.object.sha]})}, ghH);
+    await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/refs/heads/${GH_BRANCH}`, {method:'PATCH',body:JSON.stringify({sha:commit.sha,force:false})}, ghH);
     return res({ok:true},200,origin,env);
   } catch (e) { return res({ok:false,error:e.message||'Upload failed'},502,origin,env); }
 }
@@ -249,15 +242,7 @@ async function handleTest(req, env, origin) {
   if (!ghToken) return res({ ok:false, error:'Service unavailable' }, 500, origin, env);
 
   try {
-    const r = await fetch(
-      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}`,
-      { headers: { 'Authorization':'token '+ghToken, 'Accept':'application/vnd.github.v3+json', 'User-Agent':'zaza-admin-worker' } }
-    );
-    if (!r.ok) {
-      const t = await r.text();
-      return res({ ok:false, error:`GitHub ${r.status}: ${t.slice(0,160)}` }, 502, origin, env);
-    }
-    const d = await r.json();
+    const d = await ghApi(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}`, {}, ghHeaders(env));
     return res({ ok:true, repo:d.full_name }, 200, origin, env);
   } catch (e) {
     return res({ ok:false, error:'Network error: '+e.message }, 502, origin, env);

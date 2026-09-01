@@ -127,7 +127,7 @@ async function loadConfig() {
     clearTimeout(timeout);
     if (r.ok) {
       const cfg = await r.json();
-      if (_validateConfig(cfg)) { S.cfg = _ensureConfig(cfg); return; }
+      if (_validateConfig(cfg)) { S.cfg = _ensureConfig(_sanitizeConfig(cfg)); return; }
     }
   } catch (_) {}
 
@@ -270,14 +270,18 @@ function applyTheme() {
   document.documentElement.style.setProperty('--gradient-angle', angle + 'deg');
 }
 
+/* Shared hex parsing — used by hexAlpha and the particle renderer */
+function parseHexColor(hex) {
+  if (typeof hex !== 'string' || !/^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex.trim())) return null;
+  hex = hex.trim().replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+}
+
 function hexAlpha(hex, a) {
-  if (typeof hex !== 'string' || !/^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex.trim())) return `rgba(255,255,255,${a})`;
-  hex = hex.replace('#', '');
-  if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
-  const r = parseInt(hex.slice(0,2),16);
-  const g = parseInt(hex.slice(2,4),16);
-  const b = parseInt(hex.slice(4,6),16);
-  return `rgba(${r},${g},${b},${a})`;
+  const rgb = parseHexColor(hex);
+  if (!rgb) return `rgba(255,255,255,${a})`;
+  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
 }
 
 /* ══════════════════════════════════════════
@@ -597,14 +601,8 @@ function initParticles() {
   const ac = S.cfg.theme?.accentColor || '#ffffff';
   const a2 = S.cfg.theme?.accentColorSecondary || '#ffffff';
 
-  const toRGB = h => {
-    h = h.replace('#','');
-    if (h.length===3) h=h.split('').map(c=>c+c).join('');
-    return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
-  };
-  const safeHex = h => /^#?(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(h || '').trim()) ? String(h).trim() : '#ffffff';
-  const [r1,g1,b1] = toRGB(safeHex(ac));
-  const [r2,g2,b2] = toRGB(safeHex(a2));
+  const [r1,g1,b1] = parseHexColor(ac) || [255,255,255];
+  const [r2,g2,b2] = parseHexColor(a2) || [255,255,255];
 
   // Mobile / touch devices get fewer particles, no link lines, lower DPR — biggest battery + FPS win
   const isMobile = window.matchMedia('(max-width: 700px)').matches || window.matchMedia('(hover: none)').matches;
@@ -953,7 +951,7 @@ function renderSocials() {
       srLeft.className = 'sr-left';
 
       const iconEl = document.createElement('i');
-      iconEl.className = `sr-icon ${s.icon || 'fas fa-link'}`;
+      iconEl.className = `sr-icon ${safeIconClass(s.icon, 'fas fa-link')}`;
       iconEl.style.color = s.color || '';
       iconEl.setAttribute('aria-hidden', 'true');
       srLeft.appendChild(iconEl);
@@ -1178,10 +1176,12 @@ function initMusic() {
   $('#next-btn')?.setAttribute('aria-label', 'Next track');
   $('#play-pause-btn')?.addEventListener('click', playPause);
   $('#prev-btn')?.addEventListener('click', () => {
+    if (!cfg.tracks.length) return;
     loadTrack((S.trackIdx - 1 + cfg.tracks.length) % cfg.tracks.length);
     if (S.musicPlaying) S.audioEl.play().catch(() => {});
   });
   $('#next-btn')?.addEventListener('click', () => {
+    if (!cfg.tracks.length) return;
     loadTrack((S.trackIdx + 1) % cfg.tracks.length);
     if (S.musicPlaying) S.audioEl.play().catch(() => {});
   });
