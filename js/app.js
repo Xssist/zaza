@@ -815,12 +815,23 @@ function renderSkills() {
     group.items.forEach(skill => {
       const chip = document.createElement('span');
       chip.className = 'skill-chip';
-      const icon = document.createElement('i');
-      icon.className = safeIconClass(skill.icon) || 'fas fa-code';
-      if (skill.color) icon.style.color = skill.color;
+      // Custom image icons (e.g. "img:assets/images/typescript.svg") — used
+      // for brand logos Font Awesome doesn't ship (TypeScript etc.)
+      if (typeof skill.icon === 'string' && skill.icon.startsWith('img:')) {
+        const img = document.createElement('img');
+        img.src = normalizeAssetPath(skill.icon.slice(4));
+        img.alt = '';
+        img.className = 'skill-chip-icon';
+        chip.appendChild(img);
+      } else {
+        const icon = document.createElement('i');
+        icon.className = safeIconClass(skill.icon) || 'fas fa-code';
+        if (skill.color) icon.style.color = skill.color;
+        chip.appendChild(icon);
+      }
       const label = document.createElement('span');
       label.textContent = skill.label || 'Untitled';
-      chip.append(icon, label); chips.appendChild(chip);
+      chip.append(label); chips.appendChild(chip);
     });
     section.append(heading, chips); container.appendChild(section);
   });

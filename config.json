@@ -158,7 +158,7 @@
       "items": [
         {
           "label": "TypeScript",
-          "icon": "fas fa-file-code",
+          "icon": "img:assets/images/typescript.svg",
           "color": "#a0a0a0"
         },
         {
