@@ -149,7 +149,9 @@
     ],
     "description": "living in the moment. creating something real.",
     "ogImage": "assets/images/avatar.png",
-    "themeColor": "#ffffff"
+    "themeColor": "#ffffff",
+    "titleEffect": "typewriter",
+    "titleSpeed": 1
   },
   "badges": [],
   "skills": [
@@ -172,8 +174,8 @@
           "color": "#a0a0a0"
         },
         {
-          "label": "C++",
-          "icon": "fas fa-code",
+          "label": "CSS",
+          "icon": "fab fa-css3-alt",
           "color": "#a0a0a0"
         },
         {
@@ -183,7 +185,7 @@
         },
         {
           "label": "CSS",
-          "icon": "fab fa-css3-alt",
+          "icon": "fa-brands fa-css",
           "color": "#a0a0a0"
         }
       ]
