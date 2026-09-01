@@ -1,109 +1,202 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Page not found — this one got away." />
-  <meta name="robots" content="noindex, follow" />
-  <meta name="theme-color" content="#090909" />
-  <title>404 — zade</title>
-  <link rel="icon" href="/favicon.ico" sizes="32x32" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #090909;
-      --text: #f0f0f8;
-      --muted: rgba(240,240,248,.5);
-      --hair: rgba(255,255,255,.14);
-      --font: 'Nunito', system-ui, sans-serif;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { background: var(--bg); -webkit-font-smoothing: antialiased; }
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100dvh;
-      width: 100vw;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      cursor: default;
-      letter-spacing: -0.01em;
-    }
-    a { color: inherit; text-decoration: none; }
-    :focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 4px; }
-    .page { padding: 0 clamp(1.5rem, 8vw, 8rem); max-width: 1400px; width: 100%; margin: 0 auto; }
-    .crumbs { font-size: .62rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); display: flex; gap: .6rem; align-items: center; }
-    .crumbs a { border-bottom: 1px solid transparent; transition: color .25s, border-color .25s; }
-    .crumbs a:hover { color: #fff; border-color: #fff; }
-    .crumbs .sep { opacity: .4; }
-    .crumbs [aria-current] { color: rgba(240,240,248,.75); }
-    main { margin-top: clamp(3rem, 9vh, 6rem); }
-    .label { font-size: .68rem; font-weight: 600; letter-spacing: .22em; color: rgba(244,244,240,.48); }
-    h1 {
-      font-size: clamp(4.5rem, 18vw, 13rem);
-      font-weight: 800;
-      letter-spacing: -.08em;
-      line-height: 1;
-      margin-top: 2rem;
-    }
-    .sub {
-      margin-top: 2.2rem;
-      font-size: clamp(.95rem, 1.3vw, 1.08rem);
-      line-height: 1.9;
-      max-width: 560px;
-      color: rgba(244,244,240,.7);
-    }
-    .sub .dim { color: rgba(244,244,240,.52); }
-    .links { margin-top: 3.2rem; display: flex; flex-wrap: wrap; gap: clamp(1.5rem, 5vw, 4rem); }
-    .links a {
-      font-size: .8rem; font-weight: 700; letter-spacing: .02em;
-      border-bottom: 1px solid rgba(255,255,255,.4);
-      padding-bottom: .6rem;
-      transition: color .25s, border-color .25s;
-    }
-    .links a:hover { color: #fff; border-color: #fff; }
-    footer {
-      position: absolute; bottom: 2rem; left: 0; right: 0;
-      padding: 0 clamp(1.5rem, 8vw, 8rem);
-      display: flex; justify-content: space-between;
-      font-size: .68rem; color: rgba(244,244,240,.4);
-      letter-spacing: .06em;
-    }
-    @media (prefers-reduced-motion: no-preference) {
-      main > * { opacity: 0; transform: translateY(14px); animation: rise .7s cubic-bezier(.4,0,.2,1) forwards; }
-      main > *:nth-child(2) { animation-delay: .08s; }
-      main > *:nth-child(3) { animation-delay: .16s; }
-      main > *:nth-child(4) { animation-delay: .24s; }
-      @keyframes rise { to { opacity: 1; transform: none; } }
-    }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <nav class="crumbs" aria-label="Breadcrumb">
-      <a href="/">home</a><span class="sep" aria-hidden="true">/</span><span aria-current="page">404</span>
-    </nav>
-    <main>
-      <div class="label">ERROR 404</div>
-      <h1>404</h1>
-      <p class="sub">This page doesn't exist — or it moved and didn't leave a note.<br /><span class="dim">The rest of the site is still right where you left it.</span></p>
-      <div class="links">
-        <a href="/">Back home</a>
-        <a href="/#work">Work</a>
-        <a href="/#contact">Contact</a>
-      </div>
-    </main>
-  </div>
-  <footer>
-    <span>© <span id="year">2026</span> zade</span>
-    <span>built with curiosity</span>
-  </footer>
-  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Page not found — this one got away." />
+    <meta name="robots" content="noindex, follow" />
+    <meta name="theme-color" content="#090909" />
+    <title>404 — zade</title>
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #090909;
+        --text: #f0f0f8;
+        --muted: rgba(240, 240, 248, 0.5);
+        --hair: rgba(255, 255, 255, 0.14);
+        --font: "Nunito", system-ui, sans-serif;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        background: var(--bg);
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100dvh;
+        width: 100vw;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        cursor: default;
+        letter-spacing: -0.01em;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      :focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      .page {
+        padding: 0 clamp(1.5rem, 8vw, 8rem);
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      .crumbs {
+        font-size: 0.62rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+      }
+      .crumbs a {
+        border-bottom: 1px solid transparent;
+        transition:
+          color 0.25s,
+          border-color 0.25s;
+      }
+      .crumbs a:hover {
+        color: #fff;
+        border-color: #fff;
+      }
+      .crumbs .sep {
+        opacity: 0.4;
+      }
+      .crumbs [aria-current] {
+        color: rgba(240, 240, 248, 0.75);
+      }
+      main {
+        margin-top: clamp(3rem, 9vh, 6rem);
+      }
+      .label {
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.22em;
+        color: rgba(244, 244, 240, 0.48);
+      }
+      h1 {
+        font-size: clamp(4.5rem, 18vw, 13rem);
+        font-weight: 800;
+        letter-spacing: -0.08em;
+        line-height: 1;
+        margin-top: 2rem;
+      }
+      .sub {
+        margin-top: 2.2rem;
+        font-size: clamp(0.95rem, 1.3vw, 1.08rem);
+        line-height: 1.9;
+        max-width: 560px;
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .sub .dim {
+        color: rgba(244, 244, 240, 0.52);
+      }
+      .links {
+        margin-top: 3.2rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: clamp(1.5rem, 5vw, 4rem);
+      }
+      .links a {
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+        padding-bottom: 0.6rem;
+        transition:
+          color 0.25s,
+          border-color 0.25s;
+      }
+      .links a:hover {
+        color: #fff;
+        border-color: #fff;
+      }
+      footer {
+        position: absolute;
+        bottom: 2rem;
+        left: 0;
+        right: 0;
+        padding: 0 clamp(1.5rem, 8vw, 8rem);
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.68rem;
+        color: rgba(244, 244, 240, 0.4);
+        letter-spacing: 0.06em;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        main > * {
+          opacity: 0;
+          transform: translateY(14px);
+          animation: rise 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        main > *:nth-child(2) {
+          animation-delay: 0.08s;
+        }
+        main > *:nth-child(3) {
+          animation-delay: 0.16s;
+        }
+        main > *:nth-child(4) {
+          animation-delay: 0.24s;
+        }
+        @keyframes rise {
+          to {
+            opacity: 1;
+            transform: none;
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/">home</a><span class="sep" aria-hidden="true">/</span
+        ><span aria-current="page">404</span>
+      </nav>
+      <main>
+        <div class="label">ERROR 404</div>
+        <h1>404</h1>
+        <p class="sub">
+          This page doesn't exist — or it moved and didn't leave a note.<br /><span
+            class="dim"
+            >The rest of the site is still right where you left it.</span
+          >
+        </p>
+        <div class="links">
+          <a href="/">Back home</a>
+          <a href="/#work">Work</a>
+          <a href="/#contact">Contact</a>
+        </div>
+      </main>
+    </div>
+    <footer>
+      <span>© <span id="year">2026</span> zade</span>
+      <span>built with curiosity</span>
+    </footer>
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
 </html>

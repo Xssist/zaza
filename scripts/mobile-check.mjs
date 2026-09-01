@@ -1,7 +1,12 @@
 // Mobile viewport check: verify mobile-specific optimizations engage.
 export default async function run(page) {
-  await page.setViewportSize({ width: 375, height: 667, isMobile: true, hasTouch: true });
-  await page.reload({ waitUntil: 'load' });
+  await page.setViewportSize({
+    width: 375,
+    height: 667,
+    isMobile: true,
+    hasTouch: true,
+  });
+  await page.reload({ waitUntil: "load" });
   await page.waitForTimeout(1500);
   const vp = page.viewportSize();
   return await page.evaluate(`(() => {
