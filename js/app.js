@@ -414,7 +414,11 @@ function initLoading() {
     if (body) body.insertAdjacentHTML('beforeend', '<span class="term-cursor-blink"></span>');
   }, 50);
 
-  setTimeout(() => scr.classList.add('hidden'), 2700);
+  setTimeout(() => {
+    scr.classList.add('hidden');
+    // Cue the GSAP motion system to run the landing intro
+    window.dispatchEvent(new CustomEvent('zade:intro-go'));
+  }, 2700);
 }
 
 /* ══════════════════════════════════════════
@@ -2436,6 +2440,8 @@ function initSpringInteractions() {
 }
 
 function initEditorialReveals() {
+  // GSAP ScrollTrigger owns reveals when the motion system is active
+  if (document.documentElement.dataset.gsapMotion === '1') return;
   const items = $$('.reveal');
   if (!('IntersectionObserver' in window)) { items.forEach(el => el.classList.add('in-view')); return; }
   const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('in-view'); observer.unobserve(entry.target); } }), {threshold:.12});
