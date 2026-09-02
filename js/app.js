@@ -456,11 +456,18 @@ function initBackground() {
     const blur = S.cfg.background?.blur || 0;
     if (blur > 0) vid.style.filter = `blur(${blur}px)`;
 
-    // Preload the video metadata first for smoother start
+    // Preload the video metadata first for smoother start.
+    // Mobile: metadata-only preload + playsInline (iOS refuses inline autoplay
+    // without playsInline and burns data with preload:auto).
+    const bgIsMobile = window.matchMedia('(max-width: 700px)').matches || window.matchMedia('(hover: none)').matches;
     vid.style.display = 'block';
     vid.muted   = true;
     vid.loop    = true;
-    vid.preload = 'auto';
+    vid.preload = bgIsMobile ? 'metadata' : 'auto';
+    vid.playsInline = true;
+    vid.setAttribute('playsinline', '');
+    vid.setAttribute('webkit-playsinline', '');
+    vid.setAttribute('disablepictureinpicture', '');
     vid.src     = videoUrl;
     vid.load();
 
@@ -643,6 +650,9 @@ class ParticleDot {
 /* Connection lines between nearby dots — one batched path per frame. */
 function drawParticleLinks(ctx, dots, rgb) {
   const DIST_SQ = 90 * 90; // avoid Math.sqrt — compare squared distances
+  // BUGFIX: all segments share ONE path and are stroked once, so per-segment
+  // globalAlpha never applied — the last segment's alpha won for every line.
+  // Use a fixed alpha per frame instead (visually identical at these values).
   ctx.beginPath();
   ctx.lineWidth = 0.4;
   for (let i = 0; i < dots.length; i++) {
@@ -650,14 +660,15 @@ function drawParticleLinks(ctx, dots, rgb) {
       const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y;
       const d2 = dx*dx + dy*dy;
       if (d2 < DIST_SQ) {
-        ctx.globalAlpha = (1 - Math.sqrt(d2) / 90) * 0.06;
         ctx.moveTo(dots[i].x, dots[i].y);
         ctx.lineTo(dots[j].x, dots[j].y);
       }
     }
   }
+  ctx.globalAlpha = 0.05;
   ctx.strokeStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
   ctx.stroke();
+  ctx.globalAlpha = 1;
 }
 
 function initParticles() {
@@ -1097,9 +1108,15 @@ function startVisualizer() {
 
   (function draw() {
     requestAnimationFrame(draw);
+    // BUGFIX: skip entirely while the tab is hidden (was burning CPU + battery).
+    if (S.perf.hidden || !S.analyser) return;
     S.analyser.getByteFrequencyData(buf);
-    const W = cv.width  = cv.offsetWidth  || 80;
-    const H = cv.height = cv.offsetHeight || 24;
+    // BUGFIX: only resize the canvas when its CSS size actually changed —
+    // setting width/height every frame reallocates the buffer and tanks FPS.
+    const cw = cv.offsetWidth  || 80;
+    const ch = cv.offsetHeight || 24;
+    let W = cv.width, H = cv.height;
+    if (W !== cw || H !== ch) { W = cv.width = cw; H = cv.height = ch; }
     ctx.clearRect(0, 0, W, H);
     const bars = 24;
     const bw = (W / bars) - 1;
@@ -1365,6 +1382,7 @@ function initBgPattern() {
 
     (function draw() {
       requestAnimationFrame(draw);
+      if (S.perf.hidden) return; // don't burn CPU when the tab is hidden
       t++;
       ctx.fillStyle = 'rgba(6,6,11,0.05)';
       ctx.fillRect(0, 0, W, H);
@@ -1388,6 +1406,7 @@ function initBgPattern() {
 
     (function draw() {
       requestAnimationFrame(draw);
+      if (S.perf.hidden) return; // don't burn CPU when the tab is hidden
       ctx.fillStyle = 'rgba(6,6,11,0.15)';
       ctx.fillRect(0, 0, W, H);
 
@@ -1423,6 +1442,7 @@ function initBgPattern() {
 
     (function draw() {
       requestAnimationFrame(draw);
+      if (S.perf.hidden) return; // don't burn CPU when the tab is hidden
       ctx.clearRect(0, 0, W, H);
       pts.forEach(p => {
         const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
