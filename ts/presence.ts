@@ -227,7 +227,11 @@ class LanyardClient {
         }, interval);
         this.ws?.send(JSON.stringify({ op: 2, d: { subscribe_to_id: this.userId } }));
       } else if (msg.op === 0 && (msg.t === 'INIT_STATE' || msg.t === 'PRESENCE_UPDATE')) {
-        const presence = (msg.t === 'INIT_STATE' ? msg.d?.[this.userId] : msg.d) as LanyardPresence | undefined;
+        // INIT_STATE may be keyed by user id or delivered directly (varies by
+        // Lanyard version) — accept both shapes. PRESENCE_UPDATE is direct.
+        const d = msg.d as any;
+        const presence = (d?.[this.userId]?.discord_user ? d[this.userId]
+          : d?.discord_user ? d : undefined) as LanyardPresence | undefined;
         if (presence?.discord_user) this.emit(presence);
       }
     });

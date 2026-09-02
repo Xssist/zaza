@@ -2453,10 +2453,9 @@
           </div>
           <div class="a-card">
             <div class="a-card-title"><i class="fab fa-spotify"></i> Spotify Now Playing</div>
-            <div class="a-info"><i class="fas fa-circle-info"></i> You need a Spotify Access Token. Go to <a
-                href="https://developer.spotify.com/console/get-users-currently-playing-track/" target="_blank"
-                style="color:#1ed760;">Spotify Developer Console</a>, click "Get Token", check
-              <strong>user-read-currently-playing</strong>, then paste the token below. It expires in ~1 hour.</div>
+            <div class="a-info success"><i class="fas fa-circle-check"></i> No Spotify token needed. Your now-playing
+              track comes from Discord through Lanyard — just enable "Show Spotify track on Discord profile" in
+              Discord settings and play something in Spotify.</div>
             <div class="a-row">
               <label>Enable Spotify Widget</label>
               <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
@@ -2465,12 +2464,10 @@
                 <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Show now-playing on site</span>
               </div>
             </div>
-            <div class="a-row"><label>Access Token</label><input type="text" id="inp-spotify-token" class="a-input"
-                placeholder="BQA...paste your token here" /></div>
             <div class="a-row"><label>Fallback Text (when not playing)</label><input type="text"
                 id="inp-spotify-fallback" class="a-input" placeholder="not playing" /></div>
             <div style="margin-top:8px;">
-              <button class="a-btn-sm" id="a-test-spotify-btn"><i class="fas fa-plug"></i> Test Token</button>
+              <button class="a-btn-sm" id="a-test-spotify-btn"><i class="fas fa-plug"></i> Test Lanyard Spotify</button>
             </div>
           </div>
         </section>
@@ -2779,7 +2776,7 @@
     "showWidget": true
   },
   "spotify": {
-    "enabled": false,
+    "enabled": true,
     "showCurrentlyPlaying": true,
     "fallbackText": "not playing",
     "showWidget": true,
@@ -3697,18 +3694,21 @@
         } catch (e) { aToast(e.message, 'error'); }
         finally { if (btn) { btn.textContent = 'Test Connection'; btn.disabled = false; } }
       });
-      // Spotify test
+      // Spotify test (via Lanyard — no token)
       $('#a-test-spotify-btn')?.addEventListener('click', async () => {
-        const btn = $('#a-test-spotify-btn'), tok = $('#inp-spotify-token')?.value?.trim();
-        if (!tok) { aToast('Paste a token first', 'error'); return; }
+        const btn = $('#a-test-spotify-btn');
+        const uid = ($('#inp-discord-uid')?.value || '').trim() || AS.config?.discord?.discordId || AS.config?.discord?.userId;
+        if (!uid) { aToast('Set your Discord User ID first (Discord section)', 'error'); return; }
         if (btn) { btn.textContent = 'Testing...'; btn.disabled = true; }
         try {
-          const r = await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: 'Bearer ' + tok } });
+          const r = await fetch('https://api.lanyard.rest/v1/users/' + uid);
           const d = await r.json();
-          if (r.ok) aToast('Connected as ' + d.display_name, 'success');
-          else aToast('Token error: ' + d.error?.message, 'error');
+          const sp = d?.data?.spotify;
+          if (r.ok && sp) aToast('Lanyard OK — now playing: ' + sp.song + ' by ' + sp.artist, 'success');
+          else if (r.ok) aToast('Lanyard OK, but nothing playing right now (play a song in Spotify)', 'success');
+          else aToast('Lanyard error: ' + (d?.error?.message || 'unknown'), 'error');
         } catch (e) { aToast('Network error', 'error'); }
-        finally { if (btn) { btn.textContent = 'Test Token'; btn.disabled = false; } }
+        finally { if (btn) { btn.textContent = 'Test Lanyard Spotify'; btn.disabled = false; } }
       });
       // Discord / Lanyard test
       $('#a-test-discord-btn')?.addEventListener('click', async () => {
