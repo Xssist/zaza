@@ -232,5 +232,14 @@
     "art": "*\\ (^_^)",
     "message": "hi visitor, weird to see you here",
     "subMessage": "Contact me if something is broken or if u found bugs"
+  },
+  "presence": {
+    "sectionTitle": "status",
+    "showDiscord": true,
+    "showSpotify": true,
+    "showActivity": true,
+    "activityLabel": "current activity",
+    "spotifyFallbackText": "not listening to anything",
+    "avatarSync": true
   }
 }

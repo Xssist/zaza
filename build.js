@@ -13,6 +13,22 @@ const bundles = [
   { src: "js/app.js",    out: "js/app.min.js" },
 ];
 
+/* TypeScript presence module: compile → minify → delete the readable copy. */
+async function buildPresence() {
+  const { execSync } = require("node:child_process");
+  try {
+    execSync("npx -y -p typescript@5.5.4 tsc -p tsconfig.json", { stdio: "inherit" });
+  } catch (e) {
+    console.warn("tsc failed — keeping existing js/presence.min.js if present.");
+    return;
+  }
+  const code = readFileSync("js/ts-out/presence.js", "utf8");
+  const result = await minify(code, { module: false, compress: { passes: 2 }, mangle: true, format: { comments: false } });
+  if (!result.code) throw new Error("Minification produced no output for presence.ts");
+  writeFileSync("js/presence.min.js", result.code);
+  console.log(`ts/presence.ts -> js/presence.min.js: ${(code.length / 1024).toFixed(1)} kB -> ${(result.code.length / 1024).toFixed(1)} kB`);
+}
+
 /** Replace the inline config JSON inside an HTML file so it always mirrors
     config.json — the hand-edited copy used to drift out of sync. */
 function syncInlineConfig(htmlPath, configJson) {
@@ -39,6 +55,8 @@ function syncInlineConfig(htmlPath, configJson) {
     if (syncInlineConfig(htmlPath, configJson)) inlineSynced = true;
   }
   if (!inlineSynced) console.warn("No inline __ZADE_CONFIG__ block found in any HTML file.");
+
+  await buildPresence();
 
   let before = 0;
   let after = 0;

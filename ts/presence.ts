@@ -1,0 +1,741 @@
+/* ============================================================
+   ZADE — presence.ts
+   Discord presence + Spotify now-playing, powered by Lanyard.
+   No Discord user tokens, no selfbots, no OAuth, no auth.
+   Compiles to js/presence.js (minified: js/presence.min.js).
+   ============================================================ */
+
+/* ── Types ─────────────────────────────────────────────────── */
+
+type DiscordStatus = 'online' | 'idle' | 'dnd' | 'offline';
+
+interface LanyardUser {
+  id: string;
+  username: string;
+  global_name?: string | null;
+  display_name?: string | null;
+  avatar: string | null;
+}
+
+interface LanyardActivity {
+  id: string;
+  name: string;
+  type: number; // 0 play, 1 stream, 2 listen, 3 watch, 4 custom, 5 compete
+  state?: string;
+  details?: string;
+  application_id?: string;
+  timestamps?: { start?: number; end?: number };
+  assets?: { large_image?: string; small_image?: string };
+  emoji?: { name: string; id?: string; animated?: boolean };
+}
+
+interface LanyardSpotify {
+  track_id: string;
+  song: string;
+  artist: string;
+  album: string;
+  album_art_url: string;
+  timestamps: { start: number; end: number };
+}
+
+interface LanyardPresence {
+  discord_status: DiscordStatus;
+  discord_user: LanyardUser;
+  activities: LanyardActivity[];
+  spotify: LanyardSpotify | null;
+  listening_to_spotify: boolean;
+  active_on_discord_desktop?: boolean;
+}
+
+interface PresenceConfig {
+  enabled?: boolean;
+  userId?: string;
+  sectionTitle?: string;
+  showDiscord?: boolean;
+  showSpotify?: boolean;
+  showActivity?: boolean;
+  activityLabel?: string;
+  spotifyFallbackText?: string;
+  avatarSync?: boolean;
+}
+
+/* ── Small utils ───────────────────────────────────────────── */
+
+const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
+
+function fmtTime(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+    : `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+const STATUS_LABEL: Record<DiscordStatus, string> = {
+  online: 'online',
+  idle: 'away',
+  dnd: 'do not disturb',
+  offline: 'offline',
+};
+
+const ACTIVITY_LABEL: Record<number, string> = {
+  0: 'Playing',
+  1: 'Streaming',
+  2: 'Listening to',
+  3: 'Watching',
+  5: 'Competing in',
+};
+
+const ACTIVITY_ICON: Record<number, string> = {
+  0: 'fas fa-gamepad',
+  1: 'fas fa-tv',
+  2: 'fas fa-music',
+  3: 'fas fa-eye',
+  5: 'fas fa-trophy',
+};
+
+/** Lanyard CDN asset → URL (handles external/Spotify media). */
+function lanyardAsset(appId: string | undefined, assetId: string): string {
+  if (!assetId) return '';
+  if (assetId.startsWith('mp:external/')) {
+    return `https://media.discordapp.net/external/${assetId.replace('mp:external/', '')}`;
+  }
+  if (assetId.startsWith('spotify:')) return '';
+  return `https://cdn.discordapp.com/app-assets/${appId ?? '0'}/${assetId}.png`;
+}
+
+/** Reduced-motion respect (matches site behaviour). */
+function prefersReduced(): boolean {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+}
+
+/** Stable signature so we skip DOM writes when nothing changed. */
+function signature(p: LanyardPresence): string {
+  const a = p.activities.filter(x => x.type !== 4).map(x => `${x.id}:${x.name}:${x.details ?? ''}:${x.state ?? ''}:${x.timestamps?.start ?? ''}`);
+  const sp = p.spotify ? `${p.spotify.track_id}:${p.spotify.timestamps.start}` : 'none';
+  return `${p.discord_status}|${p.discord_user.username}|${a.join(';')}|${sp}`;
+}
+
+/* ════════════════════════════════════════════════════════════
+   LanyardClient — realtime presence via WebSocket, with a REST
+   polling fallback. One connection, heartbeat, capped backoff,
+   session-cached so reloads don't flash skeletons.
+   ════════════════════════════════════════════════════════════ */
+
+type Listener = (p: LanyardPresence) => void;
+
+class LanyardClient {
+  private userId: string;
+  private ws: WebSocket | null = null;
+  private heartbeat: number | undefined;
+  private reconnectDelay = 1000;
+  private wsFailures = 0;
+  private dead = false;
+  private listeners = new Set<Listener>();
+  private pollTimer: number | undefined;
+  private lastPresence: LanyardPresence | null = null;
+  private lastSig = '';
+  private readonly CACHE_KEY = 'zade_presence_cache';
+
+  constructor(userId: string) {
+    this.userId = userId;
+    this.restoreCache();
+  }
+
+  subscribe(fn: Listener): () => void {
+    this.listeners.add(fn);
+    if (this.lastPresence) fn(this.lastPresence);
+    return () => { this.listeners.delete(fn); };
+  }
+
+  private emit(p: LanyardPresence): void {
+    this.lastPresence = p;
+    this.lastSig = signature(p);
+    try { sessionStorage.setItem(this.cacheKey(), JSON.stringify({ t: Date.now(), p })); } catch { /* quota */ }
+    this.listeners.forEach(fn => { try { fn(p); } catch { /* keep others alive */ } });
+  }
+
+  private cacheKey(): string { return `${this.CACHE_KEY}:${this.userId}`; }
+
+  /** Warm-start: restore a <60s old cached presence so UI is never empty. */
+  private restoreCache(): void {
+    try {
+      const raw = sessionStorage.getItem(this.cacheKey());
+      if (!raw) return;
+      const { t, p } = JSON.parse(raw) as { t: number; p: LanyardPresence };
+      if (Date.now() - t < 60_000 && p?.discord_user) this.emit(p);
+    } catch { /* invalid cache — ignore */ }
+  }
+
+  start(): void {
+    this.connect();
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) this.pause();
+      else this.resume();
+    });
+  }
+
+  destroy(): void {
+    this.dead = true;
+    this.pause();
+    this.ws?.close();
+    this.ws = null;
+    this.listeners.clear();
+  }
+
+  private pause(): void {
+    if (this.heartbeat) { clearInterval(this.heartbeat); this.heartbeat = undefined; }
+    if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = undefined; }
+  }
+
+  private resume(): void {
+    if (this.dead) return;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) return; // socket still alive
+    if (this.wsFailures >= 3) this.startPolling();
+    else this.connect();
+  }
+
+  private connect(): void {
+    if (this.dead || this.ws) return;
+    try {
+      this.ws = new WebSocket('wss://api.lanyard.rest/socket');
+    } catch {
+      this.ws = null;
+      this.scheduleReconnect();
+      return;
+    }
+
+    this.ws.addEventListener('open', () => {
+      this.wsFailures = 0;
+      this.reconnectDelay = 1000;
+      this.stopPolling(); // realtime socket wins over polling
+    });
+
+    this.ws.addEventListener('message', ev => {
+      let msg: { op: number; t?: string; d?: any };
+      try { msg = JSON.parse(ev.data as string); } catch { return; }
+
+      if (msg.op === 1) { // Hello
+        const interval = msg.d?.heartbeat_interval ?? 30_000;
+        if (this.heartbeat) clearInterval(this.heartbeat);
+        this.heartbeat = window.setInterval(() => {
+          if (this.ws?.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({ op: 3 }));
+          }
+        }, interval);
+        this.ws?.send(JSON.stringify({ op: 2, d: { subscribe_to_id: this.userId } }));
+      } else if (msg.op === 0 && (msg.t === 'INIT_STATE' || msg.t === 'PRESENCE_UPDATE')) {
+        const presence = (msg.t === 'INIT_STATE' ? msg.d?.[this.userId] : msg.d) as LanyardPresence | undefined;
+        if (presence?.discord_user) this.emit(presence);
+      }
+    });
+
+    this.ws.addEventListener('close', () => {
+      this.ws = null;
+      if (this.heartbeat) { clearInterval(this.heartbeat); this.heartbeat = undefined; }
+      this.wsFailures++;
+      if (this.wsFailures >= 3) {
+        this.startPolling();       // graceful degradation
+        this.scheduleReconnect();  // still try to recover realtime
+      } else {
+        this.scheduleReconnect();
+      }
+    });
+
+    this.ws.addEventListener('error', () => {
+      try { this.ws?.close(); } catch { /* already closed */ }
+    });
+  }
+
+  private reconnectHandle: number | undefined;
+  private scheduleReconnect(): void {
+    if (this.dead || this.reconnectHandle) return;
+    this.reconnectHandle = window.setTimeout(() => {
+      this.reconnectHandle = undefined;
+      this.connect();
+    }, Math.min(this.reconnectDelay, 30_000));
+    this.reconnectDelay = Math.min(this.reconnectDelay * 2, 30_000);
+  }
+
+  /* ── REST fallback (Lanyard v1) — only after WS proved unreliable ── */
+  private startPolling(): void {
+    if (this.pollTimer) return;
+    const poll = async () => {
+      if (document.hidden) return;
+      try {
+        const r = await fetch(`https://api.lanyard.rest/v1/users/${this.userId}`, { headers: { Accept: 'application/json' } });
+        if (!r.ok) return;
+        const body = await r.json();
+        const p = body?.data as LanyardPresence | undefined;
+        if (p?.discord_user) this.emit(p);
+      } catch { /* network hiccup — next tick retries */ }
+    };
+    poll();
+    this.pollTimer = window.setInterval(poll, 30_000);
+  }
+
+  private stopPolling(): void {
+    if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = undefined; }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   DiscordCard — avatar, username, animated status, activity.
+   Renders skeleton → content; no layout shift (fixed heights).
+   ════════════════════════════════════════════════════════════ */
+
+class DiscordCard {
+  private root: HTMLElement;
+  private sig = '';
+  private elapsedTimer: number | undefined;
+  private elapsedStart = 0;
+  private elapsedEl: HTMLElement | null = null;
+
+  constructor(rootId: string) {
+    const el = document.getElementById(rootId);
+    if (!el) throw new Error(`#${rootId} missing`);
+    this.root = el;
+    this.renderSkeleton();
+  }
+
+  private renderSkeleton(): void {
+    this.root.innerHTML = `
+      <div class="pc-skel pc-skel-avatar"></div>
+      <div class="pc-skel-body">
+        <div class="pc-skel pc-skel-line w60"></div>
+        <div class="pc-skel pc-skel-line w40"></div>
+        <div class="pc-skel pc-skel-line w75"></div>
+      </div>`;
+  }
+
+  private contentEl(cls: string): string {
+    return `
+      <div class="pc-head">
+        <div class="pc-avatar-wrap">
+          <img class="pc-avatar" alt="Discord avatar" draggable="false" />
+          <span class="pc-status-dot" aria-hidden="true"></span>
+        </div>
+        <div class="pc-id">
+          <div class="pc-name"></div>
+          <div class="pc-status"></div>
+        </div>
+        <i class="fab fa-discord pc-brand" aria-hidden="true"></i>
+      </div>
+      <div class="pc-activity ${cls}">
+        <div class="pc-act-img-wrap">
+          <img class="pc-act-img" alt="" draggable="false" />
+          <div class="pc-act-ph"><i class="fas fa-gamepad" aria-hidden="true"></i></div>
+          <img class="pc-act-small" alt="" draggable="false" />
+        </div>
+        <div class="pc-act-body">
+          <div class="pc-act-type"></div>
+          <div class="pc-act-name"></div>
+          <div class="pc-act-detail"></div>
+          <div class="pc-act-state"></div>
+          <div class="pc-act-elapsed"></div>
+        </div>
+      </div>
+      <div class="pc-error" hidden>presence unavailable</div>`;
+  }
+
+  render(p: LanyardPresence, cfg: PresenceConfig): void {
+    const sig = signature(p);
+    if (sig === this.sig) return; // skip identical renders
+    const first = this.sig === '';
+    this.sig = sig;
+
+    if (this.root.querySelector('.pc-skel')) {
+      this.root.classList.add('ready');
+      this.root.innerHTML = this.contentEl(cfg.showActivity === false ? 'hidden' : '');
+    }
+
+    const q = <T extends HTMLElement = HTMLElement>(s: string) => this.root.querySelector(s) as T | null;
+    const user = p.discord_user;
+
+    // Avatar (fade-swap on change)
+    const av = q<HTMLImageElement>('.pc-avatar');
+    if (av && user.avatar) {
+      const ext = user.avatar.startsWith('a_') ? 'gif' : 'png';
+      const url = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=128`;
+      if (av.src !== url) {
+        av.style.opacity = '0';
+        av.onload = () => { av.style.opacity = '1'; };
+        av.onerror = () => { av.style.opacity = '0'; };
+        av.src = url;
+      }
+    }
+
+    // Status
+    const status = p.discord_status;
+    const dot = q<HTMLImageElement>('.pc-status-dot');
+    if (dot) dot.dataset.status = status;
+    const statusEl = q('.pc-status');
+    if (statusEl) statusEl.textContent = STATUS_LABEL[status] ?? status;
+    const nameEl = q('.pc-name');
+    if (nameEl) nameEl.textContent = user.global_name || user.display_name || user.username || 'discord';
+
+    // Custom status (type 4)
+    const custom = p.activities.find(a => a.type === 4);
+    const detailEl = q('.pc-act-detail');
+    if (custom && detailEl && !p.activities.some(a => a.type !== 4 && a.type !== 2)) {
+      const emoji = custom.emoji?.name ? `${custom.emoji.name} ` : '';
+      detailEl.textContent = `${emoji}${custom.state ?? ''}`.trim();
+    }
+
+    // Activity — most interesting non-custom, non-Spotify activity
+    const acts = p.activities.filter(a => a.type !== 4 && a.id !== 'spotify:1');
+    const actWrap = q('.pc-activity');
+    const act = acts[0];
+    this.stopElapsed();
+
+    if (cfg.showActivity !== false && act && actWrap) {
+      const typeEl = q('.pc-act-type');
+      const nameA = q('.pc-act-name');
+      const stateEl = q('.pc-act-state');
+      if (typeEl) typeEl.textContent = ACTIVITY_LABEL[act.type] ?? 'Playing';
+      if (nameA) nameA.textContent = act.name || '';
+      if (stateEl) stateEl.textContent = [act.details, act.state].filter(Boolean).join(' — ');
+
+      const img = q<HTMLImageElement>('.pc-act-img');
+      const ph = q('.pc-act-ph');
+      const small = this.root.querySelector<HTMLImageElement>('.pc-act-small');
+      const largeUrl = act.assets?.large_image ? lanyardAsset(act.application_id, act.assets.large_image) : '';
+      const smallUrl = act.assets?.small_image ? lanyardAsset(act.application_id, act.assets.small_image) : '';
+
+      if (img) {
+        if (largeUrl) {
+          if (img.src !== largeUrl) { img.src = largeUrl; }
+          img.dataset.on = '1';
+        } else img.dataset.on = '';
+      }
+      if (ph) ph.classList.toggle('show', !largeUrl);
+      if (ph) {
+        const icon = ph.querySelector('i');
+        if (icon) icon.className = `${ACTIVITY_ICON[act.type] ?? 'fas fa-gamepad'}`;
+      }
+      if (small) {
+        if (smallUrl) { if (small) small.src = smallUrl; small.dataset.on = '1'; }
+        else small.dataset.on = '';
+      }
+
+      if (act.timestamps?.start) this.startElapsed(act.timestamps.start, q('.pc-act-elapsed'));
+      actWrap.classList.remove('hidden');
+    } else if (actWrap) {
+      actWrap.classList.add('hidden');
+    }
+
+    if (first) this.root.classList.add('pop');
+  }
+
+  showError(): void {
+    if (this.root.querySelector('.pc-skel')) {
+      this.root.classList.add('ready');
+      this.root.innerHTML = this.contentEl('hidden');
+    }
+    const err = this.root.querySelector<HTMLElement>('.pc-error');
+    if (err) err.hidden = false;
+    this.root.classList.add('degraded');
+  }
+
+  private startElapsed(startMs: number, el: HTMLElement | null): void {
+    this.elapsedStart = startMs;
+    this.elapsedEl = el;
+    if (!el) return;
+    const tick = () => {
+      if (this.elapsedEl) this.elapsedEl.textContent = `elapsed ${fmtTime(Date.now() - this.elapsedStart)}`;
+    };
+    tick();
+    this.elapsedTimer = window.setInterval(tick, 1000);
+  }
+
+  private stopElapsed(): void {
+    if (this.elapsedTimer) { clearInterval(this.elapsedTimer); this.elapsedTimer = undefined; }
+    if (this.elapsedEl) this.elapsedEl.textContent = '';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   SpotifyCard — now playing from Lanyard activity data.
+   rAF-driven progress (only while playing & visible), elastic
+   artwork animation, elegant fallback — never leaves a gap.
+   ════════════════════════════════════════════════════════════ */
+
+class SpotifyCard {
+  private root: HTMLElement;
+  private fallbackText: string;
+  private trackId = '';
+  private isPlaying = false;
+  private start = 0;
+  private end = 0;
+  private rafId = 0;
+  private lastPct = -1;
+
+  constructor(rootId: string, fallbackText: string) {
+    const el = document.getElementById(rootId);
+    if (!el) throw new Error(`#${rootId} missing`);
+    this.root = el;
+    this.fallbackText = fallbackText || 'not listening to anything';
+    this.renderSkeleton();
+  }
+
+  private renderSkeleton(): void {
+    this.root.innerHTML = `
+      <div class="pc-skel pc-skel-art"></div>
+      <div class="pc-skel-body">
+        <div class="pc-skel pc-skel-line w75"></div>
+        <div class="pc-skel pc-skel-line w50"></div>
+        <div class="pc-skel pc-skel-line w90"></div>
+      </div>`;
+  }
+
+  private contentEl(): string {
+    return `
+      <div class="sp-art-wrap">
+        <img class="sp-art" alt="Album cover" draggable="false" />
+        <div class="sp-art-ph"><i class="fab fa-spotify" aria-hidden="true"></i></div>
+      </div>
+      <div class="sp-body">
+        <div class="sp-top">
+          <div class="sp-kicker"><i class="fab fa-spotify" aria-hidden="true"></i><span>spotify</span></div>
+          <div class="sp-state"><i class="fas fa-circle sp-state-dot" aria-hidden="true"></i><span class="sp-state-text"></span></div>
+        </div>
+        <div class="sp-title"></div>
+        <div class="sp-artist"></div>
+        <div class="sp-progress">
+          <div class="sp-progress-fill"><span class="sp-progress-knob"></span></div>
+        </div>
+        <div class="sp-times"><span class="sp-t-cur">0:00</span><span class="sp-t-end">0:00</span></div>
+      </div>
+      <div class="sp-fallback">
+        <i class="fab fa-spotify" aria-hidden="true"></i>
+        <span>${this.escape(this.fallbackText)}</span>
+      </div>`;
+  }
+
+  private escape(s: string): string {
+    return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+  }
+
+  render(p: LanyardPresence): void {
+    const sp = p.spotify;
+    const q = <T extends HTMLElement = HTMLElement>(s: string) => this.root.querySelector(s) as T | null;
+
+    // Transition skeleton → content once
+    if (this.root.querySelector('.pc-skel')) {
+      this.root.classList.add('ready');
+      this.root.innerHTML = this.contentEl();
+    }
+
+    if (!sp) { this.showFallback(); return; }
+    this.root.classList.remove('fallback');
+
+    // Same track → only update play state / progress anchors
+    const sameTrack = sp.track_id === this.trackId;
+    this.trackId = sp.track_id;
+    this.start = sp.timestamps.start;
+    this.end = sp.timestamps.end;
+    this.setPlaying(true);
+
+    const stateText = q('.sp-state-text');
+    if (stateText) stateText.textContent = 'playing';
+
+    if (!sameTrack) {
+      const title = q('.sp-title');
+      const artist = q('.sp-artist');
+      const art = q<HTMLImageElement>('.sp-art');
+      if (title) title.textContent = sp.song || 'Unknown';
+      if (artist) artist.textContent = sp.artist || '—';
+      if (art) {
+        art.style.opacity = '0';
+        art.onload = () => { art.style.opacity = '1'; this.root.classList.add('pop'); };
+        art.onerror = () => { art.style.opacity = '0'; };
+        art.src = sp.album_art_url || '';
+      }
+      this.root.title = `${sp.song} — ${sp.artist}`;
+    }
+  }
+
+  /** Public: flip the card to its idle/fallback state. */
+  showFallback(): void {
+    if (this.root.classList.contains('fallback')) return;
+    this.trackId = '';
+    this.stopProgress();
+    this.root.classList.add('fallback');
+    const stateText = this.root.querySelector('.sp-state-text');
+    if (stateText) stateText.textContent = 'idle';
+    // Keep album art visible if we have one; hide body if it doesn't exist yet
+    const art = this.root.querySelector<HTMLImageElement>('.sp-art');
+    const artWrap = this.root.querySelector<HTMLElement>('.sp-art-wrap');
+    const hasArt = !!art?.src && art.dataset.on !== undefined && art.complete && art.naturalWidth > 0;
+    if (artWrap) artWrap.classList.toggle('hidden', !hasArt);
+    const fb = this.root.querySelector('.sp-fallback');
+    if (fb) fb.textContent = this.fallbackText;
+    this.root.classList.add('pop');
+  }
+
+  /** Playing/paused toggling (Lanyard only reports playing tracks). */
+  setPlaying(playing: boolean): void {
+    if (this.isPlaying === playing) return;
+    this.isPlaying = playing;
+    this.root.classList.toggle('paused', !playing);
+    const dot = this.root.querySelector<HTMLElement>('.sp-state-dot');
+    if (dot) dot.dataset.on = playing ? '1' : '';
+    const txt = this.root.querySelector('.sp-state-text');
+    if (txt) txt.textContent = playing ? 'playing' : 'paused';
+    if (playing) this.startProgress();
+    else this.stopProgress();
+  }
+
+  /* rAF progress — transform scaleX for GPU compositing, skips writes
+     when the percentage hasn't visibly moved. */
+  private startProgress(): void {
+    if (this.rafId || prefersReduced()) { this.paintOnce(); return; }
+    const fill = this.root.querySelector<HTMLElement>('.sp-progress-fill');
+    const cur = this.root.querySelector<HTMLElement>('.sp-t-cur');
+    const end = this.root.querySelector<HTMLElement>('.sp-t-end');
+    if (end) end.textContent = fmtTime(this.end - this.start);
+    const loop = () => {
+      this.rafId = requestAnimationFrame(loop);
+      if (document.hidden) return;
+      const total = this.end - this.start;
+      if (total <= 0) return;
+      const now = clamp(Date.now(), this.start, this.end);
+      const pct = (now - this.start) / total;
+      if (Math.abs(pct - this.lastPct) < 0.0005) return; // ~0.05% granularity
+      this.lastPct = pct;
+      if (fill) fill.style.transform = `scaleX(${pct})`;
+      if (cur) cur.textContent = fmtTime(now - this.start);
+    };
+    this.rafId = requestAnimationFrame(loop);
+  }
+
+  private paintOnce(): void {
+    const fill = this.root.querySelector<HTMLElement>('.sp-progress-fill');
+    const cur = this.root.querySelector<HTMLElement>('.sp-t-cur');
+    const end = this.root.querySelector<HTMLElement>('.sp-t-end');
+    if (end) end.textContent = fmtTime(this.end - this.start);
+    if (fill) fill.style.transform = 'scaleX(0)';
+    if (cur) cur.textContent = '0:00';
+  }
+
+  private stopProgress(): void {
+    if (this.rafId) { cancelAnimationFrame(this.rafId); this.rafId = 0; }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Boot — reads window.__ZADE_CONFIG__, wires DOM + client.
+   Exposed as window.ZazaPresence for the admin panel preview.
+   ════════════════════════════════════════════════════════════ */
+
+interface BootConfig {
+  presence?: PresenceConfig;
+  discord?: { enabled?: boolean; userId?: string };
+}
+
+function boot(): void {
+  const cfgRoot = (window as any).__ZADE_CONFIG__ as BootConfig | undefined;
+  const cfg: PresenceConfig = {
+    ...cfgRoot?.presence,
+    enabled: cfgRoot?.discord?.enabled ?? cfgRoot?.presence?.enabled ?? true,
+    userId: cfgRoot?.discord?.userId ?? cfgRoot?.presence?.userId ?? '',
+  };
+
+  const section = document.getElementById('presence-section');
+  if (!section) return;
+  if (cfg.enabled === false || !cfg.userId) {
+    section.style.display = 'none';
+    return;
+  }
+  if (cfg.sectionTitle) {
+    const label = section.querySelector<HTMLElement>('.section-label');
+    if (label) label.textContent = cfg.sectionTitle.toUpperCase();
+  }
+
+  const dcRoot = document.getElementById('presence-discord');
+  const spRoot = document.getElementById('presence-spotify');
+  if (!dcRoot || !spRoot) return;
+
+  if (cfg.showDiscord === false) dcRoot.style.display = 'none';
+  if (cfg.showSpotify === false) spRoot.style.display = 'none';
+  // Single-column layout when one card is hidden — no empty space.
+  const grid = document.getElementById('presence-grid');
+  if (grid && (cfg.showDiscord === false || cfg.showSpotify === false)) {
+    grid.classList.add('single');
+  }
+
+  let discord: DiscordCard | null = null;
+  let spotify: SpotifyCard | null = null;
+  try { if (cfg.showDiscord !== false) discord = new DiscordCard('presence-discord'); } catch { /* no root */ }
+  try { if (cfg.showSpotify !== false) spotify = new SpotifyCard('presence-spotify', cfg.spotifyFallbackText ?? 'not listening to anything'); } catch { /* no root */ }
+
+  const client = new LanyardClient(cfg.userId);
+  client.start();
+
+  // Avatar sync with site profile (matches previous behaviour)
+  let avatarSynced = false;
+  const syncAvatar = (p: LanyardPresence): void => {
+  if (avatarSynced || cfg.avatarSync === false) return;
+  const hash = p.discord_user.avatar;
+  if (!hash) return;
+  avatarSynced = true;
+  const u = p.discord_user;
+  const ext = hash.startsWith('a_') ? 'gif' : 'png';
+  const url = `https://cdn.discordapp.com/avatars/${u.id}/${hash}.${ext}?size=256`;
+    const wrap = document.getElementById('avatar-wrap');
+    if (!wrap) return;
+    let img = wrap.querySelector<HTMLImageElement>('img.avatar-img');
+    if (!img) {
+      img = document.createElement('img');
+      img.className = 'avatar-img';
+      img.alt = 'avatar';
+      const ring = wrap.querySelector('.avatar-ring');
+      if (ring) ring.insertAdjacentElement('afterend', img);
+      else wrap.insertBefore(img, wrap.firstChild);
+    }
+    if (img.src !== url) {
+      img.style.transition = 'opacity 0.4s ease';
+      img.style.opacity = '0';
+      img.onerror = () => img?.remove();
+      img.onload = () => { if (img) img.style.opacity = '1'; };
+      img.src = url;
+    }
+  };
+
+  let degraded = false;
+  let lastSig = '';
+  client.subscribe(p => {
+    const sig = signature(p);
+    if (sig === lastSig) return; // dedupe across sockets/polls
+    lastSig = sig;
+    degraded = false;
+    section.classList.remove('offline');
+    try { discord?.render(p, cfg); } catch { /* one card failing must not kill the other */ }
+    try { if (p.listening_to_spotify && p.spotify) spotify?.render(p); else spotify?.showFallback(); } catch { /* idem */ }
+    syncAvatar(p);
+  });
+
+  // If nothing arrives in 12s, show graceful degraded state.
+  window.setTimeout(() => {
+    if (!lastSig) {
+      degraded = true;
+      discord?.showError();
+      spotify?.showFallback();
+      section.classList.add('offline');
+    }
+  }, 12_000);
+
+  // Cleanup
+  window.addEventListener('beforeunload', () => client.destroy());
+
+  // Expose for admin panel / debugging
+  (window as any).ZazaPresence = { client, discord, spotify, get degraded() { return degraded; } };
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => { void boot(); }, { once: true });
+} else {
+  void boot();
+}

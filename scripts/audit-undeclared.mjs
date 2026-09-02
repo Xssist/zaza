@@ -1,6 +1,9 @@
 // Temporary audit helper: find identifiers used in app.js but never declared anywhere in the file.
 import { readFileSync } from "node:fs";
-const s = readFileSync("js/app.js", "utf8");
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+const here = path.dirname(fileURLToPath(import.meta.url));
+const s = readFileSync(path.join(here, "..", "js", "app.js"), "utf8");
 const declared = new Set();
 for (const m of s.matchAll(/\b(?:function|class)\s+([A-Za-z_$][\w$]*)/g))
   declared.add(m[1]);
@@ -81,4 +84,10 @@ for (const m of s.matchAll(/\b([A-Za-z_][\w]*)\b/g)) used.add(m[1]);
 const missing = [...used].filter(
   (u) => !declared.has(u) && !globals.has(u) && !keywords.test(u),
 );
-console.log("possibly-undeclared:", [...new Set(missing)].join(", ") || "none");
+const result = [...new Set(missing)];
+console.log("possibly-undeclared:", result.join(", ") || "none");
+
+export function run() {
+  return { ok: true, possiblyUndeclared: result };
+}
+export default run;

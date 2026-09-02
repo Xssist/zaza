@@ -2534,6 +2534,46 @@
             </div>
           </div>
           <div class="a-card">
+            <div class="a-card-title"><i class="fas fa-sliders"></i> Presence Section Customization</div>
+            <div class="a-info"><i class="fas fa-circle-info"></i> Controls the STATUS section cards (Discord + Spotify) on the site.</div>
+            <div class="a-row"><label>Section Title</label><input type="text" id="inp-presence-title" class="a-input"
+                placeholder="status" /></div>
+            <div class="a-row">
+              <label>Show Discord Card</label>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+                <label class="a-toggle"><input type="checkbox" id="tog-presence-discord" /><span
+                    class="a-toggle-slider"></span></label>
+                <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Status, avatar and activity</span>
+              </div>
+            </div>
+            <div class="a-row">
+              <label>Show In-Game Activity</label>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+                <label class="a-toggle"><input type="checkbox" id="tog-presence-activity" /><span
+                    class="a-toggle-slider"></span></label>
+                <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Playing / Streaming / Watching row</span>
+              </div>
+            </div>
+            <div class="a-row">
+              <label>Show Spotify Card</label>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+                <label class="a-toggle"><input type="checkbox" id="tog-presence-spotify" /><span
+                    class="a-toggle-slider"></span></label>
+                <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Now playing via Discord (no OAuth needed)</span>
+              </div>
+            </div>
+            <div class="a-row"><label>Spotify Fallback Text (when not playing)</label><input type="text"
+                id="inp-presence-sp-fallback" class="a-input" placeholder="not listening to anything" /></div>
+            <div class="a-row">
+              <label>Sync Site Avatar From Discord</label>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+                <label class="a-toggle"><input type="checkbox" id="tog-presence-avatarsync" /><span
+                    class="a-toggle-slider"></span></label>
+                <span style="font-size:.78rem;color:rgba(240,240,245,.5);">Use your Discord profile picture</span>
+              </div>
+            </div>
+          </div>
+          <div class="a-card">
             <div class="a-card-title"><i class="fas fa-image"></i> Avatar Sync</div>
             <div class="a-info success"><i class="fas fa-circle-check"></i> When the Discord widget is enabled, your
               Discord profile picture automatically replaces the site avatar in real time — no manual upload needed.
@@ -2844,24 +2884,21 @@
       ]
     }
   ],
-  "projects": [
-    {
-      "name": "zaza.app biolink",
-      "description": "casual biolink with drag and drop features",
-      "technologies": [
-        "TypeScript",
-        "Node.js",
-        "PostgreSQL"
-      ],
-      "url": "https://zaza-production-dc12.up.railway.app/",
-      "image": "https://cdn.discordapp.com/attachments/1462427371075272917/1544092672254410852/image.png?ex=6a973fdc&is=6a95ee5c&hm=874742d01aa31ff2e3a38a29a3f3ccec82412f96918c747b94d603bf78728d62&"
-    }
-  ],
+  "projects": [],
   "consoleArt": {
     "enabled": true,
     "art": "*\\ (^_^)",
     "message": "hi visitor, weird to see you here",
     "subMessage": "Contact me if something is broken or if u found bugs"
+  },
+  "presence": {
+    "sectionTitle": "status",
+    "showDiscord": true,
+    "showSpotify": true,
+    "showActivity": true,
+    "activityLabel": "current activity",
+    "spotifyFallbackText": "not listening to anything",
+    "avatarSync": true
   }
 };
 
@@ -3129,6 +3166,15 @@
       const chkDc = $('#tog-discord'); if (chkDc) chkDc.checked = !!(cfg.discord?.enabled);
       set('#inp-discord-uid', cfg.discord?.userId || '');
 
+      // Presence section
+      const pr = cfg.presence || {};
+      set('#inp-presence-title', pr.sectionTitle || 'status');
+      chk('#tog-presence-discord', pr.showDiscord !== false);
+      chk('#tog-presence-activity', pr.showActivity !== false);
+      chk('#tog-presence-spotify', pr.showSpotify !== false);
+      set('#inp-presence-sp-fallback', pr.spotifyFallbackText || 'not listening to anything');
+      chk('#tog-presence-avatarsync', pr.avatarSync !== false);
+
       // Console art
       const chkCa = $('#tog-consoleart'); if (chkCa) chkCa.checked = cfg.consoleArt?.enabled !== false;
       const artEl = $('#inp-consoleart-art');
@@ -3228,6 +3274,14 @@
       cfg.discord.enabled = gc('#tog-discord');
       cfg.discord.userId = g('#inp-discord-uid') || '';
       cfg.discord.showWidget = true;
+
+      if (!cfg.presence) cfg.presence = {};
+      cfg.presence.sectionTitle = g('#inp-presence-title') || 'status';
+      cfg.presence.showDiscord = gc('#tog-presence-discord');
+      cfg.presence.showActivity = gc('#tog-presence-activity');
+      cfg.presence.showSpotify = gc('#tog-presence-spotify');
+      cfg.presence.spotifyFallbackText = g('#inp-presence-sp-fallback') || 'not listening to anything';
+      cfg.presence.avatarSync = gc('#tog-presence-avatarsync');
 
       if (!cfg.consoleArt) cfg.consoleArt = {};
       cfg.consoleArt.enabled = gc('#tog-consoleart');

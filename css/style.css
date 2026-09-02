@@ -1089,3 +1089,211 @@ body.a-admin input,body.a-admin textarea,body.a-admin [contenteditable="true"]{-
 .editorial-page .skill-chip i{width:1rem;text-align:center;font-size:.86rem;color:rgba(244,244,240,.8)}
 .editorial-page .skill-chip .skill-chip-icon{width:12px;height:12px;object-fit:contain;flex:none}
 @media(max-width:700px){.editorial-page .skills-section{display:block;padding-block:clamp(7rem,18vw,10rem)}.editorial-page .skills-content{margin-top:3.5rem}.editorial-page .skills-content h2{font-size:clamp(1.8rem,10vw,2.6rem)}.editorial-page .skill-chip{font-size:.72rem}}
+
+/* ════════════════════════════════════════════════════════════
+   PRESENCE — Discord status + Spotify now playing (Lanyard)
+   GPU-only animations (transform/opacity). Skeletons have fixed
+   heights so nothing shifts when content lands.
+   ════════════════════════════════════════════════════════════ */
+.presence-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.presence-grid.single { grid-template-columns: 1fr; }
+.presence-card {
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  min-height: 128px;
+  padding: 18px 20px;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 18px;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.045), rgba(255,255,255,.015) 55%),
+    var(--bg, #08080f);
+  overflow: hidden;
+  transform: translateZ(0);
+  transition: transform .45s var(--spring), border-color .3s ease, box-shadow .3s ease;
+  will-change: transform;
+}
+.presence-card:hover {
+  transform: translate3d(0,-3px,0) scale(1.008);
+  border-color: rgba(255,255,255,.14);
+  box-shadow: 0 18px 40px -18px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.03);
+}
+.presence-card.ready { animation: pcPop .55s var(--spring) both; }
+.presence-card.pop .pc-avatar-wrap, .presence-card.pop .sp-art-wrap { animation: pcPop .55s var(--spring) both; }
+@keyframes pcPop {
+  0%   { transform: scale(.92) translate3d(0,6px,0); opacity: 0; }
+  100% { transform: scale(1) translate3d(0,0,0); opacity: 1; }
+}
+.presence-card.degraded { border-style: dashed; opacity: .75; }
+
+/* ── Skeletons ── */
+.pc-skel {
+  position: relative; overflow: hidden;
+  background: rgba(255,255,255,.05);
+  border-radius: 10px;
+}
+.pc-skel::after {
+  content: ''; position: absolute; inset: 0;
+  transform: translate3d(-100%,0,0);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.09), transparent);
+  animation: pcShimmer 1.4s ease-in-out infinite;
+}
+@keyframes pcShimmer { to { transform: translate3d(100%,0,0); } }
+.pc-skel-avatar { width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0; }
+.pc-skel-art { width: 72px; height: 72px; border-radius: 12px; flex-shrink: 0; }
+.pc-skel-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding-top: 2px; }
+.pc-skel-line { height: 11px; }
+.pc-skel-line.w40 { width: 40%; } .pc-skel-line.w50 { width: 50%; }
+.pc-skel-line.w60 { width: 60%; } .pc-skel-line.w75 { width: 75%; }
+.pc-skel-line.w90 { width: 90%; height: 8px; }
+
+/* ── Discord card ── */
+.pc-head { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
+.pc-avatar-wrap { position: relative; flex-shrink: 0; width: 64px; height: 64px; }
+.pc-avatar {
+  width: 64px; height: 64px; border-radius: 50%;
+  object-fit: cover; display: block;
+  border: 1px solid rgba(255,255,255,.12);
+  opacity: 0; transition: opacity .35s ease;
+  background: rgba(255,255,255,.05);
+}
+.pc-status-dot {
+  position: absolute; right: 0; bottom: 1px;
+  width: 15px; height: 15px; border-radius: 50%;
+  border: 3px solid var(--bg, #08080f);
+  background: #747f8d;
+  transform: translateZ(0);
+}
+.pc-status-dot[data-status="online"]  { background: #23a55a; }
+.pc-status-dot[data-status="idle"]    { background: #f0b232; }
+.pc-status-dot[data-status="dnd"]     { background: #f23f43; }
+.pc-status-dot[data-status="online"]::after,
+.pc-status-dot[data-status="idle"]::after {
+  content: ''; position: absolute; inset: -3px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  color: inherit;
+  animation: pcPing 2.2s ease-out infinite;
+}
+.pc-status-dot[data-status="online"]::after  { border-color: rgba(35,165,90,.55); }
+.pc-status-dot[data-status="idle"]::after    { border-color: rgba(240,178,50,.55); }
+@keyframes pcPing {
+  0%   { transform: scale(1); opacity: .9; }
+  80%, 100% { transform: scale(1.65); opacity: 0; }
+}
+.pc-id { min-width: 0; flex: 1; }
+.pc-name { font-weight: 600; font-size: .95rem; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-status { font-size: .72rem; color: var(--text-muted); margin-top: 2px; }
+.pc-brand { margin-left: auto; color: rgba(88,101,242,.5); font-size: 1rem; transition: color .25s ease, transform .45s var(--spring); }
+.presence-card:hover .pc-brand { color: #5865F2; transform: translate3d(0,-1px,0) scale(1.08); }
+
+/* Activity row */
+.pc-activity {
+  display: flex; gap: 13px; align-items: center;
+  width: 100%; margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  transition: opacity .35s ease, transform .45s var(--spring);
+}
+.pc-activity.hidden { display: none; }
+.pc-act-img-wrap { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
+.pc-act-img { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; display: block; }
+.pc-act-img-wrap::after { content: ''; position: absolute; inset: 0; border-radius: 10px; border: 1px solid rgba(255,255,255,.1); pointer-events: none; }
+.pc-act-ph {
+  position: absolute; inset: 0; border-radius: 10px;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.05); color: var(--text-muted); font-size: .95rem;
+}
+.pc-act-ph.show { display: flex; }
+.pc-act-small {
+  position: absolute; right: -5px; bottom: -5px;
+  width: 20px; height: 20px; border-radius: 50%;
+  object-fit: cover; border: 2px solid var(--bg, #08080f);
+  background: var(--bg, #08080f);
+}
+.pc-act-small[data-on=""] { display: none; }
+.pc-act-small:not([data-on]) { display: none; }
+.pc-act-body { min-width: 0; flex: 1; }
+.pc-act-type { font-size: .58rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--text-muted); }
+.pc-act-name { font-size: .84rem; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-act-detail, .pc-act-state { font-size: .72rem; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-act-detail:empty, .pc-act-state:empty { display: none; }
+.pc-act-elapsed { font-size: .62rem; color: var(--text-muted); font-family: var(--font-mono, monospace); margin-top: 4px; }
+.pc-act-elapsed:empty { display: none; }
+.pc-error { font-size: .72rem; color: var(--text-muted); margin-top: 10px; font-style: italic; }
+
+/* ── Spotify card ── */
+.sp-art-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+.sp-art-wrap.hidden { display: none; }
+.sp-art {
+  width: 72px; height: 72px; border-radius: 12px;
+  object-fit: cover; display: block;
+  opacity: 0; transition: opacity .4s ease, transform .5s var(--spring);
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,.6);
+}
+.presence-card:hover .sp-art { transform: scale(1.045) rotate(-1.2deg); }
+.sp-art-ph {
+  position: absolute; inset: 0; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(30,215,96,.09);
+  color: rgba(30,215,96,.65); font-size: 1.35rem;
+}
+.sp-art[src]:not([src=""]) ~ .sp-art-ph { display: none; }
+.sp-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sp-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sp-kicker { display: flex; align-items: center; gap: 5px; font-size: .58rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: rgba(30,215,96,.75); }
+.sp-kicker i { font-size: .62rem; }
+.sp-state { display: flex; align-items: center; gap: 5px; font-size: .6rem; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; }
+.sp-state-dot { width: 6px; height: 6px; border-radius: 50%; background: #1ed760; box-shadow: 0 0 6px rgba(30,215,96,.8); animation: spPulse 1.6s ease-in-out infinite; }
+.sp-state-dot[data-on=""] { background: var(--text-muted); box-shadow: none; animation: none; }
+@keyframes spPulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+.sp-title { font-size: .92rem; font-weight: 600; margin-top: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-artist { font-size: .72rem; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-progress {
+  height: 4px; border-radius: 99px;
+  background: rgba(255,255,255,.09);
+  margin-top: 12px; overflow: hidden;
+}
+.sp-progress-fill {
+  height: 100%; width: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #1ed760, #1db954);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+.sp-progress-knob {
+  display: block; float: right;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #fff; margin-top: -2px;
+  box-shadow: 0 0 8px rgba(255,255,255,.7);
+  opacity: 0; transition: opacity .3s ease;
+}
+.presence-card:hover .sp-progress-knob { opacity: 1; }
+.sp-times { display: flex; justify-content: space-between; font-size: .58rem; color: var(--text-muted); font-family: var(--font-mono, monospace); margin-top: 5px; }
+
+/* Fallback state — replaces the whole card body, never empty space */
+.sp-fallback {
+  position: absolute; inset: 0;
+  display: none; align-items: center; justify-content: center; gap: 10px;
+  font-size: .78rem; color: var(--text-muted);
+}
+.sp-fallback i { color: rgba(30,215,96,.45); font-size: 1rem; }
+.presence-card.fallback .sp-body,
+.presence-card.fallback .sp-top { display: none; }
+.presence-card.fallback .sp-fallback { display: flex; }
+.presence-card.fallback { min-height: 96px; align-items: center; }
+
+/* ── Responsive ── */
+@media (max-width: 760px) {
+  .presence-grid { grid-template-columns: 1fr; gap: 14px; }
+  .presence-card { padding: 16px; min-height: 116px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .presence-card, .presence-card * { animation: none !important; transition-duration: .01ms !important; }
+}

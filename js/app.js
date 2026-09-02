@@ -1363,6 +1363,7 @@ function initThemeFab() {
    14. WEATHER (snow / rain)
 ══════════════════════════════════════════ */
 function initWeather() {
+  if (S.prefersReduced) return; // respect reduced motion — CSS forces .01ms animations which makes flakes flicker
   const t = S.cfg.theme;
   if (!t?.snowEnabled && !t?.rainEnabled) return;
   const type = t.snowEnabled ? 'snow' : 'rain';
@@ -1431,6 +1432,7 @@ function initConsoleArt() {
 function initBgPattern() {
   const pattern = S.cfg.background?.pattern;
   if (!pattern || pattern === 'none' || pattern === 'video') return;
+  if (S.prefersReduced) return; // respect reduced motion — skip animated canvas patterns
 
   // Create canvas
   let cv = document.getElementById('bg-pattern-canvas');
