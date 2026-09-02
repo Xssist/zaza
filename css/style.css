@@ -1301,3 +1301,28 @@ body.a-admin input,body.a-admin textarea,body.a-admin [contenteditable="true"]{-
 @media (prefers-reduced-motion: reduce) {
   .presence-card, .presence-card * { animation: none !important; transition-duration: .01ms !important; }
 }
+
+/* ══════════ GSAP motion system overrides ══════════ */
+/* Masked text reveal primitives */
+.gs-mask{display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:0.08em;margin-bottom:-0.08em}
+.gs-line-inner{display:inline-block;will-change:transform,opacity;backface-visibility:hidden}
+/* When GSAP owns motion: strip CSS transitions that fight GSAP tweens */
+[data-gsap-motion="1"] .reveal{transition:none!important;filter:none!important;transform:none!important;opacity:1}
+[data-gsap-motion="1"] .spring-reveal{transition:none!important}
+/* Pre-intro states (avoid any flash before GSAP tweens run) */
+html[data-gsap-motion="1"] #bg-layer{opacity:0}
+html[data-gsap-motion="1"] .page-crumbs a,
+html[data-gsap-motion="1"] .page-crumbs .crumb-sep,
+html[data-gsap-motion="1"] .hero-time,
+html[data-gsap-motion="1"] .hero-copy p,
+html[data-gsap-motion="1"] .scroll-cue{opacity:0}
+html[data-gsap-motion="1"] .gs-line-inner{transform:translateY(110%);opacity:0}
+@media (prefers-reduced-motion: reduce){
+  html[data-gsap-motion="1"] #bg-layer,
+  html[data-gsap-motion="1"] .page-crumbs a,
+  html[data-gsap-motion="1"] .hero-time,
+  html[data-gsap-motion="1"] .hero-copy p,
+  html[data-gsap-motion="1"] .scroll-cue{opacity:1}
+  html[data-gsap-motion="1"] .gs-line-inner{transform:none!important;opacity:1!important}
+  .gs-mask{overflow:visible}
+}
