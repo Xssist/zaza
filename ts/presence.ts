@@ -280,6 +280,19 @@ class LanyardClient {
     this.pollTimer = window.setInterval(poll, 30_000);
   }
 
+  /** One-shot REST fetch — instant paint while the WS handshake completes. */
+  fetchOnce(): void {
+    void (async () => {
+      try {
+        const r = await fetch(`https://api.lanyard.rest/v1/users/${this.userId}`, { headers: { Accept: 'application/json' } });
+        if (!r.ok) return;
+        const body = await r.json();
+        const p = body?.data as LanyardPresence | undefined;
+        if (p?.discord_user) this.emit(p);
+      } catch { /* WS will deliver the data anyway */ }
+    })();
+  }
+
   private stopPolling(): void {
     if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = undefined; }
   }
@@ -376,17 +389,13 @@ class DiscordCard {
     const dot = q<HTMLImageElement>('.pc-status-dot');
     if (dot) dot.dataset.status = status;
     const statusEl = q('.pc-status');
-    if (statusEl) statusEl.textContent = STATUS_LABEL[status] ?? status;
+    // Custom status (type 4) lives beside the label — it was previously
+    // written into the (usually hidden) activity detail, so it never showed.
+    const custom = p.activities.find(a => a.type === 4);
+    const customText = custom ? `${custom.emoji?.name ?? ''}${custom.state ?? ''}`.trim() : '';
+    if (statusEl) statusEl.textContent = customText ? `${STATUS_LABEL[status] ?? status} · ${customText}` : (STATUS_LABEL[status] ?? status);
     const nameEl = q('.pc-name');
     if (nameEl) nameEl.textContent = user.global_name || user.display_name || user.username || 'discord';
-
-    // Custom status (type 4)
-    const custom = p.activities.find(a => a.type === 4);
-    const detailEl = q('.pc-act-detail');
-    if (custom && detailEl && !p.activities.some(a => a.type !== 4 && a.type !== 2)) {
-      const emoji = custom.emoji?.name ? `${custom.emoji.name} ` : '';
-      detailEl.textContent = `${emoji}${custom.state ?? ''}`.trim();
-    }
 
     // Activity — most interesting non-custom, non-Spotify activity
     const acts = p.activities.filter(a => a.type !== 4 && a.id !== 'spotify:1');
@@ -428,6 +437,18 @@ class DiscordCard {
       actWrap.classList.remove('hidden');
     } else if (actWrap) {
       actWrap.classList.add('hidden');
+    }
+
+    // Always clear stale activity text so nothing lingers between tracks/games
+    if (!act || cfg.showActivity === false) {
+      const t = q('.pc-act-type'); const n = q('.pc-act-name');
+      const st = q('.pc-act-state'); const de = q('.pc-act-detail');
+      if (t) t.textContent = ''; if (n) n.textContent = '';
+      if (st) st.textContent = ''; if (de) de.textContent = '';
+      const el2 = q('.pc-act-elapsed');
+      if (el2) el2.textContent = '';
+      const im = q<HTMLImageElement>('.pc-act-img');
+      if (im) im.removeAttribute('src');
     }
 
     if (first) this.root.classList.add('pop');
@@ -532,14 +553,14 @@ class SpotifyCard {
       this.root.innerHTML = this.contentEl();
     }
 
-    if (!sp) { this.showFallback(); return; }
+    if (!sp?.timestamps) { this.showFallback(); return; }
     this.root.classList.remove('fallback');
 
     // Same track → only update play state / progress anchors
     const sameTrack = sp.track_id === this.trackId;
     this.trackId = sp.track_id;
-    this.start = sp.timestamps.start;
-    this.end = sp.timestamps.end;
+    this.start = sp.timestamps.start ?? Date.now();
+    this.end = sp.timestamps.end ?? this.start;
     this.setPlaying(true);
 
     const stateText = q('.sp-state-text');
@@ -677,6 +698,8 @@ function boot(): void {
 
   const client = new LanyardClient(cfg.userId);
   client.start();
+  // Paint immediately from REST — the socket only beats it for realtime updates.
+  client.fetchOnce();
 
   // Avatar sync with site profile (matches previous behaviour)
   let avatarSynced = false;

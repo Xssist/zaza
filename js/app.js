@@ -340,6 +340,12 @@ function playSound(name) {
 }
 
 /* ── Track analytics ── */
+let _analyticsSaveTimer = 0;
+function _flushAnalytics(analytics) {
+  try {
+    localStorage.setItem('zade_analytics', JSON.stringify(analytics));
+  } catch (_) {}
+}
 function trackEvent(event, data) {
   let analytics = {};
   try {
@@ -349,10 +355,15 @@ function trackEvent(event, data) {
   }
   if (!Array.isArray(analytics.events)) analytics.events = [];
   analytics.events.push({ event, data, timestamp: Date.now() });
-  if (analytics.events.length > 1000) analytics.events.shift(); // Limit to 1000 events
-  try {
-    localStorage.setItem('zade_analytics', JSON.stringify(analytics));
-  } catch (_) {}
+  if (analytics.events.length > 500) analytics.events.shift(); // capped at 500 events
+  // Debounce the localStorage write — bursts of events cause one save, not N.
+  clearTimeout(_analyticsSaveTimer);
+  _analyticsSaveTimer = setTimeout(() => _flushAnalytics(analytics), 2000);
+  // Still persist promptly if the page is being unloaded.
+  window.addEventListener('beforeunload', () => {
+    clearTimeout(_analyticsSaveTimer);
+    _flushAnalytics(analytics);
+  }, { once: true });
 }
 
 /* ══════════════════════════════════════════
@@ -591,6 +602,60 @@ function initCursor() {
 /* ══════════════════════════════════════════
    6. PARTICLES
 ══════════════════════════════════════════ */
+/* Particle dot — position/color logic is pure, drawing takes the ctx. */
+class ParticleDot {
+  constructor(dims, colors) {
+    this._dims = dims;     // { W, H } shared mutable size object
+    this._colors = colors; // [ [r,g,b] primary, [r,g,b] secondary ]
+    this.init(true);
+  }
+  init(full) {
+    const W = this._dims.W, H = this._dims.H;
+    this.x  = rand(0, W);
+    this.y  = full ? rand(0, H) : H + 5;
+    this.vx = rand(-0.3, 0.3);
+    this.vy = rand(-0.5, -0.1);
+    this.sz = rand(0.4, 2.2);
+    this.op = rand(0.08, 0.45);
+    this.life = 1;
+    this.decay = rand(0.0005, 0.0018);
+    const [c1, c2] = this._colors;
+    [this.r, this.g, this.b] = Math.random() > 0.65 ? c2 : c1;
+  }
+  tick(step) {
+    const s = step || 1;
+    this.x += this.vx * s; this.y += this.vy * s; this.life -= this.decay * s;
+    if (this.life <= 0 || this.y < -5) this.init(false);
+  }
+  draw(ctx) {
+    ctx.globalAlpha = this.op * this.life;
+    ctx.fillStyle = `rgb(${this.r},${this.g},${this.b})`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.sz, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+/* Connection lines between nearby dots — one batched path per frame. */
+function drawParticleLinks(ctx, dots, rgb) {
+  const DIST_SQ = 90 * 90; // avoid Math.sqrt — compare squared distances
+  ctx.beginPath();
+  ctx.lineWidth = 0.4;
+  for (let i = 0; i < dots.length; i++) {
+    for (let j = i + 1; j < dots.length; j++) {
+      const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < DIST_SQ) {
+        ctx.globalAlpha = (1 - Math.sqrt(d2) / 90) * 0.06;
+        ctx.moveTo(dots[i].x, dots[i].y);
+        ctx.lineTo(dots[j].x, dots[j].y);
+      }
+    }
+  }
+  ctx.strokeStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+  ctx.stroke();
+}
+
 function initParticles() {
   if (S.prefersReduced) return; // respect reduced motion
   const cv = $('#particles-canvas');
@@ -598,24 +663,21 @@ function initParticles() {
   const ctx = cv.getContext('2d');
   const count = Math.max(0, Math.min(200, Number(S.cfg.theme?.particleCount) || 80));
 
-  const ac = S.cfg.theme?.accentColor || '#ffffff';
-  const a2 = S.cfg.theme?.accentColorSecondary || '#ffffff';
-
-  const [r1,g1,b1] = parseHexColor(ac) || [255,255,255];
-  const [r2,g2,b2] = parseHexColor(a2) || [255,255,255];
+  const c1 = parseHexColor(S.cfg.theme?.accentColor || '#ffffff') || [255,255,255];
+  const c2 = parseHexColor(S.cfg.theme?.accentColorSecondary || '#ffffff') || [255,255,255];
 
   // Mobile / touch devices get fewer particles, no link lines, lower DPR — biggest battery + FPS win
   const isMobile = window.matchMedia('(max-width: 700px)').matches || window.matchMedia('(hover: none)').matches;
   const drawLinks = !isMobile;
   const finalCount = Math.round((isMobile ? Math.min(count, 30) : count) * S.perf.quality);
 
-  let W = 0, H = 0;
+  const dims = { W: 0, H: 0 };
   const resize = () => {
     const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
     S.perf.dpr = dpr;
-    W = innerWidth; H = innerHeight;
-    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    dims.W = innerWidth; dims.H = innerHeight;
+    cv.width = Math.round(dims.W * dpr); cv.height = Math.round(dims.H * dpr);
+    cv.style.width = dims.W + 'px'; cv.style.height = dims.H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   };
   resize();
@@ -623,69 +685,22 @@ function initParticles() {
   cv.style.contain = 'strict';
   cv.style.transform = 'translate3d(0,0,0)';
 
-  class Dot {
-    init(full) {
-      this.x  = rand(0, W);
-      this.y  = full ? rand(0, H) : H + 5;
-      this.vx = rand(-0.3, 0.3);
-      this.vy = rand(-0.5, -0.1);
-      this.sz = rand(0.4, 2.2);
-      this.op = rand(0.08, 0.45);
-      this.life = 1;
-      this.decay = rand(0.0005, 0.0018);
-      const useA2 = Math.random() > 0.65;
-      [this.r, this.g, this.b] = useA2 ? [r2,g2,b2] : [r1,g1,b1];
-    }
-    constructor() { this.init(true); }
-    tick() {
-      const step = this._step || 1;
-      this.x += this.vx * step; this.y += this.vy * step; this.life -= this.decay * step;
-      if (this.life <= 0 || this.y < -5) this.init(false);
-    }
-    draw() {
-      ctx.globalAlpha = this.op * this.life;
-      ctx.fillStyle = `rgb(${this.r},${this.g},${this.b})`;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.sz, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  const dots = Array.from({ length: finalCount }, () => new Dot());
-  const DIST_SQ = 90 * 90; // avoid Math.sqrt — compare squared distances
+  const dots = Array.from({ length: finalCount }, () => new ParticleDot(dims, [c1, c2]));
 
   let lastFrame = performance.now();
   (function loop(now) {
     if (S.perf.hidden) { requestAnimationFrame(loop); return; }
     const frameStart = performance.now();
     const delta = Math.min((now - lastFrame) / 16.67, 2); lastFrame = now;
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0, 0, dims.W, dims.H);
 
-    // Batch all connection lines into a single path + stroke call
-    // (skipped on mobile — O(n²) per frame is not worth it on phones)
-    if (drawLinks) {
-    ctx.beginPath();
-    ctx.lineWidth = 0.4;
-    for (let i = 0; i < dots.length; i++) {
-      for (let j = i + 1; j < dots.length; j++) {
-        const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y;
-        const d2 = dx*dx + dy*dy;
-        if (d2 < DIST_SQ) {
-          const alpha = (1 - Math.sqrt(d2) / 90) * 0.06;
-          ctx.globalAlpha = alpha;
-          ctx.moveTo(dots[i].x, dots[i].y);
-          ctx.lineTo(dots[j].x, dots[j].y);
-        }
-      }
-    }
-    ctx.strokeStyle = `rgb(${r1},${g1},${b1})`;
-    ctx.stroke();
-    }
+    // Connection lines are skipped on mobile — O(n²) per frame is not worth it on phones
+    if (drawLinks) drawParticleLinks(ctx, dots, c1);
 
     // Draw dots (no save/restore per dot — manage globalAlpha directly)
     ctx.shadowColor = '';
     ctx.shadowBlur = 0;
-    dots.forEach(d => { d._step = delta; d.tick(); d.draw(); });
+    dots.forEach(d => { d.tick(delta); d.draw(ctx); });
     ctx.globalAlpha = 1;
 
     RenderBudget.update(performance.now() - frameStart);
@@ -909,7 +924,10 @@ function initSpotify() {
         img.alt = 'Album cover';
         iconEl.replaceChildren(img);
       } else if (iconEl) {
-        iconEl.innerHTML = '<i class="fab fa-spotify"></i>';
+        const icon = document.createElement('i');
+        icon.className = 'fab fa-spotify';
+        icon.setAttribute('aria-hidden', 'true');
+        iconEl.replaceChildren(icon);
       }
 
       // Animate bars based on playing state
@@ -1037,168 +1055,12 @@ function titleCycle(titles, effect, speed) {
 
 /* ══════════════════════════════════════════
    10. MUSIC PLAYER
+   The player itself lives in js/music.js (MusicPlayer class).
+   This is just the consumer wiring.
 ══════════════════════════════════════════ */
 function initMusic() {
   const cfg = S.cfg.music || { enabled: false, defaultVolume: 0.5, tracks: [] };
-  cfg.tracks = Array.isArray(cfg.tracks) ? cfg.tracks : [];
-  const bar = $('#music-bar');
-
-  if (bar) bar.style.display = 'none'; // always hidden — music plays in background
-
-  S.audioEl = new Audio();
-  S.audioEl.volume = cfg.defaultVolume ?? 0.5;
-  S.audioEl.crossOrigin = 'anonymous';
-
-  /* Web Audio Context — created lazily on first play */
-  function ensureCtx() {
-    if (S.audioCtx) {
-      if (S.audioCtx.state === 'suspended') S.audioCtx.resume();
-      return;
-    }
-    try {
-      S.audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
-      S.analyser  = S.audioCtx.createAnalyser();
-      S.analyser.fftSize = 256;
-      S.gainNode  = S.audioCtx.createGain();
-      S.gainNode.gain.value = S.audioEl.volume;
-      S.sourceNode = S.audioCtx.createMediaElementSource(S.audioEl);
-      S.sourceNode.connect(S.analyser);
-      S.analyser.connect(S.gainNode);
-      S.gainNode.connect(S.audioCtx.destination);
-      startVisualizer();
-    } catch (e) {
-      console.warn('Web Audio setup failed:', e);
-    }
-  }
-
-  function loadTrack(idx) {
-    const track = cfg.tracks[idx];
-    if (!track) return;
-    S.trackIdx = idx;
-
-    const titleEl  = $('#music-title-mini');
-    const artistEl = $('#music-artist-mini');
-    const coverEl  = $('#music-cover-mini');
-    if (titleEl)  titleEl.textContent  = track.title  || 'Unknown';
-    if (artistEl) artistEl.textContent = track.artist || '—';
-    if (coverEl) {
-      if (track.cover) {
-        const cover = normalizeAssetPath(track.cover) || safeExternalUrl(track.cover);
-        if (cover) coverEl.style.backgroundImage = `url("${cover.replace(/"/g, '%22')}")`;
-        else coverEl.style.backgroundImage = '';
-        coverEl.replaceChildren();
-      } else {
-        coverEl.style.backgroundImage = '';
-        const icon = document.createElement('i');
-        icon.className = 'fas fa-music';
-        coverEl.replaceChildren(icon);
-      }
-    }
-    S.audioEl.src = normalizeAssetPath(track.src);
-    S.audioEl.load();
-    const fill = $('#music-progress-fill-mini');
-    const time = $('#music-time-mini');
-    if (fill) fill.style.width = '0%';
-    if (time) time.textContent = '0:00';
-  }
-
-  function playPause() {
-    ensureCtx();
-    if (S.audioEl.paused) {
-      S.audioEl.play()
-        .then(() => {
-          S.musicPlaying = true;
-          updatePlayBtn(true);
-          $('#music-cover-mini')?.classList.add('playing');
-        })
-        .catch(e => console.warn('Playback error:', e));
-    } else {
-      S.audioEl.pause();
-      S.musicPlaying = false;
-      updatePlayBtn(false);
-      $('#music-cover-mini')?.classList.remove('playing');
-    }
-  }
-
-  function updatePlayBtn(playing) {
-    const btn = $('#play-pause-btn');
-    if (!btn) return;
-    btn.innerHTML = playing
-      ? '<i class="fas fa-pause" aria-hidden="true"></i>'
-      : '<i class="fas fa-play" aria-hidden="true"></i>';
-    btn.className = 'music-btn-mini play-btn';
-    btn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-    btn.setAttribute('aria-pressed', String(playing));
-  }
-
-  S.audioEl.addEventListener('timeupdate', () => {
-    if (!S.audioEl.duration) return;
-    const pct = (S.audioEl.currentTime / S.audioEl.duration) * 100;
-    const fill = $('#music-progress-fill-mini');
-    const time = $('#music-time-mini');
-    if (fill) fill.style.width = pct + '%';
-    if (time) time.textContent = fmtTime(S.audioEl.currentTime);
-  });
-
-  S.audioEl.addEventListener('ended', () => {
-    if (cfg.tracks.length > 1) {
-      loadTrack((S.trackIdx + 1) % cfg.tracks.length);
-      S.audioEl.play().catch(() => {});
-    } else {
-      S.musicPlaying = false;
-      updatePlayBtn(false);
-      $('#music-cover-mini')?.classList.remove('playing');
-    }
-  });
-
-  // Volume — update fill track via CSS custom property
-  function syncSliderFill(el) {
-    const min = parseFloat(el.min) || 0;
-    const max = parseFloat(el.max) || 1;
-    const pct = ((parseFloat(el.value) - min) / (max - min)) * 100;
-    el.style.setProperty('--pct', pct + '%');
-  }
-
-  const volSlider = $('#volume-slider');
-  if (volSlider) {
-    volSlider.value = S.audioEl.volume;
-    syncSliderFill(volSlider);
-    volSlider.addEventListener('input', e => {
-      const v = parseFloat(e.target.value);
-      S.audioEl.volume = v;
-      if (S.gainNode) S.gainNode.gain.value = v;
-      syncSliderFill(e.target);
-    });
-  }
-
-  // Seek
-  const prog = $('#music-progress-mini');
-  if (prog) {
-    prog.addEventListener('click', e => {
-      if (!S.audioEl.duration) return;
-      S.audioEl.currentTime = (e.offsetX / prog.offsetWidth) * S.audioEl.duration;
-    });
-  }
-
-  // Buttons — with ARIA labels
-  $('#play-pause-btn')?.setAttribute('aria-label', 'Play');
-  $('#play-pause-btn')?.setAttribute('aria-pressed', 'false');
-  $('#prev-btn')?.setAttribute('aria-label', 'Previous track');
-  $('#next-btn')?.setAttribute('aria-label', 'Next track');
-  $('#play-pause-btn')?.addEventListener('click', playPause);
-  $('#prev-btn')?.addEventListener('click', () => {
-    if (!cfg.tracks.length) return;
-    loadTrack((S.trackIdx - 1 + cfg.tracks.length) % cfg.tracks.length);
-    if (S.musicPlaying) S.audioEl.play().catch(() => {});
-  });
-  $('#next-btn')?.addEventListener('click', () => {
-    if (!cfg.tracks.length) return;
-    loadTrack((S.trackIdx + 1) % cfg.tracks.length);
-    if (S.musicPlaying) S.audioEl.play().catch(() => {});
-  });
-
-  loadTrack(0);
-  S.playPause = playPause;
+  new window.MusicPlayer(S, cfg);
 }
 
 function fmtTime(s) {
@@ -1252,6 +1114,7 @@ function startVisualizer() {
     }
   })();
 }
+window.startVisualizer = startVisualizer; // used by js/music.js
 
 /* ══════════════════════════════════════════
    11. ENTER SCREEN

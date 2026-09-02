@@ -235,7 +235,7 @@
   },
   "presence": {
     "sectionTitle": "status",
-    "showDiscord": false,
+    "showDiscord": true,
     "showSpotify": true,
     "showActivity": true,
     "activityLabel": "current activity",

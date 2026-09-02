@@ -41,9 +41,24 @@ const server = http.createServer(async (request, response) => {
     return sendError(response, 400);
   }
   const relativePath = pathname === "/" ? "index.html" : decodedPathname.replace(/^[/\\]+/, "");
+  // Resolve the relative path against root and reject anything that escapes it
+  // (e.g. /..%2f..%2fetc/passwd) BEFORE building the final file path.
+  const resolvedRelative = resolve(root, relativePath);
+  if (resolvedRelative !== root && !resolvedRelative.startsWith(root + sep)) {
+    return sendError(response, 404);
+  }
   const filePath = normalize(join(root, relativePath));
 
-  if (!filePath.startsWith(root + sep) || !existsSync(filePath) || !statSync(filePath).isFile()) return sendError(response, 404);
+  let stat;
+  try {
+    if (!filePath.startsWith(root + sep) || !existsSync(filePath) || !(stat = statSync(filePath)).isFile()) {
+      return sendError(response, 404);
+    }
+  } catch (_) {
+    // File vanished or is unreadable between checks (or statSync threw) —
+    // don't let the error crash the request handler.
+    return sendError(response, 404);
+  }
 
   response.writeHead(200, {
     "Content-Type": contentTypes[extname(filePath).toLowerCase()] || "application/octet-stream",
