@@ -1131,6 +1131,10 @@ body.a-admin input,body.a-admin textarea,body.a-admin [contenteditable="true"]{-
   100% { transform: scale(1) translate3d(0,0,0); opacity: 1; }
 }
 .presence-card.degraded { border-style: dashed; opacity: .75; }
+/* Discord card stacks head above activity row (the card flex is row by default,
+   which crushed the name/status column to zero width). */
+#presence-discord.presence-card { flex-direction: column; }
+#presence-discord .pc-activity { width: 100%; }
 
 /* ── Skeletons ── */
 .pc-skel {
