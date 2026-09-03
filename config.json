@@ -150,7 +150,7 @@
     "description": "living in the moment. creating something real.",
     "ogImage": "assets/images/avatar.png",
     "themeColor": "#ffffff",
-    "titleEffect": "typewriter",
+    "titleEffect": "glitchHard",
     "titleSpeed": 1
   },
   "badges": [],
