@@ -226,7 +226,17 @@
       ]
     }
   ],
-  "projects": [],
+  "projects": [
+    {
+      "name": "BreachWatch",
+      "description": "",
+      "technologies": [
+        "javascript"
+      ],
+      "url": "https://github.com/lolzade/BreachWatch",
+      "image": ""
+    }
+  ],
   "consoleArt": {
     "enabled": true,
     "art": "*\\ (^_^)",
