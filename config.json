@@ -241,6 +241,13 @@
       ],
       "url": "https://github.com/lolzade/BreachWatch",
       "image": "https://cdn.discordapp.com/attachments/1294709764303093922/1544900005947506758/image.png?ex=6a9a2fc0&is=6a98de40&hm=0b8194dccd53343787b5c1a7e8cc687064e61c0b878992fe2b8db1aa4aaa5df4&"
+    },
+    {
+      "name": "Advanced Web Security Scanner",
+      "description": "",
+      "technologies": [],
+      "url": "https://github.com/lolzade/advanced-websecurity-scanner",
+      "image": ""
     }
   ],
   "consoleArt": {
