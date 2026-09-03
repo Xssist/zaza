@@ -231,7 +231,8 @@
       "name": "BreachWatch",
       "description": "",
       "technologies": [
-        "javascript"
+        "javascript",
+        "python"
       ],
       "url": "https://github.com/lolzade/BreachWatch",
       "image": "https://cdn.discordapp.com/attachments/1294709764303093922/1544899507815452702/image.png?ex=6a9a2f49&is=6a98ddc9&hm=fd689a83fb99e4b4ab15247784e5e1f5eef1e3fe279e2a9fb41691883af19b9f&"
