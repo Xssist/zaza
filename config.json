@@ -187,6 +187,11 @@
           "label": "C++",
           "icon": "fa-brands fa-css",
           "color": "#a0a0a0"
+        },
+        {
+          "label": "Python",
+          "icon": "fa-brands fa-python",
+          "color": "#a0a0a0"
         }
       ]
     },
