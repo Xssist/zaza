@@ -245,9 +245,11 @@
     {
       "name": "Advanced Web Security Scanner",
       "description": "",
-      "technologies": [],
+      "technologies": [
+        "Python"
+      ],
       "url": "https://github.com/lolzade/advanced-websecurity-scanner",
-      "image": ""
+      "image": "https://cdn.discordapp.com/attachments/1294709764303093922/1545206519711272990/image.png?ex=6a9b4d36&is=6a99fbb6&hm=68eca082d9d236c66cf58c11ef31a1f35670b08f953c1fc59b9bd29fe98af82c&"
     }
   ],
   "consoleArt": {
